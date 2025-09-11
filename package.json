@@ -1,0 +1,28 @@
+{
+  "name": "nexobase-dashboard-v1",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build"
+  },
+  "dependencies": {
+    "@headlessui/vue": "^1.7.16",
+    "@heroicons/vue": "^2.0.18",
+    "axios": "^1.5.0",
+    "pinia": "^2.1.6",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4",
+    "vue-toastification": "^2.0.0-rc.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^24.3.1",
+    "@vitejs/plugin-vue": "^4.3.4",
+    "autoprefixer": "^10.4.21",
+    "typescript": "~5.1.6",
+    "vite": "^5.4.20",
+    "vue-tsc": "^3.0.6"
+  }
+}

@@ -13,13 +13,15 @@ export const apiClient = axios.create({
 // Request: agrega Authorization si hay token
 apiClient.interceptors.request.use(
   (config) => {
-    const raw = localStorage.getItem("nexo_tokens");
+    const raw = localStorage.getItem("nexa_tokens");
     if (raw) {
       try {
         const tokens = JSON.parse(raw);
         if (tokens?.access_token) {
           config.headers = config.headers ?? {};
-          (config.headers as any).Authorization = `Bearer ${tokens.access_token}`;
+          (
+            config.headers as any
+          ).Authorization = `Bearer ${tokens.access_token}`;
         }
       } catch (e) {
         console.error("Failed to parse tokens:", e);
@@ -38,23 +40,23 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const raw = localStorage.getItem("nexo_tokens");
+        const raw = localStorage.getItem("nexa_tokens");
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed?.refresh_token) {
             const resp = await axios.post(`${BASE_URL}/auth/refresh`, {
               refresh_token: parsed.refresh_token,
             });
-            const newTokens = resp.data; // { access_token, refresh_token, ... }
-            localStorage.setItem("nexo_tokens", JSON.stringify(newTokens));
+            const newTokens = resp.data;
+            localStorage.setItem("nexa_tokens", JSON.stringify(newTokens));
             originalRequest.headers = originalRequest.headers ?? {};
             originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
             return apiClient(originalRequest);
           }
         }
       } catch (refreshError) {
-        localStorage.removeItem("nexo_tokens");
-        localStorage.removeItem("nexo_user");
+        localStorage.removeItem("nexa_tokens");
+        localStorage.removeItem("nexa_user");
         // Opcional: redirigir a login
         // window.location.href = "/";
       }
@@ -75,6 +77,11 @@ export const authAPI = {
   }) => apiClient.post("/auth/register", data),
   logout: () => apiClient.post("/auth/logout"),
   getCurrentUser: () => apiClient.get("/auth/me"),
+  refresh: (refreshToken: string) =>
+    apiClient.post("/auth/refresh", { refresh_token: refreshToken }),
+  changePassword: (data: { current_password: string; new_password: string }) =>
+    apiClient.patch("/auth/change-password", data),
+  updateProfile: (data: any) => apiClient.patch("/auth/profile", data),
 };
 
 // Admin Collections API
@@ -92,7 +99,20 @@ export const adminCollections = {
     is_active?: boolean;
     metadata?: Record<string, unknown> | null;
   }) => apiClient.post("/api/admin/collections", payload),
-  // Si agregas update/delete admin, se añaden aquí
+  update: (name: string, payload: any) =>
+    apiClient.put(
+      `/api/admin/collections/${encodeURIComponent(name)}`,
+      payload
+    ),
+  delete: (name: string) =>
+    apiClient.delete(`/api/admin/collections/${encodeURIComponent(name)}`),
+  getSchema: (name: string) =>
+    apiClient.get(`/api/admin/collections/${encodeURIComponent(name)}/schema`),
+  updateSchema: (name: string, schema: any) =>
+    apiClient.put(
+      `/api/admin/collections/${encodeURIComponent(name)}/schema`,
+      schema
+    ),
 };
 
 // Dynamic Collections API
@@ -102,27 +122,114 @@ export const dynamicCollections = {
       params,
     }),
   create: (collectionName: string, data: any) =>
-    apiClient.post(`/api/collections/${encodeURIComponent(collectionName)}`, data),
+    apiClient.post(
+      `/api/collections/${encodeURIComponent(collectionName)}`,
+      data
+    ),
   getById: (collectionName: string, id: string) =>
     apiClient.get(
-      `/api/collections/${encodeURIComponent(collectionName)}/${encodeURIComponent(id)}`
+      `/api/collections/${encodeURIComponent(
+        collectionName
+      )}/${encodeURIComponent(id)}`
     ),
   update: (collectionName: string, id: string, data: any) =>
     apiClient.put(
-      `/api/collections/${encodeURIComponent(collectionName)}/${encodeURIComponent(id)}`,
+      `/api/collections/${encodeURIComponent(
+        collectionName
+      )}/${encodeURIComponent(id)}`,
       data
     ),
   remove: (collectionName: string, id: string) =>
     apiClient.delete(
-      `/api/collections/${encodeURIComponent(collectionName)}/${encodeURIComponent(id)}`
+      `/api/collections/${encodeURIComponent(
+        collectionName
+      )}/${encodeURIComponent(id)}`
     ),
 };
 
-// Users API (si lo usas)
+// Users API
 export const usersAPI = {
-  getAll: (params?: any) => apiClient.get("/admin/users", { params }),
-  update: (id: string, data: any) => apiClient.put(`/admin/users/${id}`, data),
-  delete: (id: string) => apiClient.delete(`/admin/users/${id}`),
+  getAll: (params?: any) => apiClient.get("/api/admin/users", { params }),
+  create: (data: any) => apiClient.post("/api/admin/users", data),
+  update: (id: string, data: any) =>
+    apiClient.put(`/api/admin/users/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/api/admin/users/${id}`),
+  getById: (id: string) => apiClient.get(`/api/admin/users/${id}`),
+  toggleStatus: (id: string) =>
+    apiClient.patch(`/api/admin/users/${id}/toggle-status`),
+};
+
+// Configuration API
+export const configAPI = {
+  getAll: () => apiClient.get("/api/admin/configuration"),
+  getByCategory: (category: string) =>
+    apiClient.get(`/api/admin/configuration/category/${category}`),
+  update: (key: string, value: any) =>
+    apiClient.patch(`/api/admin/configuration/${key}`, { value }),
+  initialize: () => apiClient.post("/api/admin/configuration/initialize"),
+};
+
+// Activity Logs API
+export const activityLogsAPI = {
+  getAll: (params?: any) =>
+    apiClient.get("/api/admin/activity-logs", { params }),
+  getStats: () => apiClient.get("/api/admin/activity-logs/stats"),
+  create: (data: any) => apiClient.post("/api/admin/activity-logs", data),
+};
+
+// Backup API
+export const backupAPI = {
+  create: (type: string = "manual") =>
+    apiClient.post("/api/admin/backup", { type }),
+  restore: (backupPath: string) =>
+    apiClient.post("/api/admin/backup/restore", { backupPath }),
+  restoreByFilename: (filename: string) =>
+    apiClient.post(`/api/admin/backup/restore/${filename}`),
+  list: () => apiClient.get("/api/admin/backup"),
+  delete: (filename: string) =>
+    apiClient.delete(`/api/admin/backup/${filename}`),
+  cleanup: (retentionDays: number = 30) =>
+    apiClient.post("/api/admin/backup/cleanup", { retentionDays }),
+};
+
+// API Keys API
+export const apiKeysAPI = {
+  getAll: () => apiClient.get("/api/admin/api-keys"),
+  getStats: () => apiClient.get("/api/admin/api-keys/stats"),
+  create: (data: any) => apiClient.post("/api/admin/api-keys", data),
+  update: (id: string, data: any) =>
+    apiClient.patch(`/api/admin/api-keys/${id}`, data),
+  toggle: (id: string) => apiClient.patch(`/api/admin/api-keys/${id}/toggle`),
+  regenerate: (id: string) =>
+    apiClient.patch(`/api/admin/api-keys/${id}/regenerate`),
+  delete: (id: string) => apiClient.delete(`/api/admin/api-keys/${id}`),
+  validate: (key: string) =>
+    apiClient.post("/api/admin/api-keys/validate", { key }),
+};
+
+// Dashboard/Stats API
+export const dashboardAPI = {
+  getStats: () => apiClient.get("/api/admin/dashboard/stats"),
+  getActivity: (params?: any) =>
+    apiClient.get("/api/admin/dashboard/activity", { params }),
+  getUsage: (params?: any) =>
+    apiClient.get("/api/admin/dashboard/usage", { params }),
+  getSystemInfo: () => apiClient.get("/api/admin/system/info"),
+};
+
+// Storage/Files API (para futuras funcionalidades)
+export const storageAPI = {
+  upload: (file: File, folder?: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (folder) formData.append("folder", folder);
+    return apiClient.post("/api/storage/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  delete: (fileId: string) => apiClient.delete(`/api/storage/${fileId}`),
+  getUrl: (fileId: string) => apiClient.get(`/api/storage/${fileId}/url`),
+  list: (params?: any) => apiClient.get("/api/storage", { params }),
 };
 
 export default apiClient;

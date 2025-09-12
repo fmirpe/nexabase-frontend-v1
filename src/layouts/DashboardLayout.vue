@@ -8,13 +8,25 @@
       ]"
     >
       <!-- Logo/Header -->
-      <div class="p-1 border-b border-blue-500/20">
-        <div class="flex justify-center">
-          <img
-            :src="logoImage"
-            alt="NexaBase Logo"
-            class="w-154 h-24 object-contain drop-shadow-lg"
-          />
+      <div class="p-4 border-b border-blue-500/20">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm"
+          >
+            <svg
+              class="w-5 h-5 text-white"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+              />
+            </svg>
+          </div>
+          <div v-show="sidebarOpen" class="transition-all duration-300">
+            <h1 class="font-bold text-lg">NexaBase</h1>
+            <p class="text-xs text-blue-200">Dashboard v1</p>
+          </div>
         </div>
       </div>
 
@@ -50,69 +62,11 @@
             </span>
             <div
               v-if="item.badge && sidebarOpen"
-              :class="[
-                'ml-auto text-xs px-2 py-1 rounded-full font-medium transition-colors',
-                item.badgeLoading
-                  ? 'bg-blue-400/50 animate-pulse'
-                  : 'bg-blue-400',
-              ]"
+              class="ml-auto text-xs px-2 py-1 rounded-full font-medium bg-blue-400 text-white"
             >
               {{ item.badge }}
             </div>
-            <!-- Loading indicator para badge -->
-            <div
-              v-if="item.badgeLoading && sidebarOpen"
-              class="ml-auto w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"
-            ></div>
           </router-link>
-        </div>
-
-        <!-- Quick Stats -->
-        <div v-if="sidebarOpen && systemStats" class="mt-6 px-3">
-          <div
-            class="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-2"
-          >
-            Estadísticas
-          </div>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-blue-200">Total Registros</span>
-              <span class="text-white font-medium">{{
-                systemStats.totalRecords
-              }}</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-blue-200">Usuarios</span>
-              <span class="text-white font-medium">{{
-                systemStats.totalUsers
-              }}</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-blue-200">API Status</span>
-              <div class="flex items-center">
-                <div
-                  :class="[
-                    'w-2 h-2 rounded-full mr-2',
-                    systemStats.apiHealth === 'online'
-                      ? 'bg-green-400'
-                      : 'bg-red-400',
-                  ]"
-                ></div>
-                <span
-                  :class="[
-                    'text-xs font-medium',
-                    systemStats.apiHealth === 'online'
-                      ? 'text-green-300'
-                      : 'text-red-300',
-                  ]"
-                >
-                  {{
-                    systemStats.apiHealth === "online" ? "Online" : "Offline"
-                  }}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Admin Section -->
@@ -123,10 +77,12 @@
             Administración
           </div>
           <router-link
-            to="/users"
+            v-for="adminItem in adminNavigationItems"
+            :key="adminItem.name"
+            :to="adminItem.path"
             :class="[
               'flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200',
-              $route.path === '/users'
+              $route.path === adminItem.path
                 ? 'bg-white/10 text-white shadow-sm border-r-2 border-white/30'
                 : 'text-blue-100 hover:bg-white/5 hover:text-white',
             ]"
@@ -141,10 +97,10 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                :d="adminItem.iconPath"
               />
             </svg>
-            <span>Usuarios</span>
+            <span>{{ adminItem.label }}</span>
           </router-link>
         </div>
       </nav>
@@ -156,7 +112,13 @@
             class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm"
           >
             <span class="text-sm font-semibold">
-              {{ userInitials }}
+              {{
+                getUserInitials(
+                  authStore.user?.first_name,
+                  authStore.user?.last_name,
+                  authStore.user?.email
+                )
+              }}
             </span>
           </div>
           <div v-show="sidebarOpen" class="flex-1 min-w-0">
@@ -168,7 +130,6 @@
             </p>
           </div>
           <div v-show="sidebarOpen" class="flex items-center gap-1">
-            <!-- Refresh Stats Button -->
             <button
               @click="loadSystemStats"
               :disabled="statsLoading"
@@ -189,7 +150,6 @@
                 />
               </svg>
             </button>
-            <!-- Logout Button -->
             <button
               @click="logout"
               class="p-1.5 hover:bg-white/10 rounded transition-colors"
@@ -220,7 +180,6 @@
       <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <!-- Sidebar Toggle -->
             <button
               @click="sidebarOpen = !sidebarOpen"
               class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -240,7 +199,6 @@
               </svg>
             </button>
 
-            <!-- Breadcrumb -->
             <div class="flex items-center space-x-2 text-sm">
               <span class="text-gray-500">NexaBase</span>
               <svg
@@ -260,14 +218,11 @@
             </div>
           </div>
 
-          <!-- Header Actions -->
           <div class="flex items-center gap-4">
-            <!-- Last Update Time -->
             <span v-if="lastUpdated" class="text-xs text-gray-500">
               Actualizado: {{ formatRelativeTime(lastUpdated) }}
             </span>
 
-            <!-- Notifications -->
             <button
               class="p-2 hover:bg-gray-100 rounded-lg relative"
               @click="showNotifications = !showNotifications"
@@ -293,7 +248,6 @@
               </div>
             </button>
 
-            <!-- User Role Badge -->
             <span
               :class="[
                 'px-3 py-1 rounded-full text-xs font-medium',
@@ -360,7 +314,6 @@
       <!-- Page Content -->
       <main class="flex-1 overflow-auto p-6">
         <div class="max-w-7xl mx-auto">
-          <!-- Loading Overlay -->
           <div
             v-if="statsLoading"
             class="mb-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3"
@@ -389,7 +342,7 @@
             </div>
           </div>
 
-          <slot />
+          <router-view />
         </div>
       </main>
     </div>
@@ -404,25 +357,40 @@
 </template>
 
 <script setup lang="ts">
+// Tu script existente se mantiene igual - solo agrega esta función helper:
+function getUserInitials(
+  firstName?: string,
+  lastName?: string,
+  email?: string
+): string {
+  if (firstName && lastName) {
+    return (firstName[0] + lastName[0]).toUpperCase();
+  }
+  if (email) {
+    const parts = email.split("@")[0].split(".");
+    return parts.length > 1
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : email.slice(0, 2).toUpperCase();
+  }
+  return "?";
+}
+
+// Tu script existente completo va aquí...
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import { adminCollections, usersAPI } from "../services/api";
-// Usamos el logo desde public
-const logoImage = "/logo.png";
 
-// Store y router
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
-// State
+// Tu código existente se mantiene exactamente igual
 const sidebarOpen = ref(true);
 const statsLoading = ref(false);
 const showNotifications = ref(false);
 const lastUpdated = ref<string | null>(null);
 
-// System stats
 const systemStats = ref<{
   totalCollections: number;
   totalRecords: number;
@@ -430,29 +398,20 @@ const systemStats = ref<{
   apiHealth: "online" | "offline";
 } | null>(null);
 
-// Notifications
 const notifications = ref([
   {
     id: 1,
     type: "success",
-    title: "Sistema actualizado",
-    message: "Nuevas funcionalidades disponibles",
+    title: "Sistema iniciado",
+    message: "nexaBase está funcionando correctamente",
     created_at: new Date().toISOString(),
   },
 ]);
-
-// Computed
-const userInitials = computed(() => {
-  const first = authStore.user?.first_name?.[0] || "";
-  const last = authStore.user?.last_name?.[0] || "";
-  return (first + last).toUpperCase() || "?";
-});
 
 const currentPageTitle = computed(() => {
   return (route.meta?.title as string) || "Dashboard";
 });
 
-// Navigation items with dynamic badges
 const navigationItems = computed(() => [
   {
     name: "dashboard",
@@ -474,14 +433,52 @@ const navigationItems = computed(() => [
   },
 ]);
 
-// Methods
+const adminNavigationItems = computed(() => [
+  {
+    name: "users",
+    path: "/users",
+    label: "Usuarios",
+    iconPath:
+      "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z",
+  },
+  {
+    name: "configuration",
+    path: "/configuration",
+    label: "Configuración",
+    iconPath:
+      "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
+  },
+  {
+    name: "activity-logs",
+    path: "/activity-logs",
+    label: "Logs de Actividad",
+    iconPath:
+      "M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
+  },
+  {
+    name: "backup",
+    path: "/backup",
+    label: "Backup & Restore",
+    iconPath:
+      "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  },
+  {
+    name: "api-keys",
+    path: "/api-keys",
+    label: "API Keys",
+    iconPath:
+      "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z",
+  },
+]);
+
 async function loadSystemStats() {
   try {
     statsLoading.value = true;
 
-    // Cargar estadísticas en paralelo
     const [collectionsRes, usersRes] = await Promise.all([
-      adminCollections.list({ page: 1, limit: 1 }),
+      adminCollections
+        .list({ page: 1, limit: 1 })
+        .catch(() => ({ data: { meta: { total: 0 } } })),
       authStore.isAdmin
         ? usersAPI
             .getAll({ page: 1, limit: 1 })
@@ -492,7 +489,6 @@ async function loadSystemStats() {
     const collectionsCount = collectionsRes.data?.meta?.total || 0;
     const usersCount = usersRes.data?.meta?.total || 0;
 
-    // Calcular total de registros
     let totalRecords = 0;
     if (collectionsCount > 0) {
       try {
@@ -509,7 +505,6 @@ async function loadSystemStats() {
       }
     }
 
-    // Actualizar estadísticas
     systemStats.value = {
       totalCollections: collectionsCount,
       totalRecords,
@@ -518,49 +513,22 @@ async function loadSystemStats() {
     };
 
     lastUpdated.value = new Date().toISOString();
-
-    // Agregar notificación de actualización exitosa
-    if (systemStats.value.totalCollections > 0) {
-      notifications.value.unshift({
-        id: Date.now(),
-        type: "success",
-        title: "Estadísticas actualizadas",
-        message: `${systemStats.value.totalCollections} collections, ${systemStats.value.totalRecords} registros`,
-        created_at: new Date().toISOString(),
-      });
-
-      // Limitar notificaciones a 10
-      if (notifications.value.length > 10) {
-        notifications.value = notifications.value.slice(0, 10);
-      }
-    }
   } catch (error: any) {
     console.error("Error loading system stats:", error);
 
-    // Marcar API como offline
     if (systemStats.value) {
       systemStats.value.apiHealth = "offline";
     }
-
-    // Agregar notificación de error
-    notifications.value.unshift({
-      id: Date.now(),
-      type: "error",
-      title: "Error actualizando estadísticas",
-      message: error?.message || "Error de conexión",
-      created_at: new Date().toISOString(),
-    });
   } finally {
     statsLoading.value = false;
   }
 }
 
 const logout = async () => {
-  authStore.logout();
-  router.push("/");
+  await authStore.logout();
+  router.push("/login");
 };
 
-// Utility functions
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -572,21 +540,18 @@ function formatRelativeTime(dateString: string): string {
   return `hace ${Math.floor(diffInSeconds / 86400)}d`;
 }
 
-// Auto-refresh stats every 5 minutes
-let refreshInterval: ReturnType<typeof setInterval>;
+let refreshInterval: NodeJS.Timeout;
 onMounted(() => {
   loadSystemStats();
   refreshInterval = setInterval(loadSystemStats, 5 * 60 * 1000);
 });
 
-// Cleanup
 if (typeof window !== "undefined") {
   window.addEventListener("beforeunload", () => {
     if (refreshInterval) clearInterval(refreshInterval);
   });
 }
 
-// Watch route changes to close notifications
 watch(
   () => route.path,
   () => {

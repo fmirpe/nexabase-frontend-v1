@@ -146,7 +146,7 @@
                 type="email"
                 required
                 class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                placeholder="admin@nexobase.com"
+                placeholder="admin@nexabase.com"
               />
             </div>
 
@@ -264,11 +264,14 @@
 
 <script setup lang="ts">
 import { ref, reactive } from "vue";
+import { useRouter } from "vue-router"; // ✅ Agregar router
 import { useAuthStore } from "../stores/auth";
+
 // Usamos el logo desde public
 const logoUrl = "/logo.png";
 
 const authStore = useAuthStore();
+const router = useRouter(); // ✅ Agregar router
 
 // State
 const isLogin = ref(true);
@@ -276,7 +279,7 @@ const showPassword = ref(false);
 const showFallback = ref(false);
 
 const form = reactive({
-  email: "",
+  email: "", // ✅ Valores por defecto para testing
   password: "",
   first_name: "",
   last_name: "",
@@ -285,16 +288,24 @@ const form = reactive({
 async function handleLogin() {
   authStore.clearError?.();
 
-  const ok = isLogin.value
-    ? await authStore.login({ email: form.email, password: form.password })
-    : await authStore.register({
-        email: form.email,
-        password: form.password,
-        first_name: form.first_name,
-        last_name: form.last_name,
-      });
+  try {
+    // ✅ Usar la respuesta del store actualizado
+    const result = isLogin.value
+      ? await authStore.login({ email: form.email, password: form.password })
+      : await authStore.register({
+          email: form.email,
+          password: form.password,
+          first_name: form.first_name,
+          last_name: form.last_name,
+        });
 
-  if (!ok) return;
-  // En este punto, nexo_tokens ya está en localStorage y el interceptor añadirá Authorization
+    // ✅ Verificar si fue exitoso y redirigir
+    if (result.success) {
+      router.push("/"); // Redirigir al dashboard
+    }
+    // Si no fue exitoso, el error ya se muestra automáticamente desde el store
+  } catch (error) {
+    console.error("Login error:", error);
+  }
 }
 </script>

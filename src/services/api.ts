@@ -232,4 +232,42 @@ export const storageAPI = {
   list: (params?: any) => apiClient.get("/api/storage", { params }),
 };
 
+// Webhooks API
+export const webhooksAPI = {
+  getAll: () => apiClient.get("/api/admin/webhooks"),
+  create: (data: {
+    name: string;
+    url: string;
+    events: string[];
+    collections?: string[];
+    secret?: string;
+    headers?: Record<string, string>;
+  }) => apiClient.post("/api/admin/webhooks", data),
+  update: (id: string, data: any) =>
+    apiClient.patch(`/api/admin/webhooks/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/api/admin/webhooks/${id}`),
+  toggle: (id: string) => apiClient.patch(`/api/admin/webhooks/${id}/toggle`),
+  test: (id: string) => apiClient.post(`/api/admin/webhooks/${id}/test`),
+  getDeliveries: (webhookId?: string, params?: any) =>
+    apiClient.get(`/api/admin/webhooks/deliveries`, {
+      params: { webhook_id: webhookId, ...params },
+    }),
+  getStats: (webhookId: string) =>
+    apiClient.get(`/api/admin/webhooks/${webhookId}/stats`),
+  retryDelivery: (deliveryId: string) =>
+    apiClient.post(`/api/admin/webhooks/deliveries/${deliveryId}/retry`),
+};
+
+// Analytics API
+export const analyticsAPI = {
+  getUsage: (params?: { hours?: number; apiKeyId?: string }) =>
+    apiClient.get("/api/admin/analytics/usage", { params }),
+  getApiKeyAnalytics: (params?: { days?: number }) =>
+    apiClient.get("/api/admin/analytics/api-keys", { params }),
+  getApiKeyUsage: (apiKeyId: string, params?: { hours?: number }) =>
+    apiClient.get(`/api/admin/analytics/api-keys/${apiKeyId}`, { params }),
+  getRealtime: () => apiClient.get("/api/admin/analytics/realtime"),
+  getDashboard: () => apiClient.get("/api/admin/analytics/dashboard"),
+};
+
 export default apiClient;

@@ -20,6 +20,9 @@ import ActivityLogsView from "./pages/configuration/ActivityLogsView.vue";
 import BackupView from "./pages/configuration/BackupView.vue";
 import ApiKeysView from "./pages/configuration/ApiKeysView.vue";
 
+// ✅ AGREGAR - Webhooks
+import WebhooksView from "./pages/webhooks/WebhooksView.vue";
+
 // Auth/Login view
 import LoginView from "./pages/LoginPage.vue";
 
@@ -56,6 +59,13 @@ const routes = [
         name: "Users",
         component: UsersView,
         meta: { requiresAuth: true, requiresAdmin: true, title: "Users" },
+      },
+      // ✅ AGREGAR - Ruta de webhooks
+      {
+        path: "webhooks",
+        name: "Webhooks",
+        component: WebhooksView,
+        meta: { requiresAuth: true, requiresAdmin: true, title: "Webhooks" },
       },
       {
         path: "configuration",
@@ -145,5 +155,4 @@ router.beforeEach(async (to, from, next) => {
 });
 
 app.use(router);
-
 app.mount("#app");

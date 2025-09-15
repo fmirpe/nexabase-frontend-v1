@@ -12,7 +12,7 @@ export const apiClient = axios.create({
 
 // Request: agrega Authorization si hay token
 apiClient.interceptors.request.use(
-  (config) => {
+  (config: any) => {
     const raw = localStorage.getItem("nexa_tokens");
     if (raw) {
       try {
@@ -29,15 +29,17 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: any) => Promise.reject(error)
 );
 
 // Response: intenta refresh una vez en 401
 apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+  (response: any) => response,
+  async (error: any) => {
+    const originalRequest = error.config as any & {
+      _retry?: boolean;
+    };
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true;
       try {
         const raw = localStorage.getItem("nexa_tokens");
@@ -47,7 +49,10 @@ apiClient.interceptors.response.use(
             const resp = await axios.post(`${BASE_URL}/auth/refresh`, {
               refresh_token: parsed.refresh_token,
             });
-            const newTokens = resp.data;
+            const newTokens = resp.data as {
+              access_token: string;
+              refresh_token: string;
+            };
             localStorage.setItem("nexa_tokens", JSON.stringify(newTokens));
             originalRequest.headers = originalRequest.headers ?? {};
             originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
@@ -217,21 +222,6 @@ export const dashboardAPI = {
   getSystemInfo: () => apiClient.get("/api/admin/system/info"),
 };
 
-// Storage/Files API (para futuras funcionalidades)
-export const storageAPI = {
-  upload: (file: File, folder?: string) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    if (folder) formData.append("folder", folder);
-    return apiClient.post("/api/storage/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
-  delete: (fileId: string) => apiClient.delete(`/api/storage/${fileId}`),
-  getUrl: (fileId: string) => apiClient.get(`/api/storage/${fileId}/url`),
-  list: (params?: any) => apiClient.get("/api/storage", { params }),
-};
-
 // Webhooks API
 export const webhooksAPI = {
   getAll: () => apiClient.get("/api/admin/webhooks"),
@@ -268,6 +258,51 @@ export const analyticsAPI = {
     apiClient.get(`/api/admin/analytics/api-keys/${apiKeyId}`, { params }),
   getRealtime: () => apiClient.get("/api/admin/analytics/realtime"),
   getDashboard: () => apiClient.get("/api/admin/analytics/dashboard"),
+};
+
+// Agregar al final del archivo api.ts
+export const storageAPI = {
+  upload: (file: File, options?: any) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const params = new URLSearchParams();
+    if (options?.folder) params.append("folder", options.folder);
+    if (options?.collection) params.append("collection", options.collection);
+    if (options?.record_id) params.append("record_id", options.record_id);
+
+    return apiClient.post(
+      `/api/storage/upload?${params.toString()}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+  },
+
+  uploadMultiple: (formData: FormData, params?: URLSearchParams) => {
+    return apiClient.post(
+      `/api/storage/upload/multiple?${params?.toString() || ""}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+  },
+
+  list: (params?: any) => apiClient.get("/api/storage", { params }),
+
+  getStats: () => apiClient.get("/api/storage/stats"),
+
+  delete: (fileId: string) => apiClient.delete(`/api/storage/${fileId}`),
+
+  getUrl: (fileId: string, expires?: number) =>
+    apiClient.get(`/api/storage/${fileId}/url`, { params: { expires } }),
+
+  move: (fileId: string, folder: string) =>
+    apiClient.post(`/api/storage/${fileId}/move`, { folder }),
+
+  cleanup: () => apiClient.post("/api/storage/cleanup"),
 };
 
 export default apiClient;

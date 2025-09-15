@@ -1,18 +1,19 @@
-{ 
-  "compilerOptions": { 
-    "target": "ES2020", 
-    "module": "ESNext", 
-    "strict": true, 
-    "jsx": "preserve", 
-    "moduleResolution": "node", 
-    "allowSyntheticDefaultImports": true, 
-    "esModuleInterop": true, 
-    "lib": ["ES2020", "DOM", "DOM.Iterable"], 
-    "skipLibCheck": true, 
-    "baseUrl": ".", 
-    "paths": { 
-      "@/*": ["./src/*"] 
-    } 
-  }, 
-  "include": ["src/**/*.ts", "src/**/*.vue", "env.d.ts"] 
-} 
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "strict": true,
+    "jsx": "preserve",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue", "env.d.ts", "vite.config.ts"]
+}

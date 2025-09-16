@@ -718,6 +718,21 @@
                 placeholder='{"key":"value"}'
               ></textarea>
             </template>
+            <template v-else-if="isRelationField(def.name)">
+              <select
+                v-model="insertModel[def.name]"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Seleccionar --</option>
+                <option 
+                  v-for="option in getRelationOptions(def.name)" 
+                  :key="option.id" 
+                  :value="option.id"
+                >
+                  {{ option.display }}
+                </option>
+              </select>
+            </template>
             <template v-else>
               <input
                 type="text"
@@ -957,6 +972,22 @@
                   placeholder='{"key":"value"}'
                 ></textarea>
               </template>
+              <!-- ✅ AGREGAR ESTE TEMPLATE AQUÍ -->
+              <template v-else-if="isRelationField(def.name)">
+                <select
+                  v-model="recordModel[def.name]"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">-- Seleccionar --</option>
+                  <option 
+                    v-for="option in getRelationOptions(def.name)" 
+                    :key="option.id" 
+                    :value="option.id"
+                  >
+                    {{ option.display }}
+                  </option>
+                </select>
+              </template>
               <template v-else>
                 <input
                   type="text"
@@ -1057,6 +1088,8 @@ const error = ref<string | null>(null);
 
 const searchQuery = ref("");
 const selectedFilter = ref<"all" | "active" | "inactive">("all");
+const relationOptions = ref<Record<string, any[]>>({});
+const currentCollectionSchema = ref<any>(null);
 
 const filteredCollections = computed(() => {
   let rows = collections.value.slice();
@@ -1525,9 +1558,14 @@ async function viewCollection(c: CollectionDto) {
     let rows: any[] = [];
     let meta: any = null;
     if (Array.isArray(payload)) rows = payload;
-    else if (payload?.data && Array.isArray(payload.data)) {
-      rows = payload.data;
-      meta = payload.meta ?? null;
+    else if (
+      payload &&
+      typeof payload === "object" &&
+      "data" in payload &&
+      Array.isArray((payload as any).data)
+    ) {
+      rows = (payload as any).data;
+      meta = (payload as any).meta ?? null;
     } else rows = [payload];
     browseRows.value = rows;
     browseMeta.value = meta;
@@ -1575,7 +1613,7 @@ const insertJsonBuffers = ref<Record<string, string>>({});
 const insertError = ref<any>(null);
 const inserting = ref(false);
 
-function openInsertRecord(c: CollectionDto) {
+async function openInsertRecord(c: CollectionDto) {
   insertError.value = null;
   insertTitle.value = c.name;
   insertName.value = c.name;
@@ -1584,6 +1622,12 @@ function openInsertRecord(c: CollectionDto) {
   insertJsonBuffers.value = {};
 
   const s = c.schema as any;
+  currentCollectionSchema.value = s; // ✅ Guardar schema actual
+  // Cargar opciones para relaciones
+  if (s?.relations) {
+    await loadRelationOptions(s.relations);
+  }
+
   const fobj = s?.fields || {};
   for (const key of Object.keys(fobj)) {
     const def = fobj[key];
@@ -1598,6 +1642,7 @@ function openInsertRecord(c: CollectionDto) {
       max: typeof def.max === "number" ? def.max : undefined,
     };
     insertFields.value.push(entry);
+    // Resto del código igual...
     if (def.type === "boolean")
       insertModel.value[key] =
         typeof def.default === "boolean" ? def.default : false;
@@ -1618,6 +1663,7 @@ function openInsertRecord(c: CollectionDto) {
   }
   insertOpen.value = true;
 }
+
 function closeInsert() {
   insertOpen.value = false;
   insertError.value = null;
@@ -1760,13 +1806,20 @@ async function openEditRecord(colName: string, id: string) {
     const c = collections.value.find((x) => x.name === colName);
     const schema = (c?.schema as any) || {};
     recordFields.value = mapSchemaToFields(schema);
+    
+    // ✅ NUEVO: Guardar schema y cargar opciones para relaciones
+    currentCollectionSchema.value = schema;
+    if (schema?.relations) {
+      await loadRelationOptions(schema.relations);
+    }
 
     const { data } = await dynamicCollections.getById(colName, id);
     recordData.value = data;
     recordModel.value = {};
     recordJsonBuffers.value = {};
+    const record = data as Record<string, any>;
     for (const f of recordFields.value) {
-      const v = data[f.name];
+      const v = record[f.name];
       if (f.type === "json")
         recordJsonBuffers.value[f.name] =
           v !== undefined ? JSON.stringify(v, null, 2) : "";
@@ -1891,6 +1944,44 @@ async function submitDeleteRecord() {
 function closeRecord() {
   recordOpen.value = false;
   recordError.value = null;
+}
+
+async function loadRelationOptions(schemaRelations: any) {
+  if (!schemaRelations) return;
+  try {
+    // Obtener todas las collections disponibles
+    const collections = await adminCollections.getOptions();
+    for (const [fieldName, relationConfig] of Object.entries(schemaRelations)) {
+      const referencedCollection = (relationConfig as any).references;
+      // Obtener datos de la collection referenciada
+      try {
+        const { data } = await dynamicCollections.list(referencedCollection);
+        const records = Array.isArray(data)
+          ? data
+          : (typeof data === "object" && data !== null && "data" in data && Array.isArray((data as any).data))
+            ? (data as any).data
+            : [];
+        relationOptions.value[fieldName] = records.map((record: any) => ({
+          id: record.id,
+          display: record.name || record.title || record.id
+        }));
+      } catch (error) {
+        console.error(`Error loading options for ${referencedCollection}:`, error);
+        relationOptions.value[fieldName] = [];
+      }
+    }
+  } catch (error) {
+    console.error('Error loading relation options:', error);
+  }
+}
+
+function isRelationField(fieldName: string): boolean {
+  const relations = currentCollectionSchema.value?.relations;
+  return relations && relations[fieldName] && relations[fieldName].type === 'belongs_to';
+}
+
+function getRelationOptions(fieldName: string): any[] {
+  return relationOptions.value[fieldName] || [];
 }
 
 // lifecycle

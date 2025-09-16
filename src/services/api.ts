@@ -11,26 +11,22 @@ export const apiClient = axios.create({
 });
 
 // Request: agrega Authorization si hay token
-apiClient.interceptors.request.use(
-  (config: any) => {
-    const raw = localStorage.getItem("nexa_tokens");
-    if (raw) {
-      try {
-        const tokens = JSON.parse(raw);
-        if (tokens?.access_token) {
-          config.headers = config.headers ?? {};
-          (
-            config.headers as any
-          ).Authorization = `Bearer ${tokens.access_token}`;
-        }
-      } catch (e) {
-        console.error("Failed to parse tokens:", e);
-      }
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+function processQueue(error: any, token: string | null = null) {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token!);
     }
-    return config;
-  },
-  (error: any) => Promise.reject(error)
-);
+  });
+  failedQueue = [];
+}
 
 // Response: intenta refresh una vez en 401
 apiClient.interceptors.response.use(
@@ -39,8 +35,32 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as any & {
       _retry?: boolean;
     };
-    if (error.response?.status === 401 && !originalRequest?._retry) {
+
+    // Solo procesar 401 que no sean refresh ni login
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?._retry &&
+      !originalRequest.url?.includes("/auth/refresh") &&
+      !originalRequest.url?.includes("/auth/login")
+    ) {
+      // Si ya estamos refreshing, agregar a la cola
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers = originalRequest.headers ?? {};
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
       try {
         const raw = localStorage.getItem("nexa_tokens");
         if (raw) {
@@ -53,21 +73,74 @@ apiClient.interceptors.response.use(
               access_token: string;
               refresh_token: string;
             };
+
             localStorage.setItem("nexa_tokens", JSON.stringify(newTokens));
+
+            // Procesar la cola con el nuevo token
+            processQueue(null, newTokens.access_token);
+
+            // Reintentar el request original
             originalRequest.headers = originalRequest.headers ?? {};
             originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
             return apiClient(originalRequest);
           }
         }
+
+        throw new Error("No refresh token available");
       } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError);
+
+        // Procesar la cola con error
+        processQueue(refreshError, null);
+
+        // Limpiar tokens
         localStorage.removeItem("nexa_tokens");
         localStorage.removeItem("nexa_user");
-        // Opcional: redirigir a login
-        // window.location.href = "/";
+
+        // Redirigir al login después de un pequeño delay
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 100);
+
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
     return Promise.reject(error);
   }
+);
+
+apiClient.interceptors.request.use(
+  (config: any) => {
+    console.log("🔍 REQUEST:", config.method?.toUpperCase(), config.url);
+
+    const raw = localStorage.getItem("nexa_tokens");
+    console.log("📦 Raw tokens:", raw ? "EXISTS" : "NOT FOUND");
+
+    if (raw) {
+      try {
+        const tokens = JSON.parse(raw);
+        console.log("🎫 Tokens parsed:", {
+          has_access_token: !!tokens?.access_token,
+          has_refresh_token: !!tokens?.refresh_token,
+          access_token_start: tokens?.access_token?.substring(0, 50) || "NONE",
+        });
+
+        if (tokens?.access_token) {
+          config.headers = config.headers ?? {};
+          config.headers.Authorization = `Bearer ${tokens.access_token}`;
+          console.log("✅ Authorization header set");
+        } else {
+          console.log("❌ No access token found");
+        }
+      } catch (e) {
+        console.error("❌ Failed to parse tokens:", e);
+      }
+    }
+    return config;
+  },
+  (error: any) => Promise.reject(error)
 );
 
 // Auth API
@@ -118,6 +191,11 @@ export const adminCollections = {
       `/api/admin/collections/${encodeURIComponent(name)}/schema`,
       schema
     ),
+
+  async getOptions() {
+    const response = await apiClient.get("/api/admin/collections/options");
+    return response.data;
+  },
 };
 
 // Dynamic Collections API
@@ -260,7 +338,7 @@ export const analyticsAPI = {
   getDashboard: () => apiClient.get("/api/admin/analytics/dashboard"),
 };
 
-// Agregar al final del archivo api.ts
+// Storage API
 export const storageAPI = {
   upload: (file: File, options?: any) => {
     const formData = new FormData();

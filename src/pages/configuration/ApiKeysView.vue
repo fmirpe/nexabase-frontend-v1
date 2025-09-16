@@ -574,11 +574,17 @@ const isEditing = ref(false);
 const apiKeyToDelete = ref<any>(null);
 
 // Form
-const apiKeyForm = ref({
+interface ApiKeyForm {
+  name: string;
+  description: string;
+  permissions: string[];
+  expires_at?: string;
+  rate_limit: string;
+}
+const apiKeyForm = ref<ApiKeyForm>({
   name: "",
   description: "",
-  permissions: [] as string[],
-  expires_at: "",
+  permissions: [],
   rate_limit: "unlimited",
 });
 const editingApiKey = ref<any>(null);
@@ -600,8 +606,20 @@ async function loadApiKeys() {
     loading.value = true;
     error.value = null;
 
-    const { data } = await apiClient.get("/api/admin/api-keys");
-    apiKeys.value = data;
+    const response = await apiClient.get("/api/admin/api-keys");
+    
+    // ✅ Manejar la estructura de respuesta del backend
+    const data = response.data as { success?: boolean; data?: any };
+    if (data.success && Array.isArray(data.data)) {
+      apiKeys.value = data.data;
+    } else if (Array.isArray(data)) {
+      // Fallback si viene la estructura antigua
+      apiKeys.value = data;
+    } else {
+      apiKeys.value = [];
+    }
+    
+    console.log('API Keys loaded:', apiKeys.value);
   } catch (e: any) {
     console.error("Error loading API keys:", e);
     error.value =
@@ -613,8 +631,16 @@ async function loadApiKeys() {
 
 async function loadStats() {
   try {
-    const { data } = await apiClient.get("/api/admin/api-keys/stats");
-    stats.value = data;
+    const response = await apiClient.get("/api/admin/api-keys/stats");
+    // ✅ Manejar la estructura de respuesta del backend
+    const data = response.data as { success?: boolean; data?: any };
+    if (data.success && data.data) {
+      stats.value = data.data;
+    } else {
+      // Fallback si viene la estructura antigua
+      stats.value = data;
+    }
+    console.log('Stats loaded:', stats.value);
   } catch (e: any) {
     console.error("Error loading stats:", e);
   }
@@ -632,17 +658,22 @@ async function saveApiKey() {
       delete formData.expires_at;
     }
 
+    let responseData;
     if (isEditing.value && editingApiKey.value) {
-      await apiClient.patch(
+      const response = await apiClient.patch(
         `/api/admin/api-keys/${editingApiKey.value.id}`,
         formData
       );
+      const data = response.data as { success?: boolean; data?: any };
+      responseData = data.success ? data.data : data;
       successMessage.value = "API Key actualizada exitosamente";
     } else {
-      const { data } = await apiClient.post("/api/admin/api-keys", formData);
-      successMessage.value = `API Key creada: ${data.name}`;
+      const response = await apiClient.post("/api/admin/api-keys", formData);
+      const data = response.data as { success?: boolean; data?: any };
+      responseData = data.success ? data.data : data;
+      successMessage.value = `API Key creada: ${responseData.name}`;
       // Mostrar la key recién creada
-      visibleKeys.value.add(data.id);
+      visibleKeys.value.add(responseData.id);
     }
 
     setTimeout(() => (successMessage.value = null), 5000);
@@ -688,15 +719,18 @@ async function regenerateApiKey(apiKey: any) {
 
   try {
     actionLoading.value = true;
-    const { data } = await apiClient.patch(
+    const response = await apiClient.patch(
       `/api/admin/api-keys/${apiKey.id}/regenerate`
     );
+    
+    const data = response.data as { success?: boolean; data?: any };
+    const responseData = data.success ? data.data : data;
 
     successMessage.value = `API Key regenerada para ${apiKey.name}`;
     setTimeout(() => (successMessage.value = null), 5000);
 
     // Mostrar la nueva key
-    visibleKeys.value.add(data.id);
+    visibleKeys.value.add(responseData.id);
 
     await loadApiKeys();
   } catch (e: any) {

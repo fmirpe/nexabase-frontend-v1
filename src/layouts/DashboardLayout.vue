@@ -441,6 +441,13 @@ const adminNavigationItems = computed(() => [
     iconPath:
       "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z",
   },
+  {
+    name: "storage",
+    path: "/storage",
+    label: "Archivos",
+    iconPath:
+      "M4 3a2 2 0 00-2 2v1.5h16V5a2 2 0 00-2-2H4zM2 8.5V17a2 2 0 002 2h12a2 2 0 002-2V8.5H2z",
+  },
   // ✅ NUEVO - Webhooks
   {
     name: "webhooks",
@@ -449,6 +456,7 @@ const adminNavigationItems = computed(() => [
     iconPath:
       "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1",
   },
+
   {
     name: "configuration",
     path: "/configuration",
@@ -500,10 +508,12 @@ async function loadSystemStats() {
     let totalRecords = 0;
     if (collectionsCount > 0) {
       try {
-        const allCollectionsRes = await adminCollections.list({
-          page: 1,
-          limit: 100,
-        });
+        const allCollectionsRes = await adminCollections
+          .list({
+            page: 1,
+            limit: 100,
+          })
+          .catch(() => ({ data: { data: [] } }));
         const collections = allCollectionsRes.data?.data || [];
         totalRecords = collections.reduce((sum: number, collection: any) => {
           return sum + (collection.record_count || 0);

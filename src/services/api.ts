@@ -1,3 +1,4 @@
+// frontend/services/api.ts - REEMPLAZAR LA SECCIÓN Activity Logs API COMPLETA
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -113,29 +114,16 @@ apiClient.interceptors.response.use(
 
 apiClient.interceptors.request.use(
   (config: any) => {
-    console.log("🔍 REQUEST:", config.method?.toUpperCase(), config.url);
-
     const raw = localStorage.getItem("nexa_tokens");
-    console.log("📦 Raw tokens:", raw ? "EXISTS" : "NOT FOUND");
-
     if (raw) {
       try {
         const tokens = JSON.parse(raw);
-        console.log("🎫 Tokens parsed:", {
-          has_access_token: !!tokens?.access_token,
-          has_refresh_token: !!tokens?.refresh_token,
-          access_token_start: tokens?.access_token?.substring(0, 50) || "NONE",
-        });
-
         if (tokens?.access_token) {
           config.headers = config.headers ?? {};
           config.headers.Authorization = `Bearer ${tokens.access_token}`;
-          console.log("✅ Authorization header set");
-        } else {
-          console.log("❌ No access token found");
         }
       } catch (e) {
-        console.error("❌ Failed to parse tokens:", e);
+        console.error("Failed to parse tokens:", e);
       }
     }
     return config;
@@ -252,12 +240,62 @@ export const configAPI = {
   initialize: () => apiClient.post("/api/admin/configuration/initialize"),
 };
 
-// Activity Logs API
+// ✅ Activity Logs API - SECCIÓN ACTUALIZADA COMPLETA
 export const activityLogsAPI = {
-  getAll: (params?: any) =>
-    apiClient.get("/api/admin/activity-logs", { params }),
+  // Obtener todos los logs con filtros y paginación
+  getAll: (params?: {
+    page?: number;
+    limit?: number;
+    action?: string;
+    user_email?: string;
+    user_id?: string;
+    resource_type?: string;
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+  }) => apiClient.get("/api/admin/activity-logs", { params }),
+
+  // Estadísticas básicas
   getStats: () => apiClient.get("/api/admin/activity-logs/stats"),
-  create: (data: any) => apiClient.post("/api/admin/activity-logs", data),
+
+  // Estadísticas detalladas
+  getDetailedStats: () =>
+    apiClient.get("/api/admin/activity-logs/stats/detailed"),
+
+  // Exportar logs
+  export: (params?: {
+    format?: "csv" | "json";
+    action?: string;
+    user_email?: string;
+    user_id?: string;
+    resource_type?: string;
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+  }) => apiClient.get("/api/admin/activity-logs/export", { params }),
+
+  // Obtener usuarios únicos (para filtros)
+  getUniqueUsers: () => apiClient.get("/api/admin/activity-logs/users"),
+
+  // Obtener tipos de recursos únicos (para filtros)
+  getUniqueResourceTypes: () =>
+    apiClient.get("/api/admin/activity-logs/resource-types"),
+
+  // Crear log manual
+  create: (data: {
+    user_id: string;
+    user_email?: string;
+    action: string;
+    resource_type: string;
+    resource_id?: string;
+    resource_name?: string;
+    metadata?: any;
+    ip_address?: string;
+    user_agent?: string;
+    status?: "success" | "failed" | "warning";
+  }) => apiClient.post("/api/admin/activity-logs", data),
 };
 
 // Backup API
@@ -302,7 +340,10 @@ export const dashboardAPI = {
 
 // Webhooks API
 export const webhooksAPI = {
-  getAll: () => apiClient.get("/api/admin/webhooks"),
+  // Obtener todos los webhooks
+  getAll: () => apiClient.get("/api/webhooks"),
+
+  // Crear webhook
   create: (data: {
     name: string;
     url: string;
@@ -310,20 +351,36 @@ export const webhooksAPI = {
     collections?: string[];
     secret?: string;
     headers?: Record<string, string>;
-  }) => apiClient.post("/api/admin/webhooks", data),
-  update: (id: string, data: any) =>
-    apiClient.patch(`/api/admin/webhooks/${id}`, data),
-  delete: (id: string) => apiClient.delete(`/api/admin/webhooks/${id}`),
-  toggle: (id: string) => apiClient.patch(`/api/admin/webhooks/${id}/toggle`),
-  test: (id: string) => apiClient.post(`/api/admin/webhooks/${id}/test`),
+  }) => apiClient.post("/api/webhooks", data),
+
+  // Actualizar webhook
+  update: (id: string, data: any) => apiClient.put(`/api/webhooks/${id}`, data),
+
+  // Eliminar webhook
+  delete: (id: string) => apiClient.delete(`/api/webhooks/${id}`),
+
+  // Alternar estado activo/inactivo
+  toggle: (id: string) => apiClient.patch(`/api/webhooks/${id}/toggle`),
+
+  // Probar webhook
+  test: (id: string) => apiClient.post(`/api/webhooks/${id}/test`),
+
+  // Obtener entregas/deliveries
   getDeliveries: (webhookId?: string, params?: any) =>
-    apiClient.get(`/api/admin/webhooks/deliveries`, {
-      params: { webhook_id: webhookId, ...params },
+    apiClient.get(`/api/webhooks/deliveries`, {
+      params: { webhookid: webhookId, ...params },
     }),
+
+  // Estadísticas de webhook
   getStats: (webhookId: string) =>
-    apiClient.get(`/api/admin/webhooks/${webhookId}/stats`),
+    apiClient.get(`/api/webhooks/${webhookId}/stats`),
+
+  // Reintentar entrega
   retryDelivery: (deliveryId: string) =>
-    apiClient.post(`/api/admin/webhooks/deliveries/${deliveryId}/retry`),
+    apiClient.post(`/api/webhooks/deliveries/${deliveryId}/retry`),
+
+  // Obtener estadísticas globales
+  getGlobalStats: () => apiClient.get("/api/webhooks/stats/global"),
 };
 
 // Analytics API
@@ -336,6 +393,51 @@ export const analyticsAPI = {
     apiClient.get(`/api/admin/analytics/api-keys/${apiKeyId}`, { params }),
   getRealtime: () => apiClient.get("/api/admin/analytics/realtime"),
   getDashboard: () => apiClient.get("/api/admin/analytics/dashboard"),
+};
+
+// ✅ Realtime API - NUEVA SECCIÓN
+export const realtimeAPI = {
+  // Estadísticas de conexiones en tiempo real
+  getStats: () => apiClient.get("/api/realtime/stats"),
+
+  // Habilitar/deshabilitar realtime en colecciones
+  enableCollection: (collectionName: string) =>
+    apiClient.post(`/api/realtime/collections/${collectionName}/enable`),
+
+  disableCollection: (collectionName: string) =>
+    apiClient.delete(`/api/realtime/collections/${collectionName}/disable`),
+
+  // Obtener triggers activos en una colección
+  getCollectionTriggers: (collectionName: string) =>
+    apiClient.get(`/api/realtime/collections/${collectionName}/triggers`),
+
+  // Test de broadcasting
+  testBroadcast: (data: {
+    collection: string;
+    operation: "created" | "updated" | "deleted";
+    data: any;
+  }) => apiClient.post("/api/realtime/test/broadcast", data),
+
+  // Test de notificación de sistema
+  testSystemNotification: (notification: {
+    title: string;
+    message: string;
+    type: "info" | "warning" | "error" | "success";
+    data?: any;
+  }) => apiClient.post("/api/realtime/test/notification", notification),
+
+  // Historial de eventos
+  getEventHistory: (limit: number = 50) =>
+    apiClient.get("/api/realtime/events/history", { params: { limit } }),
+
+  // Canales activos
+  getActiveChannels: () => apiClient.get("/api/realtime/channels"),
+
+  // Health check
+  getHealth: () => apiClient.get("/api/realtime/health"),
+
+  // Cleanup
+  cleanup: () => apiClient.post("/api/realtime/cleanup"),
 };
 
 // Storage API

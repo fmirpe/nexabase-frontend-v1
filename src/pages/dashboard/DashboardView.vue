@@ -503,9 +503,13 @@ async function loadDashboardStats() {
         : Promise.resolve({ data: { meta: { total: 0 } } }),
     ]);
 
+    // ✅ CAST EXPLÍCITO
+    const collectionsData = collectionsRes.data as any;
+    const usersData = usersRes.data as any;
+
     // Actualizar estadísticas con datos reales
-    const collectionsCount = collectionsRes.data?.meta?.total || 0;
-    const usersCount = usersRes.data?.meta?.total || 0;
+    const collectionsCount = collectionsData?.meta?.total || 0;
+    const usersCount = usersData?.meta?.total || 0;
 
     // Obtener conteo total de registros de todas las collections
     let totalRecords = 0;
@@ -515,7 +519,10 @@ async function loadDashboardStats() {
           page: 1,
           limit: 100,
         });
-        const collections = allCollectionsRes.data?.data || [];
+        
+        // ✅ CAST EXPLÍCITO
+        const allCollectionsData = allCollectionsRes.data as any;
+        const collections = allCollectionsData?.data || [];
 
         totalRecords = collections.reduce((sum: number, collection: any) => {
           return sum + (collection.record_count || 0);
@@ -557,7 +564,10 @@ async function loadRecentActivity() {
 
     // Obtener actividad de collections recientes
     const collectionsRes = await adminCollections.list({ page: 1, limit: 5 });
-    const collections = collectionsRes.data?.data || [];
+    
+    // ✅ CAST EXPLÍCITO PARA EVITAR ERROR DE TYPESCRIPT
+    const responseData = collectionsRes.data as any;
+    const collections = responseData?.data || [];
 
     // Crear actividad basada en collections reales
     const activity = collections.map((collection: any, index: number) => ({

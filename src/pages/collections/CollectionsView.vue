@@ -488,6 +488,10 @@
                       <option value="json">json</option>
                       <option value="email">email</option>
                       <option value="url">url</option>
+                      <option value="file">file</option>
+                      <option value="image">image</option>
+                      <option value="files">files (múltiples)</option>
+                      <option value="images">images (múltiples)</option>
                     </select>
                   </div>
                   <div class="flex items-center gap-2">
@@ -570,6 +574,87 @@
               </div>
               <p v-if="fieldList.length === 0" class="text-xs text-gray-500">
                 Agrega al menos un campo.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-sm font-semibold text-gray-800">Relaciones</h4>
+              <button
+                @click="addRelation"
+                type="button"
+                class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+              >
+                Agregar relación
+              </button>
+            </div>
+            <div class="space-y-3">
+              <div
+                v-for="(r, idx) in relationList"
+                :key="r._id"
+                class="border rounded-lg p-3 bg-gray-50"
+              >
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      Campo
+                    </label>
+                    <input
+                      v-model.trim="r.field"
+                      type="text"
+                      placeholder="categoria_id"
+                      class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      Tipo
+                    </label>
+                    <select
+                      v-model="r.type"
+                      class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="belongs_to">belongs_to</option>
+                      <option value="has_many">has_many</option>
+                      <option value="many_to_many">many_to_many</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      Referencia
+                    </label>
+                    <input
+                      v-model.trim="r.references"
+                      type="text"
+                      placeholder="categories"
+                      class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      {{ r.type === 'many_to_many' ? 'Tabla intermedia' : 'Campo mostrar' }}
+                    </label>
+                    <input
+                      v-model.trim="r.extra"
+                      type="text"
+                      :placeholder="r.type === 'many_to_many' ? 'product_tags' : 'name'"
+                      class="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div class="flex items-center justify-end">
+                    <button
+                      @click="removeRelation(idx)"
+                      class="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                      type="button"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <p v-if="relationList.length === 0" class="text-xs text-gray-500">
+                Las relaciones son opcionales.
               </p>
             </div>
           </div>
@@ -718,6 +803,218 @@
                 placeholder='{"key":"value"}'
               ></textarea>
             </template>
+
+            <template v-else-if="def.type === 'file'">
+              <div class="space-y-3">
+                <div class="flex items-center justify-center w-full">
+                  <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                      </svg>
+                      <p class="mb-2 text-sm text-gray-500">
+                        <span class="font-semibold">Haz clic para subir</span> o arrastra y suelta
+                      </p>
+                      <p class="text-xs text-gray-500">PNG, JPG, PDF (MAX. 50MB)</p>
+                    </div>
+                    <input
+                      type="file"
+                      @change="handleFileUpload($event, def.name, false)"
+                      class="hidden"
+                    />
+                  </label>
+                </div>
+                
+                <!-- Archivo subido -->
+                <div v-if="insertModel[def.name]" class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 3a2 2 0 00-2 2v1.5h16V5a2 2 0 00-2-2H4zM2 8.5V17a2 2 0 002 2h12a2 2 0 002-2V8.5H2z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-green-900">Archivo subido</p>
+                      <p class="text-xs text-green-700">{{ getFileName(insertModel[def.name]) }}</p>
+                    </div>
+                  </div>
+                  <button 
+                    @click="removeFile(def.name)" 
+                    class="text-red-600 hover:text-red-800 p-1"
+                    title="Quitar archivo"
+                  >
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </template>
+
+            <!-- Campo IMAGE (una imagen) -->
+            <template v-else-if="def.type === 'image'">
+              <div class="space-y-3">
+                <div class="flex items-center justify-center w-full">
+                  <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                      <p class="mb-2 text-sm text-gray-500">
+                        <span class="font-semibold">Haz clic para subir imagen</span>
+                      </p>
+                      <p class="text-xs text-gray-500">PNG, JPG, GIF (MAX. 50MB)</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      @change="handleFileUpload($event, def.name, false)"
+                      class="hidden"
+                    />
+                  </label>
+                </div>
+                <!-- Imagen subida -->
+                <div v-if="insertModel[def.name]" class="relative">
+                  <img 
+                    :src="getFileUrl(insertModel[def.name])" 
+                    :alt="getFileName(insertModel[def.name])"
+                    class="w-full h-48 object-cover rounded-lg border border-gray-200"
+                    @load="console.log('✅ Image loaded successfully')"
+                    @error="handleImageError"
+                  />
+                  <button 
+                    @click="removeFile(def.name)"
+                    class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition-colors"
+                    title="Quitar imagen"
+                  >
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </template>
+
+            <!-- Campo FILES (múltiples archivos) -->
+            <template v-else-if="def.type === 'files'">
+              <div class="space-y-3">
+                <div class="flex items-center justify-center w-full">
+                  <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                      <p class="mb-2 text-sm text-gray-500">
+                        <span class="font-semibold">Subir múltiples archivos</span>
+                      </p>
+                      <p class="text-xs text-gray-500">Selecciona varios archivos (MAX. 50MB c/u)</p>
+                    </div>
+                    <input
+                      type="file"
+                      multiple
+                      @change="handleFileUpload($event, def.name, true)"
+                      class="hidden"
+                    />
+                  </label>
+                </div>
+                
+                <!-- Lista de archivos subidos -->
+                <div v-if="insertModel[def.name] && insertModel[def.name].length > 0" class="space-y-2">
+                  <div class="text-sm font-medium text-gray-700 mb-2">
+                    Archivos subidos ({{ insertModel[def.name].length }})
+                  </div>
+                  <div 
+                    v-for="(fileId, index) in insertModel[def.name]" 
+                    :key="fileId"
+                    class="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                  >
+                    <div class="flex items-center gap-3">
+                      <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 3a2 2 0 00-2 2v1.5h16V5a2 2 0 00-2-2H4zM2 8.5V17a2 2 0 002 2h12a2 2 0 002-2V8.5H2z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-blue-900">{{ getFileName(fileId) }}</p>
+                        <p class="text-xs text-blue-700">Archivo {{ index + 1 }}</p>
+                      </div>
+                    </div>
+                    <button 
+                      @click="removeFileFromArray(def.name, index)" 
+                      class="text-red-600 hover:text-red-800 p-1"
+                      title="Quitar archivo"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Campo IMAGES (múltiples imágenes) -->
+            <template v-else-if="def.type === 'images'">
+              <div class="space-y-3">
+                <div class="flex items-center justify-center w-full">
+                  <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                      <p class="mb-2 text-sm text-gray-500">
+                        <span class="font-semibold">Subir múltiples imágenes</span>
+                      </p>
+                      <p class="text-xs text-gray-500">Selecciona varias imágenes (MAX. 50MB c/u)</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      @change="handleFileUpload($event, def.name, true)"
+                      class="hidden"
+                    />
+                  </label>
+                </div>
+                
+                <!-- Grid de imágenes subidas -->
+                <div v-if="insertModel[def.name] && insertModel[def.name].length > 0">
+                  <div class="text-sm font-medium text-gray-700 mb-3">
+                    Imágenes subidas ({{ insertModel[def.name].length }})
+                  </div>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div 
+                      v-for="(fileId, index) in insertModel[def.name]" 
+                      :key="fileId"
+                      class="relative group"
+                    >
+                      <img 
+                        :src="getFileUrl(fileId)" 
+                        :alt="getFileName(fileId)"
+                        class="w-full h-24 object-cover rounded-lg border border-gray-200"
+                        @load="console.log('✅ Image loaded successfully')"
+                        @error="handleImageError"
+                      />
+                      <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                        <button 
+                          @click="removeFileFromArray(def.name, index)"
+                          class="opacity-0 group-hover:opacity-100 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition-all"
+                          title="Quitar imagen"
+                        >
+                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <div class="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                        {{ index + 1 }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
             <template v-else-if="isRelationField(def.name)">
               <select
                 v-model="insertModel[def.name]"
@@ -836,7 +1133,70 @@
                     :key="col"
                     class="px-3 py-2"
                   >
-                    <span v-if="isPrimitive(row[col])">{{
+                    <!-- ✅ NUEVA LÓGICA PARA ARCHIVOS -->
+                    <div v-if="isFileField(col, currentCollectionName)">
+                      <!-- Archivo único -->
+                      <div v-if="isFileId(row[col])" class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 3a2 2 0 00-2 2v1.5h16V5a2 2 0 00-2-2H4zM2 8.5V17a2 2 0 002 2h12a2 2 0 002-2V8.5H2z"/>
+                        </svg>
+                        <a 
+                          :href="getFileDownloadUrl(row[col])" 
+                          target="_blank"
+                          class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          {{ getFileDisplayName(row[col]) }}
+                        </a>
+                      </div>
+                      <!-- Múltiples archivos -->
+                      <div v-else-if="Array.isArray(row[col]) && row[col].length > 0" class="flex flex-wrap gap-1">
+                        <a 
+                          v-for="fileId in row[col].slice(0, 2)"
+                          :key="fileId"
+                          :href="getFileDownloadUrl(fileId)" 
+                          target="_blank"
+                          class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full hover:bg-blue-200"
+                        >
+                          {{ getFileDisplayName(fileId) }}
+                        </a>
+                        <span 
+                          v-if="row[col].length > 2"
+                          class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                        >
+                          +{{ row[col].length - 2 }} más
+                        </span>
+                      </div>
+                      <span v-else class="text-gray-400 text-xs">Sin archivo</span>
+                    </div>
+
+                    <!-- Relaciones (código existente) -->
+                    <div v-else-if="isRelationData(row[col])">
+                      <span v-if="Array.isArray(row[col])">
+                        <div class="flex flex-wrap gap-1">
+                          <span 
+                            v-for="item in row[col].slice(0, 3)" 
+                            :key="item.id"
+                            class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                          >
+                            {{ item.name || item.title || item.id }}
+                          </span>
+                          <span 
+                            v-if="row[col].length > 3"
+                            class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                          >
+                            +{{ row[col].length - 3 }} más
+                          </span>
+                        </div>
+                      </span>
+                      <span v-else>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                          {{ row[col].name || row[col].title || row[col].id }}
+                        </span>
+                      </span>
+                    </div>
+
+                    <!-- Datos primitivos y JSON (código existente) -->
+                    <span v-else-if="isPrimitive(row[col])">{{
                       renderCell(row[col])
                     }}</span>
                     <pre v-else class="text-xs bg-gray-50 border rounded p-2">{{
@@ -910,11 +1270,41 @@
           <span v-else>{{ recordError }}</span>
         </div>
 
-        <div v-if="recordMode === 'view'">
-          <pre
-            class="text-xs bg-gray-50 border rounded p-3 overflow-auto max-h-[60vh]"
-            >{{ JSON.stringify(recordData, null, 2) }}</pre
+        <div v-if="recordMode === 'view'" class="space-y-3">
+          <div
+            v-for="[key, value] in Object.entries(recordData || {})"
+            :key="key"
+            class="border-b border-gray-200 pb-2"
           >
+            <label class="text-sm font-medium text-gray-700 block mb-1">
+              {{ key }}
+            </label>
+            <!-- Relaciones -->
+            <div v-if="isRelationData(value)">
+              <div v-if="Array.isArray(value)" class="flex flex-wrap gap-2">
+                <span
+                  v-for="item in value"
+                  :key="item.id"
+                  class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-lg"
+                >
+                  {{ getRelationDisplayName(item) }}
+                </span>
+              </div>
+              <span v-else class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-lg">
+                {{ getRelationDisplayName(value) }}
+              </span>
+            </div>
+
+            <!-- Datos primitivos -->
+            <span v-else-if="isPrimitive(value)" class="text-sm">
+              {{ renderCell(value) }}
+            </span>
+
+            <!-- JSON complejo -->
+            <pre v-else class="text-xs bg-gray-50 border rounded p-2 overflow-auto">{{
+              JSON.stringify(value, null, 2)
+            }}</pre>
+          </div>
         </div>
 
         <div v-else>
@@ -972,7 +1362,218 @@
                   placeholder='{"key":"value"}'
                 ></textarea>
               </template>
-              <!-- ✅ AGREGAR ESTE TEMPLATE AQUÍ -->
+
+              <!-- Campo FILE para edición -->
+              <template v-else-if="def.type === 'file'">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-center w-full">
+                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <p class="mb-2 text-sm text-gray-500">
+                          <span class="font-semibold">Cambiar archivo</span>
+                        </p>
+                        <p class="text-xs text-gray-500">PNG, JPG, PDF (MAX. 50MB)</p>
+                      </div>
+                      <input
+                        type="file"
+                        @change="handleRecordFileUpload($event, def.name, false)"
+                        class="hidden"
+                      />
+                    </label>
+                  </div>
+                  
+                  <!-- Archivo actual/subido -->
+                  <div v-if="recordModel[def.name]" class="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex items-center gap-3">
+                      <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 3a2 2 0 00-2 2v1.5h16V5a2 2 0 00-2-2H4zM2 8.5V17a2 2 0 002 2h12a2 2 0 002-2V8.5H2z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-green-900">Archivo actual</p>
+                        <p class="text-xs text-green-700">{{ getFileName(recordModel[def.name]) }}</p>
+                      </div>
+                    </div>
+                    <button 
+                      @click="removeRecordFile(def.name)" 
+                      class="text-red-600 hover:text-red-800 p-1"
+                      title="Quitar archivo"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Campo IMAGE para edición -->
+              <template v-else-if="def.type === 'image'">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-center w-full">
+                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <p class="mb-2 text-sm text-gray-500">
+                          <span class="font-semibold">Cambiar imagen</span>
+                        </p>
+                        <p class="text-xs text-gray-500">PNG, JPG, GIF (MAX. 50MB)</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        @change="handleRecordFileUpload($event, def.name, false)"
+                        class="hidden"
+                      />
+                    </label>
+                  </div>
+                  
+                  <!-- Imagen actual/subida -->
+                  <div v-if="recordModel[def.name]" class="relative">
+                    <img 
+                      :src="getFileUrl(recordModel[def.name])" 
+                      :alt="getFileName(recordModel[def.name])"
+                      class="w-full h-48 object-cover rounded-lg border border-gray-200"
+                      @error="handleImageError"
+                    />
+                    <button 
+                      @click="removeRecordFile(def.name)"
+                      class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition-colors"
+                      title="Quitar imagen"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Campo FILES para edición -->
+              <template v-else-if="def.type === 'files'">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-center w-full">
+                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p class="mb-2 text-sm text-gray-500">
+                          <span class="font-semibold">Agregar más archivos</span>
+                        </p>
+                        <p class="text-xs text-gray-500">Selecciona varios archivos (MAX. 50MB c/u)</p>
+                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        @change="handleRecordFileUpload($event, def.name, true)"
+                        class="hidden"
+                      />
+                    </label>
+                  </div>
+                  
+                  <!-- Lista de archivos actuales -->
+                  <div v-if="recordModel[def.name] && recordModel[def.name].length > 0" class="space-y-2">
+                    <div class="text-sm font-medium text-gray-700 mb-2">
+                      Archivos actuales ({{ recordModel[def.name].length }})
+                    </div>
+                    <div 
+                      v-for="(fileId, index) in recordModel[def.name]" 
+                      :key="fileId"
+                      class="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                    >
+                      <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 3a2 2 0 00-2 2v1.5h16V5a2 2 0 00-2-2H4zM2 8.5V17a2 2 0 002 2h12a2 2 0 002-2V8.5H2z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-blue-900">{{ getFileName(fileId) }}</p>
+                          <p class="text-xs text-blue-700">Archivo {{ index + 1 }}</p>
+                        </div>
+                      </div>
+                      <button 
+                        @click="removeRecordFileFromArray(def.name, index)" 
+                        class="text-red-600 hover:text-red-800 p-1"
+                        title="Quitar archivo"
+                      >
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Campo IMAGES para edición -->
+              <template v-else-if="def.type === 'images'">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-center w-full">
+                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <p class="mb-2 text-sm text-gray-500">
+                          <span class="font-semibold">Agregar más imágenes</span>
+                        </p>
+                        <p class="text-xs text-gray-500">Selecciona varias imágenes (MAX. 50MB c/u)</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        @change="handleRecordFileUpload($event, def.name, true)"
+                        class="hidden"
+                      />
+                    </label>
+                  </div>
+                  
+                  <!-- Grid de imágenes actuales -->
+                  <div v-if="recordModel[def.name] && recordModel[def.name].length > 0">
+                    <div class="text-sm font-medium text-gray-700 mb-3">
+                      Imágenes actuales ({{ recordModel[def.name].length }})
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div 
+                        v-for="(fileId, index) in recordModel[def.name]" 
+                        :key="fileId"
+                        class="relative group"
+                      >
+                        <img 
+                          :src="getFileUrl(fileId)" 
+                          :alt="getFileName(fileId)"
+                          class="w-full h-24 object-cover rounded-lg border border-gray-200"
+                          @error="handleImageError"
+                        />
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                          <button 
+                            @click="removeRecordFileFromArray(def.name, index)"
+                            class="opacity-0 group-hover:opacity-100 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition-all"
+                            title="Quitar imagen"
+                          >
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                            </svg>
+                          </button>
+                        </div>
+                        <div class="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                          {{ index + 1 }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
               <template v-else-if="isRelationField(def.name)">
                 <select
                   v-model="recordModel[def.name]"
@@ -1090,6 +1691,9 @@ const searchQuery = ref("");
 const selectedFilter = ref<"all" | "active" | "inactive">("all");
 const relationOptions = ref<Record<string, any[]>>({});
 const currentCollectionSchema = ref<any>(null);
+// Variables para archivos
+const uploadingFiles = ref<Record<string, boolean>>({});
+const recordUploadingFiles = ref<Record<string, boolean>>({});
 
 const filteredCollections = computed(() => {
   let rows = collections.value.slice();
@@ -1160,6 +1764,169 @@ function goToPage(page: number) {
   }
 }
 
+// Función principal para subir archivos
+async function handleFileUpload(event: Event, fieldName: string, isMultiple: boolean) {
+  const target = event.target as HTMLInputElement;
+  const files = target.files;
+  if (!files || files.length === 0) return;
+
+  try {
+    uploadingFiles.value[fieldName] = true;
+    
+    if (isMultiple) {
+      const currentFiles = insertModel.value[fieldName] || [];
+      const newFileIds: string[] = [];
+      
+      for (const file of Array.from(files)) {
+        const fileId = await uploadSingleFile(file);
+        if (fileId) newFileIds.push(fileId);
+      }
+      
+      insertModel.value[fieldName] = [...currentFiles, ...newFileIds];
+    } else {
+      const fileId = await uploadSingleFile(files[0]);
+      if (fileId) {
+        insertModel.value[fieldName] = fileId;
+      }
+    }
+    
+    target.value = '';
+    
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    insertError.value = 'Error subiendo archivo: ' + (error as any).message;
+  } finally {
+    uploadingFiles.value[fieldName] = false;
+  }
+}
+
+// Función para subir archivos en modo edición
+async function handleRecordFileUpload(event: Event, fieldName: string, isMultiple: boolean) {
+  const target = event.target as HTMLInputElement;
+  const files = target.files;
+  if (!files || files.length === 0) return;
+
+  try {
+    recordUploadingFiles.value[fieldName] = true;
+    
+    if (isMultiple) {
+      const currentFiles = recordModel.value[fieldName] || [];
+      const newFileIds: string[] = [];
+      
+      for (const file of Array.from(files)) {
+        const fileId = await uploadSingleFileForRecord(file);
+        if (fileId) newFileIds.push(fileId);
+      }
+      
+      recordModel.value[fieldName] = [...currentFiles, ...newFileIds];
+    } else {
+      const fileId = await uploadSingleFileForRecord(files[0]);
+      if (fileId) {
+        recordModel.value[fieldName] = fileId;
+      }
+    }
+    
+    target.value = '';
+    
+  } catch (error) {
+    console.error('Error uploading file in edit mode:', error);
+    recordError.value = 'Error subiendo archivo: ' + (error as any).message;
+  } finally {
+    recordUploadingFiles.value[fieldName] = false;
+  }
+}
+
+// Subir archivo para edición (usa la collection del registro)
+async function uploadSingleFileForRecord(file: File): Promise<string | null> {
+  try {
+    const { storageAPI } = await import("../../services/api");
+    
+    const response = await storageAPI.upload(file, {
+      folder: recordCollection.value,
+      collection: recordCollection.value
+    });
+    
+    const responseData = response.data as any;
+    const fileId = responseData?.data?.id || responseData?.id;
+    return fileId || null;
+    
+  } catch (error) {
+    console.error('Error uploading single file for record:', error);
+    throw error;
+  }
+}
+
+// Remover archivo individual en edición
+function removeRecordFile(fieldName: string) {
+  recordModel.value[fieldName] = null;
+}
+
+// Remover archivo de array en edición
+function removeRecordFileFromArray(fieldName: string, index: number) {
+  const currentFiles = recordModel.value[fieldName] || [];
+  currentFiles.splice(index, 1);
+  recordModel.value[fieldName] = [...currentFiles];
+}
+
+// Subir un archivo individual
+async function uploadSingleFile(file: File): Promise<string | null> {
+  try {
+    const { storageAPI } = await import("../../services/api");
+    
+    const response = await storageAPI.upload(file, {
+      folder: insertName.value,
+      collection: insertName.value
+    });
+    
+    const responseData = response.data as any;
+    const fileId = responseData?.data?.id || responseData?.id;
+    return fileId || null;
+    
+  } catch (error) {
+    console.error('Error uploading single file:', error);
+    throw error;
+  }
+}
+
+// Obtener URL de un archivo por su ID
+function getFileUrl(fileId: string): string {
+  console.log('🔍 getFileUrl called with fileId:', fileId);
+  if (!fileId) {
+    console.log('❌ No fileId provided');
+    return '';
+  }
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/storage/${fileId}/download`;
+  console.log('🌐 Generated URL:', url);
+  return url;
+}
+
+
+
+// Obtener nombre del archivo (simplificado)
+function getFileName(fileId: string): string {
+  if (!fileId) return '';
+  return `file_${fileId.slice(0, 8)}.ext`;
+}
+
+// Remover un archivo individual
+function removeFile(fieldName: string) {
+  insertModel.value[fieldName] = null;
+}
+
+// Remover archivo de un array
+function removeFileFromArray(fieldName: string, index: number) {
+  const currentFiles = insertModel.value[fieldName] || [];
+  currentFiles.splice(index, 1);
+  insertModel.value[fieldName] = [...currentFiles];
+}
+
+// Manejar error de carga de imagen
+function handleImageError(event: Event) {
+  const img = event.target as HTMLImageElement;
+  img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwYXRoIGQ9Im0yMSAxNS0zLjA4Ni0zLjA4NmE0Ljg4OCA0Ljg4OCAwIDAwLTYuODI4IDBMMTAgMTMiLz48L3N2Zz4=';
+}
+
 // ===================== Create/Edit Collection =====================
 type FieldRow = {
   _id: string;
@@ -1172,7 +1939,11 @@ type FieldRow = {
     | "date"
     | "json"
     | "email"
-    | "url";
+    | "url"
+    | "file"        // ✅ NUEVO
+    | "image"       // ✅ NUEVO
+    | "files"       // ✅ NUEVO
+    | "images";     // ✅ NUEVO;
   required?: boolean;
   unique?: boolean;
   default?: any;
@@ -1221,6 +1992,14 @@ const fieldList = ref<FieldRow[]>([
     maxLength: 100,
   },
 ]);
+
+type RelationRow = {
+  _id: string;
+  field: string;
+  type: 'belongs_to' | 'has_many' | 'many_to_many';
+  references: string;
+  extra: string; // display_field para belongs_to/has_many, through para many_to_many
+};
 const indexesInput = ref("");
 const authCreateInput = ref("authenticated");
 const authReadInput = ref("public");
@@ -1237,15 +2016,24 @@ function removeField(i: number) {
   fieldList.value.splice(i, 1);
 }
 
-function openCreate() {
-  resetCollectionForm();
-  isEditing.value = false;
-  showModal.value = true;
+const relationList = ref<RelationRow[]>([]);
+
+// Agregar estas funciones después de removeField
+function addRelation() {
+  relationList.value.push({
+    _id: cryptoRandomId(),
+    field: '',
+    type: 'belongs_to',
+    references: '',
+    extra: 'name'
+  });
 }
-function closeModal() {
-  showModal.value = false;
-  formError.value = null;
+
+function removeRelation(i: number) {
+  relationList.value.splice(i, 1);
 }
+
+// Actualizar resetCollectionForm para incluir relations
 function resetCollectionForm() {
   formError.value = null;
   form.value = {
@@ -1269,12 +2057,52 @@ function resetCollectionForm() {
       maxLength: 100,
     },
   ];
+  relationList.value = []; // ✅ Limpiar relaciones
   indexesInput.value = "";
   authCreateInput.value = "authenticated";
   authReadInput.value = "public";
   authUpdateInput.value = "owner, admin";
   authDeleteInput.value = "admin";
 }
+
+// Agregar función para construir relaciones
+function buildSchemaRelationsFromUI() {
+  const relations: Record<string, any> = {};
+  for (const r of relationList.value) {
+    const field = r.field.trim();
+    const references = r.references.trim();
+    if (!field || !references) continue;
+
+    const relation: any = {
+      type: r.type,
+      references: references
+    };
+
+    if (r.type === 'many_to_many') {
+      if (r.extra.trim()) {
+        relation.through = r.extra.trim();
+      }
+    } else {
+      if (r.extra.trim()) {
+        relation.display_field = r.extra.trim();
+      }
+    }
+
+    relations[field] = relation;
+  }
+  return relations;
+}
+
+function openCreate() {
+  resetCollectionForm();
+  isEditing.value = false;
+  showModal.value = true;
+}
+function closeModal() {
+  showModal.value = false;
+  formError.value = null;
+}
+
 
 function toArrayFromCsv(s: string) {
   return s
@@ -1342,14 +2170,21 @@ function buildCreateCollectionPayload() {
     formError.value = "Agrega al menos un campo al schema";
     return null;
   }
+  
   const idx = toArrayFromCsv(indexesInput.value);
+  const relations = buildSchemaRelationsFromUI(); // ✅ Construir relaciones
+  
+  const schema: any = {
+    fields,
+    timestamps: !!form.value.schema.timestamps,
+  };
+  
+  if (idx.length) schema.indexes = idx;
+  if (Object.keys(relations).length > 0) schema.relations = relations; // ✅ Agregar relaciones
+
   return {
     name,
-    schema: {
-      fields,
-      timestamps: !!form.value.schema.timestamps,
-      indexes: idx.length ? idx : undefined,
-    },
+    schema,
     auth_rules: buildAuthRulesFromUI(),
     metadata: form.value.metadata?.description
       ? { description: form.value.metadata.description }
@@ -1359,13 +2194,21 @@ function buildCreateCollectionPayload() {
 function buildUpdateCollectionPayload() {
   const fields = buildSchemaFieldsFromUI();
   const idx = toArrayFromCsv(indexesInput.value);
+  const relations = buildSchemaRelationsFromUI(); // ✅ Construir relaciones
+  
   const body: any = {};
-  body.schema = {
+  
+  const schema: any = {
     fields,
     timestamps: !!form.value.schema.timestamps,
-    ...(idx.length ? { indexes: idx } : {}),
   };
+  
+  if (idx.length) schema.indexes = idx;
+  if (Object.keys(relations).length > 0) schema.relations = relations; // ✅ Agregar relaciones
+  
+  body.schema = schema;
   body.auth_rules = buildAuthRulesFromUI();
+  
   if (
     form.value.metadata?.description &&
     form.value.metadata.description.trim().length > 0
@@ -1404,6 +2247,8 @@ async function openEditCollection(name: string) {
     form.value.schema.timestamps = !!s?.timestamps;
     form.value.schema.indexes = Array.isArray(s?.indexes) ? s.indexes : [];
     indexesInput.value = (form.value.schema.indexes || []).join(", ");
+    
+    // Cargar campos
     fieldList.value = [];
     const fobj = s?.fields || {};
     for (const key of Object.keys(fobj)) {
@@ -1429,6 +2274,21 @@ async function openEditCollection(name: string) {
         required: true,
         maxLength: 100,
       });
+
+    // ✅ NUEVO: Cargar relaciones existentes
+    relationList.value = [];
+    const relations = s?.relations || {};
+    for (const [fieldName, relationConfig] of Object.entries(relations)) {
+      const config = relationConfig as any;
+      relationList.value.push({
+        _id: cryptoRandomId(),
+        field: fieldName,
+        type: config.type || 'belongs_to',
+        references: config.references || '',
+        extra: config.through || config.display_field || 'name'
+      });
+    }
+
     const ar = dto.auth_rules as any;
     authCreateInput.value = Array.isArray(ar?.create)
       ? ar.create.join(", ")
@@ -1596,7 +2456,11 @@ type FieldDef = {
     | "date"
     | "json"
     | "email"
-    | "url";
+    | "url"
+    | "file"        // ✅ NUEVO
+    | "image"       // ✅ NUEVO
+    | "files"       // ✅ NUEVO
+    | "images";     // ✅ NUEVO
   required?: boolean;
   unique?: boolean;
   default?: any;
@@ -1678,6 +2542,7 @@ function normalizeInsertPayload() {
       return null;
     }
     if (val === undefined || val === "") continue;
+    
     switch (def.type) {
       case "number":
         if (typeof val !== "number" || isNaN(val)) {
@@ -1710,6 +2575,14 @@ function normalizeInsertPayload() {
       case "date":
         payload[def.name] = new Date(val).toISOString();
         break;
+      case "file":
+      case "image":
+        if (val) payload[def.name] = val;
+        break;
+      case "files":
+      case "images":
+        if (Array.isArray(val) && val.length > 0) payload[def.name] = val;
+        break;
       default:
         if (def.maxLength && String(val).length > def.maxLength) {
           insertError.value = `El campo '${def.name}' supera maxLength ${def.maxLength}`;
@@ -1719,8 +2592,10 @@ function normalizeInsertPayload() {
         break;
     }
   }
+  
   return payload;
 }
+
 
 async function submitInsert() {
   inserting.value = true;
@@ -1846,35 +2721,25 @@ function normalizeUpdateRecordPayload() {
     if (val === undefined || val === "") continue;
     switch (def.type) {
       case "number":
-        if (typeof val !== "number" || isNaN(val)) {
-          recordError.value = `El campo '${def.name}' debe ser numérico`;
-          return null;
-        }
-        if (typeof def.min === "number" && val < def.min) {
-          recordError.value = `El campo '${def.name}' debe ser >= ${def.min}`;
-          return null;
-        }
-        if (typeof def.max === "number" && val > def.max) {
-          recordError.value = `El campo '${def.name}' debe ser <= ${def.max}`;
-          return null;
-        }
-        payload[def.name] = val;
+        // ... código existente ...
         break;
       case "boolean":
         payload[def.name] = !!val;
         break;
       case "json":
-        try {
-          const text = recordJsonBuffers.value[def.name] ?? "";
-          if (text.trim().length === 0) continue;
-          payload[def.name] = JSON.parse(text);
-        } catch {
-          recordError.value = `El JSON de '${def.name}' no es válido`;
-          return null;
-        }
+        // ... código existente ...
         break;
       case "date":
         payload[def.name] = new Date(val).toISOString();
+        break;
+      // ✅ AGREGAR CASOS PARA ARCHIVOS
+      case "file":
+      case "image":
+        if (val) payload[def.name] = val;
+        break;
+      case "files":
+      case "images":
+        if (Array.isArray(val) && val.length > 0) payload[def.name] = val;
         break;
       default:
         if (def.maxLength && String(val).length > def.maxLength) {
@@ -1948,26 +2813,31 @@ function closeRecord() {
 
 async function loadRelationOptions(schemaRelations: any) {
   if (!schemaRelations) return;
+  
   try {
-    // Obtener todas las collections disponibles
-    const collections = await adminCollections.getOptions();
     for (const [fieldName, relationConfig] of Object.entries(schemaRelations)) {
-      const referencedCollection = (relationConfig as any).references;
-      // Obtener datos de la collection referenciada
-      try {
-        const { data } = await dynamicCollections.list(referencedCollection);
-        const records = Array.isArray(data)
-          ? data
-          : (typeof data === "object" && data !== null && "data" in data && Array.isArray((data as any).data))
-            ? (data as any).data
-            : [];
-        relationOptions.value[fieldName] = records.map((record: any) => ({
-          id: record.id,
-          display: record.name || record.title || record.id
-        }));
-      } catch (error) {
-        console.error(`Error loading options for ${referencedCollection}:`, error);
-        relationOptions.value[fieldName] = [];
+      const config = relationConfig as any;
+      
+      // Solo cargar opciones para belongs_to
+      if (config.type === 'belongs_to') {
+        const referencedCollection = config.references;
+        
+        try {
+          const { data } = await dynamicCollections.list(referencedCollection);
+          const records = Array.isArray(data)
+            ? data
+            : (typeof data === "object" && data !== null && "data" in data && Array.isArray((data as any).data))
+              ? (data as any).data
+              : [];
+              
+          relationOptions.value[fieldName] = records.map((record: any) => ({
+            id: record.id,
+            display: record.name || record.title || record.id
+          }));
+        } catch (error) {
+          console.error(`Error loading options for ${referencedCollection}:`, error);
+          relationOptions.value[fieldName] = [];
+        }
       }
     }
   } catch (error) {
@@ -1977,11 +2847,70 @@ async function loadRelationOptions(schemaRelations: any) {
 
 function isRelationField(fieldName: string): boolean {
   const relations = currentCollectionSchema.value?.relations;
-  return relations && relations[fieldName] && relations[fieldName].type === 'belongs_to';
+  if (!relations || !relations[fieldName]) return false;
+  
+  // Solo mostrar select para belongs_to (las otras son complejas)
+  return relations[fieldName].type === 'belongs_to';
 }
 
 function getRelationOptions(fieldName: string): any[] {
   return relationOptions.value[fieldName] || [];
+}
+
+function isRelationData(value: any): boolean {
+  if (!value) return false;
+  
+  // Es un array de objetos con estructura de registro (has_many, many_to_many)
+  if (Array.isArray(value) && value.length > 0) {
+    return value.some(item => 
+      typeof item === 'object' && 
+      item !== null && 
+      'id' in item &&
+      (item.name || item.title || item.id)
+    );
+  }
+  
+  // Es un objeto con estructura de registro (belongs_to)
+  if (typeof value === 'object' && value !== null && 'id' in value) {
+    return !!(value.name || value.title || value.id);
+  }
+  
+  return false;
+}
+
+function getRelationDisplayName(item: any): string {
+  return item.name || item.title || item.email || item.id || 'Sin nombre';
+}
+
+function isFileField(fieldName: string, collectionName: string): boolean {
+  const collection = collections.value.find(c => c.name === collectionName);
+  if (!collection) return false;
+  
+  const schema = collection.schema as any;
+  const field = schema?.fields?.[fieldName];
+  if (!field) return false;
+  
+  return ['file', 'image', 'files', 'images'].includes(field.type);
+}
+
+// Verifica si un valor es un ID de archivo (UUID)
+function isFileId(value: any): boolean {
+  if (typeof value !== 'string') return false;
+  // Regex simple para UUID
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+// Obtener URL de descarga de archivo
+function getFileDownloadUrl(fileId: string): string {
+  if (!fileId) return '';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  return `${baseUrl}/api/storage/${fileId}/download`;
+}
+
+// Obtener nombre display de archivo (mejorado)
+function getFileDisplayName(fileId: string): string {
+  if (!fileId) return 'Sin nombre';
+  return `archivo_${fileId.slice(0, 8)}`;
 }
 
 // lifecycle

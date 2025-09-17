@@ -52,7 +52,7 @@
           <span>{{ exporting ? "Exportando..." : "Exportar" }}</span>
         </button>
         <button
-          @click="loadActivityLogs"
+          @click="handleLoadClick"
           :disabled="loading"
           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 disabled:opacity-50"
         >
@@ -222,7 +222,7 @@
             <option value="login">Login</option>
             <option value="logout">Logout</option>
             <option value="admin">Admin</option>
-            <option value="error">Error</option>
+            <option value="failed">Error</option>
           </select>
         </div>
 
@@ -236,7 +236,11 @@
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">Todos los usuarios</option>
-            <option v-for="user in uniqueUsers" :key="user" :value="user">
+            <option 
+              v-for="(user, index) in uniqueUsers" 
+              :key="`user-${index}`" 
+              :value="user"
+            >
               {{ user }}
             </option>
           </select>
@@ -369,7 +373,7 @@
                   <div
                     :class="[
                       'w-3 h-3 rounded-full border-2 border-white shadow',
-                      getStatusColor(log.action, log.details),
+                      getStatusColor(log.action, log.status),
                     ]"
                   ></div>
                 </div>
@@ -390,10 +394,19 @@
                         >
                           {{ log.action.toUpperCase() }}
                         </span>
+                        <span
+                          v-if="log.status"
+                          :class="[
+                            'px-2 py-1 text-xs font-medium rounded-full',
+                            getStatusBadgeColor(log.status),
+                          ]"
+                        >
+                          {{ log.status }}
+                        </span>
                       </div>
 
                       <p class="text-sm text-gray-600 mb-2">
-                        {{ log.description }}
+                        {{ formatDescription(log) }}
                       </p>
 
                       <!-- Details -->
@@ -403,11 +416,11 @@
                         <span v-if="log.user_email">
                           👤 {{ log.user_email }}
                         </span>
-                        <span v-if="log.entity_type">
-                          📄 {{ log.entity_type }}
+                        <span v-if="log.resource_type">
+                          📄 {{ log.resource_type }}
                         </span>
-                        <span v-if="log.entity_id">
-                          🔗 {{ log.entity_id.substring(0, 8) }}...
+                        <span v-if="log.resource_id">
+                          🔗 {{ log.resource_id.substring(0, 8) }}...
                         </span>
                         <span>{{ formatRelativeTime(log.created_at) }}</span>
                       </div>
@@ -416,7 +429,7 @@
                     <!-- Actions -->
                     <div class="flex items-center space-x-2">
                       <button
-                        v-if="log.details"
+                        v-if="log.metadata"
                         @click="showLogDetails(log)"
                         class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                         title="Ver detalles"
@@ -444,10 +457,10 @@
 
                   <!-- Error details -->
                   <div
-                    v-if="log.action === 'error' && log.details"
+                    v-if="log.status === 'failed' && log.metadata"
                     class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700"
                   >
-                    {{ JSON.stringify(log.details, null, 2) }}
+                    {{ JSON.stringify(log.metadata, null, 2) }}
                   </div>
                 </div>
               </div>
@@ -511,15 +524,6 @@
             <p class="text-sm text-gray-900 mt-1">{{ selectedLog.action }}</p>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700"
-              >Descripción</label
-            >
-            <p class="text-sm text-gray-900 mt-1">
-              {{ selectedLog.description }}
-            </p>
-          </div>
-
           <div v-if="selectedLog.user_email">
             <label class="block text-sm font-medium text-gray-700"
               >Usuario</label
@@ -529,22 +533,38 @@
             </p>
           </div>
 
-          <div v-if="selectedLog.entity_type">
+          <div v-if="selectedLog.resource_type">
             <label class="block text-sm font-medium text-gray-700"
-              >Tipo de Entidad</label
+              >Tipo de Recurso</label
             >
             <p class="text-sm text-gray-900 mt-1">
-              {{ selectedLog.entity_type }}
+              {{ selectedLog.resource_type }}
             </p>
           </div>
 
-          <div v-if="selectedLog.entity_id">
+          <div v-if="selectedLog.resource_id">
             <label class="block text-sm font-medium text-gray-700"
-              >ID de Entidad</label
+              >ID de Recurso</label
             >
             <p class="text-sm text-gray-900 mt-1 font-mono">
-              {{ selectedLog.entity_id }}
+              {{ selectedLog.resource_id }}
             </p>
+          </div>
+
+          <div v-if="selectedLog.resource_name">
+            <label class="block text-sm font-medium text-gray-700"
+              >Nombre de Recurso</label
+            >
+            <p class="text-sm text-gray-900 mt-1">
+              {{ selectedLog.resource_name }}
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700"
+              >Estado</label
+            >
+            <p class="text-sm text-gray-900 mt-1">{{ selectedLog.status }}</p>
           </div>
 
           <div>
@@ -556,13 +576,20 @@
             </p>
           </div>
 
-          <div v-if="selectedLog.details">
+          <div v-if="selectedLog.ip_address">
+            <label class="block text-sm font-medium text-gray-700"
+              >Dirección IP</label
+            >
+            <p class="text-sm text-gray-900 mt-1">{{ selectedLog.ip_address }}</p>
+          </div>
+
+          <div v-if="selectedLog.metadata">
             <label class="block text-sm font-medium text-gray-700"
               >Detalles</label
             >
             <pre
               class="text-xs bg-gray-50 p-3 rounded border mt-1 overflow-x-auto"
-              >{{ JSON.stringify(selectedLog.details, null, 2) }}</pre
+              >{{ JSON.stringify(selectedLog.metadata, null, 2) }}</pre
             >
           </div>
         </div>
@@ -662,7 +689,7 @@ const filteredLogs = computed(() => {
 
   if (filters.value.date_to) {
     const toDate = new Date(filters.value.date_to);
-    toDate.setHours(23, 59, 59, 999); // End of day
+    toDate.setHours(23, 59, 59, 999);
     filtered = filtered.filter((log) => new Date(log.created_at) <= toDate);
   }
 
@@ -702,6 +729,10 @@ const uniqueUsers = computed(() => {
 });
 
 // Methods
+
+function handleLoadClick() {
+  loadActivityLogs(true);
+}
 async function loadActivityLogs(reset = true) {
   try {
     loading.value = reset;
@@ -714,20 +745,31 @@ async function loadActivityLogs(reset = true) {
     const response = await activityLogsAPI.getAll({
       page: currentPage.value,
       limit: 50,
+      action: filters.value.action || undefined,
+      user_email: filters.value.user_email || undefined,
+      date_from: filters.value.date_from || undefined,
+      date_to: filters.value.date_to || undefined,
     });
 
-    const newLogs = response.data?.data || [];
+    // ✅ CAST EXPLÍCITO
+    const responseData = response.data as any;
 
-    if (reset) {
-      allLogs.value = newLogs;
+    if (responseData?.success) {
+      const newLogs = responseData?.data || [];
+
+      if (reset) {
+        allLogs.value = newLogs;
+      } else {
+        allLogs.value.push(...newLogs);
+      }
+
+      hasMore.value = newLogs.length === 50;
+
+      // Load stats
+      await loadStats();
     } else {
-      allLogs.value.push(...newLogs);
+      throw new Error(responseData?.error || 'Failed to load logs');
     }
-
-    hasMore.value = newLogs.length === 50;
-
-    // Load stats
-    await loadStats();
   } catch (e: any) {
     console.error("Error loading activity logs:", e);
     error.value =
@@ -739,7 +781,23 @@ async function loadActivityLogs(reset = true) {
 
 async function loadStats() {
   try {
-    const statsResponse = await activityLogsAPI.getStats();
+    const statsResponse = await activityLogsAPI.getDetailedStats();
+    
+    // ✅ CAST EXPLÍCITO
+    const responseData = statsResponse.data as any;
+    
+    if (responseData?.success) {
+      const data = responseData.data;
+      stats.value = {
+        totalEvents: data.totalEvents || 0,
+        todayEvents: data.todayEvents || 0,
+        errorEvents: data.errorEvents || 0,
+        activeUsers: data.activeUsers || 0,
+      };
+    }
+  } catch (e) {
+    console.error("Error loading stats:", e);
+    // Fallback con datos de los logs cargados
     stats.value = {
       totalEvents: allLogs.value.length,
       todayEvents: allLogs.value.filter((log) => {
@@ -747,11 +805,9 @@ async function loadStats() {
         const logDate = new Date(log.created_at);
         return logDate.toDateString() === today.toDateString();
       }).length,
-      errorEvents: allLogs.value.filter((log) => log.action === "error").length,
+      errorEvents: allLogs.value.filter((log) => log.status === "failed").length,
       activeUsers: uniqueUsers.value.length,
     };
-  } catch (e) {
-    console.error("Error loading stats:", e);
   }
 }
 
@@ -761,7 +817,7 @@ async function loadMore() {
 }
 
 function applyFilters() {
-  // The computed filteredLogs will automatically update
+  loadActivityLogs();
 }
 
 function clearFilters() {
@@ -771,53 +827,46 @@ function clearFilters() {
     date_from: "",
     date_to: "",
   };
+  loadActivityLogs();
 }
 
 async function exportLogs() {
   try {
     exporting.value = true;
 
-    // Create CSV content
-    const headers = [
-      "Fecha",
-      "Hora",
-      "Acción",
-      "Descripción",
-      "Usuario",
-      "Tipo Entidad",
-      "ID Entidad",
-    ];
-    const csvContent = [
-      headers.join(","),
-      ...filteredLogs.value.map((log) =>
-        [
-          new Date(log.created_at).toLocaleDateString(),
-          new Date(log.created_at).toLocaleTimeString(),
-          log.action,
-          `"${log.description.replace(/"/g, '""')}"`,
-          log.user_email || "",
-          log.entity_type || "",
-          log.entity_id || "",
-        ].join(",")
-      ),
-    ].join("\n");
+    const exportResponse = await activityLogsAPI.export({
+      format: 'csv',
+      action: filters.value.action || undefined,
+      user_email: filters.value.user_email || undefined,
+      date_from: filters.value.date_from || undefined,
+      date_to: filters.value.date_to || undefined,
+    });
 
-    // Download CSV
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `activity_logs_${new Date().toISOString().split("T")[0]}.csv`
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // ✅ CAST EXPLÍCITO
+    const responseData = exportResponse.data as any;
+
+    if (responseData?.success && responseData.data) {
+      const blob = new Blob([responseData.data], { 
+        type: "text/csv;charset=utf-8;" 
+      });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `activity_logs_${new Date().toISOString().split("T")[0]}.csv`
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } else {
+      throw new Error('No data received from export endpoint');
+    }
   } catch (e: any) {
     console.error("Error exporting logs:", e);
-    error.value = "Error exportando logs";
+    error.value = e?.response?.data?.message || "Error exportando logs";
   } finally {
     exporting.value = false;
   }
@@ -829,7 +878,7 @@ function toggleAutoRefresh() {
   if (autoRefresh.value) {
     refreshInterval = setInterval(() => {
       loadActivityLogs();
-    }, 30000); // Refresh every 30 seconds
+    }, 30000);
   } else {
     if (refreshInterval) {
       clearInterval(refreshInterval);
@@ -842,17 +891,17 @@ function showLogDetails(log: any) {
   selectedLog.value = log;
 }
 
-function getStatusColor(action: string, details: any): string {
-  if (action === "error" || details?.error) {
+function getStatusColor(action: string, status: string): string {
+  if (status === "failed") {
     return "bg-red-500";
   }
-  if (action === "create") {
+  if (action.includes("create")) {
     return "bg-green-500";
   }
-  if (action === "update") {
+  if (action.includes("update")) {
     return "bg-blue-500";
   }
-  if (action === "delete") {
+  if (action.includes("delete")) {
     return "bg-red-400";
   }
   if (action === "login") {
@@ -865,16 +914,33 @@ function getStatusColor(action: string, details: any): string {
 }
 
 function getActionBadgeColor(action: string): string {
-  if (action === "error") return "bg-red-100 text-red-800";
-  if (action === "create") return "bg-green-100 text-green-800";
-  if (action === "update") return "bg-blue-100 text-blue-800";
-  if (action === "delete") return "bg-red-100 text-red-800";
+  if (action.includes("create")) return "bg-green-100 text-green-800";
+  if (action.includes("update")) return "bg-blue-100 text-blue-800";
+  if (action.includes("delete")) return "bg-red-100 text-red-800";
   if (action === "login") return "bg-green-100 text-green-800";
   if (action === "logout") return "bg-gray-100 text-gray-800";
   return "bg-purple-100 text-purple-800";
 }
 
-function formatDateGroup(dateString: string): string {
+function getStatusBadgeColor(status: string): string {
+  if (status === "success") return "bg-green-100 text-green-800";
+  if (status === "failed") return "bg-red-100 text-red-800";
+  if (status === "warning") return "bg-yellow-100 text-yellow-800";
+  return "bg-gray-100 text-gray-800";
+}
+
+function formatDescription(log: any): string {
+  if (log.resource_name) {
+    return `${log.action} en ${log.resource_type}: ${log.resource_name}`;
+  }
+  if (log.resource_type) {
+    return `${log.action} en ${log.resource_type}`;
+  }
+  return log.action;
+}
+
+function formatDateGroup(dateInput: string | number): string {
+  const dateString = String(dateInput);
   const date = new Date(dateString);
   const today = new Date();
   const yesterday = new Date(today);

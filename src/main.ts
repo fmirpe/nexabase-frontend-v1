@@ -19,7 +19,7 @@ import ConfigurationView from "./pages/configuration/ConfigurationView.vue";
 import ActivityLogsView from "./pages/configuration/ActivityLogsView.vue";
 import BackupView from "./pages/configuration/BackupView.vue";
 import ApiKeysView from "./pages/configuration/ApiKeysView.vue";
-
+import StorageView from "./components/admin/StorageView.vue";
 // ✅ AGREGAR - Webhooks
 import WebhooksView from "./pages/webhooks/WebhooksView.vue";
 
@@ -59,6 +59,12 @@ const routes = [
         name: "Users",
         component: UsersView,
         meta: { requiresAuth: true, requiresAdmin: true, title: "Users" },
+      },
+      {
+        path: "storage",
+        name: "Storage",
+        component: StorageView,
+        meta: { requiresAuth: true, requiresAdmin: true, title: "Storage" },
       },
       // ✅ AGREGAR - Ruta de webhooks
       {

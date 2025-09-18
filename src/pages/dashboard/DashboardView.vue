@@ -59,7 +59,7 @@
       
       <div class="flex items-center space-x-2">
         <button
-          v-for="view in ['grid', 'list', 'compact']"
+          v-for="view in ['grid', 'list', 'compact'] as const"
           :key="view"
           @click="currentView = view"
           :class="[

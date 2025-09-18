@@ -104,6 +104,18 @@
           >
             Historial de Entregas
           </button>
+          <!-- Agregar un tercer tab -->
+          <button
+            @click="activeTab = 'realtime'"
+            :class="[
+              'py-4 px-6 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'realtime'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            Tiempo Real
+          </button>
         </nav>
       </div>
 
@@ -260,6 +272,104 @@
           </div>
         </div>
       </div>
+
+      <div v-if="activeTab === 'realtime'" class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-medium text-gray-900">Entregas en Tiempo Real</h3>
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+              <div 
+                :class="[
+                  'w-3 h-3 rounded-full mr-2',
+                  realTimeConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                ]"
+              ></div>
+              <span class="text-sm text-gray-600">
+                {{ realTimeConnected ? 'Conectado' : 'Desconectado' }}
+              </span>
+            </div>
+            <button
+              @click="toggleRealTime"
+              :class="[
+                'px-3 py-1 rounded text-sm font-medium',
+                realTimeEnabled
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-600',
+              ]"
+            >
+              {{ realTimeEnabled ? 'Detener' : 'Iniciar' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Timeline en Tiempo Real -->
+        <div class="space-y-4 max-h-96 overflow-y-auto">
+          <div 
+            v-for="delivery in realTimeDeliveries" 
+            :key="delivery.id"
+            class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border-l-4"
+            :class="{
+              'border-green-500': delivery.status === 'success',
+              'border-red-500': delivery.status === 'failed',
+              'border-yellow-500': delivery.status === 'pending'
+            }"
+            :style="{ animation: 'slideIn 0.3s ease-out' }"
+          >
+            <!-- Status Icon -->
+            <div 
+              :class="[
+                'w-8 h-8 rounded-full flex items-center justify-center',
+                delivery.status === 'success' ? 'bg-green-100' : 
+                delivery.status === 'failed' ? 'bg-red-100' : 'bg-yellow-100'
+              ]"
+            >
+              <svg v-if="delivery.status === 'success'" class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+              </svg>
+              <svg v-else-if="delivery.status === 'failed'" class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+              </svg>
+              <svg v-else class="w-4 h-4 text-yellow-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium text-gray-900">{{ delivery.event }}</h4>
+                  <p class="text-sm text-gray-500">
+                    Webhook: {{ getWebhookName(delivery.webhook_id) }}
+                  </p>
+                </div>
+                <span class="text-xs text-gray-400">
+                  {{ formatTime(delivery.created_at) }}
+                </span>
+              </div>
+              
+              <div class="mt-2 flex items-center space-x-4 text-xs">
+                <span :class="[
+                  'px-2 py-1 rounded-full',
+                  delivery.status === 'success' ? 'bg-green-100 text-green-800' : 
+                  delivery.status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                ]">
+                  {{ delivery.status }}
+                </span>
+                <span class="text-gray-500">{{ delivery.response_status }}</span>
+                <span class="text-gray-500">{{ delivery.duration_ms }}ms</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="realTimeDeliveries.length === 0" class="text-center py-8 text-gray-500">
+            {{ realTimeEnabled ? 'Esperando entregas...' : 'Tiempo real deshabilitado' }}
+          </div>
+        </div>
+      </div>
+
+      
     </div>
 
     <!-- Create/Edit Modal -->
@@ -381,7 +491,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { webhooksAPI } from "../../services/api";
 
 // State
@@ -398,7 +508,14 @@ const webhooks = ref<any[]>([]);
 const deliveries = ref<any[]>([]);
 const collectionsInput = ref('');
 
+const realTimeEnabled = ref(false);
+const realTimeConnected = ref(false);
+const realTimeDeliveries = ref<any[]>([]);
+let pollInterval: NodeJS.Timeout | null = null;
+
+
 const availableEvents = [
+  'test.webhook',      // ✅ AGREGAR ESTE
   'record.created',
   'record.updated', 
   'record.deleted',
@@ -436,6 +553,73 @@ const successRate = computed(() => {
 });
 
 // Methods
+
+async function startRealTimePolling() {
+  if (pollInterval) return;
+
+  realTimeConnected.value = true;
+  
+  pollInterval = setInterval(async () => {
+    try {
+      // Obtener las últimas entregas (últimos 5 minutos)
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const response = await webhooksAPI.getDeliveries();
+      const responseData = response.data as any;
+
+      if (responseData?.success) {
+        const allDeliveries = responseData.data || [];
+        
+        // Filtrar solo las nuevas (últimos 5 minutos)
+        const newDeliveries = allDeliveries.filter((delivery: any) => 
+          new Date(delivery.created_at) > new Date(fiveMinutesAgo)
+        );
+
+        // Agregar solo las que no tenemos ya
+        newDeliveries.forEach((delivery: any) => {
+          if (!realTimeDeliveries.value.find(d => d.id === delivery.id)) {
+            realTimeDeliveries.value.unshift(delivery);
+            
+            // Mantener solo los últimos 20
+            if (realTimeDeliveries.value.length > 20) {
+              realTimeDeliveries.value = realTimeDeliveries.value.slice(0, 20);
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error polling deliveries:', error);
+      realTimeConnected.value = false;
+    }
+  }, 2000); // Revisar cada 2 segundos
+}
+
+function stopRealTimePolling() {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+  realTimeConnected.value = false;
+}
+
+function toggleRealTime() {
+  realTimeEnabled.value = !realTimeEnabled.value;
+  
+  if (realTimeEnabled.value) {
+    startRealTimePolling();
+  } else {
+    stopRealTimePolling();
+    realTimeDeliveries.value = [];
+  }
+}
+
+function getWebhookName(webhookId: string): string {
+  const webhook = webhooks.value.find(w => w.id === webhookId);
+  return webhook?.name || 'Unknown Webhook';
+}
+
+function formatTime(dateString: string): string {
+  return new Date(dateString).toLocaleTimeString();
+}
 async function loadWebhooks() {
   try {
     loading.value = true;
@@ -523,19 +707,22 @@ async function saveWebhook() {
 
 async function testWebhook(webhookId: string) {
   try {
+    console.log('🧪 FRONTEND: Testeando webhook ID:', webhookId); // ✅ LOG FRONTEND
     const response = await webhooksAPI.test(webhookId);
-    
-    // ✅ CAST EXPLÍCITO
     const responseData = response.data as any;
-    
+    console.log('📨 FRONTEND: Respuesta del test:', responseData); // ✅ LOG RESPUESTA
     if (responseData?.success) {
-      showSuccess('Webhook de prueba enviado correctamente');
-      setTimeout(() => loadDeliveries(), 1000);
+      showSuccess('Test webhook enviado correctamente ✅');
+      // Recargar entregas después de 2 segundos para ver el resultado
+      setTimeout(() => {
+        console.log('🔄 Recargando entregas...');
+        loadDeliveries();
+      }, 2000);
     } else {
-      throw new Error(responseData?.message || 'Error al probar webhook');
+      throw new Error(responseData?.message || 'Test failed');
     }
   } catch (e: any) {
-    console.error('Error testing webhook:', e);
+    console.error('❌ FRONTEND: Error testing webhook:', e);
     showError('Error enviando webhook de prueba: ' + (e?.response?.data?.message || e.message));
   }
 }
@@ -623,8 +810,38 @@ function showError(message: string) {
 }
 
 // Lifecycle
+onUnmounted(() => {
+  stopRealTimePolling();
+});
+
 onMounted(async () => {
   await loadWebhooks();
   await loadDeliveries();
 });
 </script>
+
+<style scoped>
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+</style>

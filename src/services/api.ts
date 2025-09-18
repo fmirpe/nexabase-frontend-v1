@@ -1,4 +1,4 @@
-// frontend/services/api.ts - REEMPLAZAR LA SECCIÓN Activity Logs API COMPLETA
+// frontend/services/api.ts - VERSIÓN COMPLETA ACTUALIZADA
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -150,14 +150,35 @@ export const authAPI = {
   updateProfile: (data: any) => apiClient.patch("/auth/profile", data),
 };
 
-// Admin Collections API
+// ✅ ACTUALIZADO: Admin Collections API con filtros avanzados
 export const adminCollections = {
+  // Lista simple (original)
   list: (params?: { page?: number; limit?: number; q?: string }) =>
     apiClient.get("/api/admin/collections", { params }),
+
+  // ✅ NUEVO: Lista con filtros avanzados
+  listAdvanced: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    filters?: string; // JSON string
+    sort?: string; // JSON string
+    relations?: string[]; // JSON string
+  }) => apiClient.get("/api/admin/collections/advanced", { params }),
+
+  // ✅ NUEVO: Estadísticas generales de collections
+  getStats: () => apiClient.get("/api/admin/collections/stats"),
+
   getByName: (name: string) =>
     apiClient.get(`/api/admin/collections/${encodeURIComponent(name)}`),
+
   stats: (name: string) =>
     apiClient.get(`/api/admin/collections/${encodeURIComponent(name)}/stats`),
+
+  // ✅ NUEVO: Schema con metadatos de filtros
+  getSchema: (name: string) =>
+    apiClient.get(`/api/admin/collections/${encodeURIComponent(name)}/schema`),
+
   create: (payload: {
     name: string;
     schema: Record<string, unknown>;
@@ -165,15 +186,16 @@ export const adminCollections = {
     is_active?: boolean;
     metadata?: Record<string, unknown> | null;
   }) => apiClient.post("/api/admin/collections", payload),
+
   update: (name: string, payload: any) =>
     apiClient.put(
       `/api/admin/collections/${encodeURIComponent(name)}`,
       payload
     ),
+
   delete: (name: string) =>
     apiClient.delete(`/api/admin/collections/${encodeURIComponent(name)}`),
-  getSchema: (name: string) =>
-    apiClient.get(`/api/admin/collections/${encodeURIComponent(name)}/schema`),
+
   updateSchema: (name: string, schema: any) =>
     apiClient.put(
       `/api/admin/collections/${encodeURIComponent(name)}/schema`,
@@ -186,23 +208,45 @@ export const adminCollections = {
   },
 };
 
-// Dynamic Collections API
+// ✅ ACTUALIZADO: Dynamic Collections API con filtros avanzados
 export const dynamicCollections = {
+  // Lista simple (original)
   list: (collectionName: string, params?: Record<string, unknown>) =>
     apiClient.get(`/api/collections/${encodeURIComponent(collectionName)}`, {
       params,
     }),
+
+  // ✅ NUEVO: Lista con filtros avanzados
+  listAdvanced: (
+    collectionName: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      filters?: string; // JSON string
+      sort?: string; // JSON string
+    }
+  ) =>
+    apiClient.get(
+      `/api/collections/${encodeURIComponent(collectionName)}/advanced`,
+      {
+        params,
+      }
+    ),
+
   create: (collectionName: string, data: any) =>
     apiClient.post(
       `/api/collections/${encodeURIComponent(collectionName)}`,
       data
     ),
+
   getById: (collectionName: string, id: string) =>
     apiClient.get(
       `/api/collections/${encodeURIComponent(
         collectionName
       )}/${encodeURIComponent(id)}`
     ),
+
   update: (collectionName: string, id: string, data: any) =>
     apiClient.put(
       `/api/collections/${encodeURIComponent(
@@ -210,6 +254,7 @@ export const dynamicCollections = {
       )}/${encodeURIComponent(id)}`,
       data
     ),
+
   remove: (collectionName: string, id: string) =>
     apiClient.delete(
       `/api/collections/${encodeURIComponent(
@@ -218,16 +263,120 @@ export const dynamicCollections = {
     ),
 };
 
-// Users API
+// ✅ ACTUALIZADO: External Collections API con filtros avanzados
+export const externalCollections = {
+  // Lista simple (original)
+  list: (
+    collectionName: string,
+    params?: {
+      page?: number;
+      limit?: number;
+    }
+  ) =>
+    apiClient.get(
+      `/api/data/collections/${encodeURIComponent(collectionName)}`,
+      {
+        params,
+      }
+    ),
+
+  // ✅ NUEVO: Lista con filtros avanzados para API externa
+  listAdvanced: (
+    collectionName: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      filters?: string; // JSON string
+      sort?: string; // JSON string
+    }
+  ) =>
+    apiClient.get(
+      `/api/data/collections/${encodeURIComponent(collectionName)}/advanced`,
+      {
+        params,
+      }
+    ),
+
+  getById: (collectionName: string, id: string) =>
+    apiClient.get(
+      `/api/data/collections/${encodeURIComponent(
+        collectionName
+      )}/${encodeURIComponent(id)}`
+    ),
+
+  create: (collectionName: string, data: any) =>
+    apiClient.post(
+      `/api/data/collections/${encodeURIComponent(collectionName)}`,
+      data
+    ),
+};
+
+// ✅ ACTUALIZADO COMPLETO: Users API con filtros avanzados
 export const usersAPI = {
-  getAll: (params?: any) => apiClient.get("/api/admin/users", { params }),
+  // Lista simple (original)
+  getAll: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    user_id?: string;
+    user_email?: string;
+  }) => apiClient.get("/api/admin/users", { params }),
+
+  // ✅ NUEVO: Lista con filtros avanzados
+  getAdvanced: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    filters?: string; // JSON string con filtros avanzados
+    sort?: string; // JSON string con ordenamiento
+    relations?: string[]; // Relaciones a incluir
+  }) => apiClient.get("/api/admin/users/advanced", { params }),
+
+  // ✅ NUEVO: Estadísticas de usuarios
+  getStats: () => apiClient.get("/api/admin/users/stats"),
+
+  // ✅ NUEVO: Sugerencias de búsqueda
+  getSearchSuggestions: (query: string) =>
+    apiClient.get("/api/admin/users/search/suggestions", {
+      params: { q: query },
+    }),
+
+  // ✅ NUEVO: Mi perfil
+  getMyProfile: () => apiClient.get("/api/admin/users/profile/me"),
+
+  // Operaciones CRUD (originales)
   create: (data: any) => apiClient.post("/api/admin/users", data),
+
   update: (id: string, data: any) =>
-    apiClient.put(`/api/admin/users/${id}`, data),
+    apiClient.patch(`/api/admin/users/${id}`, data),
+
   delete: (id: string) => apiClient.delete(`/api/admin/users/${id}`),
+
   getById: (id: string) => apiClient.get(`/api/admin/users/${id}`),
+
+  // ✅ NUEVO: Toggle status
   toggleStatus: (id: string) =>
     apiClient.patch(`/api/admin/users/${id}/toggle-status`),
+
+  // ✅ NUEVO: Operaciones masivas
+  bulkActivate: (userIds: string[]) =>
+    apiClient.post("/api/admin/users/bulk/activate", { userIds }),
+
+  bulkDeactivate: (userIds: string[]) =>
+    apiClient.post("/api/admin/users/bulk/deactivate", { userIds }),
+
+  // ✅ NUEVO: Logs por usuario específico
+  getUserLogs: (
+    userId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      filters?: string;
+      sort?: string;
+    }
+  ) => apiClient.get(`/api/admin/activity-logs/user/${userId}`, { params }),
 };
 
 // Configuration API
@@ -240,9 +389,9 @@ export const configAPI = {
   initialize: () => apiClient.post("/api/admin/configuration/initialize"),
 };
 
-// ✅ Activity Logs API - SECCIÓN ACTUALIZADA COMPLETA
+// ✅ ACTUALIZADO COMPLETO: Activity Logs API con filtros avanzados
 export const activityLogsAPI = {
-  // Obtener todos los logs con filtros y paginación
+  // Obtener todos los logs con filtros simples (original)
   getAll: (params?: {
     page?: number;
     limit?: number;
@@ -256,14 +405,41 @@ export const activityLogsAPI = {
     search?: string;
   }) => apiClient.get("/api/admin/activity-logs", { params }),
 
-  // Estadísticas básicas
+  // ✅ NUEVO: Filtros avanzados
+  getAdvanced: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    filters?: string; // JSON string con filtros avanzados
+    sort?: string; // JSON string con ordenamiento
+    relations?: string[]; // Relaciones a incluir
+  }) => apiClient.get("/api/admin/activity-logs/advanced", { params }),
+
+  // ✅ NUEVO: Logs de auditoría con filtros específicos
+  getAuditLogs: (params?: {
+    page?: number;
+    limit?: number;
+    startDate?: string;
+    endDate?: string;
+    userId?: string;
+    actions?: string; // Comma-separated
+    entityTypes?: string; // Comma-separated
+  }) => apiClient.get("/api/admin/activity-logs/audit", { params }),
+
+  // Estadísticas básicas (original)
   getStats: () => apiClient.get("/api/admin/activity-logs/stats"),
 
-  // Estadísticas detalladas
+  // ✅ NUEVO: Estadísticas avanzadas con período personalizable
+  getAdvancedStats: (days: number = 30) =>
+    apiClient.get("/api/admin/activity-logs/stats/advanced", {
+      params: { days },
+    }),
+
+  // Estadísticas detalladas (original)
   getDetailedStats: () =>
     apiClient.get("/api/admin/activity-logs/stats/detailed"),
 
-  // Exportar logs
+  // Exportar logs (original)
   export: (params?: {
     format?: "csv" | "json";
     action?: string;
@@ -276,6 +452,14 @@ export const activityLogsAPI = {
     search?: string;
   }) => apiClient.get("/api/admin/activity-logs/export", { params }),
 
+  // ✅ NUEVO: Export avanzado con filtros complejos
+  exportAdvanced: (params?: {
+    format?: "csv" | "json";
+    limit?: number;
+    filters?: string; // JSON string
+    sort?: string; // JSON string
+  }) => apiClient.get("/api/admin/activity-logs/export/advanced", { params }),
+
   // Obtener usuarios únicos (para filtros)
   getUniqueUsers: () => apiClient.get("/api/admin/activity-logs/users"),
 
@@ -283,7 +467,21 @@ export const activityLogsAPI = {
   getUniqueResourceTypes: () =>
     apiClient.get("/api/admin/activity-logs/resource-types"),
 
-  // Crear log manual
+  // ✅ NUEVO: Obtener acciones únicas
+  getUniqueActions: () => apiClient.get("/api/admin/activity-logs/actions"),
+
+  // ✅ NUEVO: Logs por usuario específico
+  getUserLogs: (
+    userId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      filters?: string;
+      sort?: string;
+    }
+  ) => apiClient.get(`/api/admin/activity-logs/user/${userId}`, { params }),
+
+  // Crear log manual (original)
   create: (data: {
     user_id: string;
     user_email?: string;
@@ -331,19 +529,31 @@ export const apiKeysAPI = {
 // Dashboard/Stats API
 export const dashboardAPI = {
   getStats: () => apiClient.get("/api/admin/dashboard/stats"),
-  getActivity: (params?: any) =>
+  getSystemInfo: () => apiClient.get("/api/admin/dashboard/system-info"),
+  getActivity: (params?: { limit?: number }) =>
     apiClient.get("/api/admin/dashboard/activity", { params }),
-  getUsage: (params?: any) =>
-    apiClient.get("/api/admin/dashboard/usage", { params }),
-  getSystemInfo: () => apiClient.get("/api/admin/system/info"),
+  getHealth: () => apiClient.get("/api/admin/dashboard/health"),
 };
 
-// Webhooks API
+// ✅ ACTUALIZADO: Webhooks API con filtros avanzados
 export const webhooksAPI = {
-  // Obtener todos los webhooks
-  getAll: () => apiClient.get("/api/webhooks"),
+  // Obtener todos los webhooks (original)
+  getAll: (params?: { page?: number; limit?: number; search?: string }) =>
+    apiClient.get("/api/webhooks", { params }),
 
-  // Crear webhook
+  // ✅ NUEVO: Webhooks con filtros avanzados
+  getAdvanced: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    filters?: string; // JSON string
+    sort?: string; // JSON string
+  }) => apiClient.get("/api/webhooks/advanced", { params }),
+
+  // ✅ NUEVO: Estadísticas de webhooks
+  getStats: () => apiClient.get("/api/webhooks/stats"),
+
+  // Crear webhook (original)
   create: (data: {
     name: string;
     url: string;
@@ -353,34 +563,61 @@ export const webhooksAPI = {
     headers?: Record<string, string>;
   }) => apiClient.post("/api/webhooks", data),
 
-  // Actualizar webhook
+  // Actualizar webhook (original)
   update: (id: string, data: any) => apiClient.put(`/api/webhooks/${id}`, data),
 
-  // Eliminar webhook
+  // Eliminar webhook (original)
   delete: (id: string) => apiClient.delete(`/api/webhooks/${id}`),
 
-  // Alternar estado activo/inactivo
+  // Alternar estado activo/inactivo (original)
   toggle: (id: string) => apiClient.patch(`/api/webhooks/${id}/toggle`),
 
-  // Probar webhook
-  test: (id: string) => apiClient.post(`/api/webhooks/${id}/test`),
+  // Probar webhook (original)
+  test: (webhookId: string) => {
+    console.log("🔌 API: Llamando test webhook para ID:", webhookId);
+    return apiClient.post(`/api/webhooks/${webhookId}/test`);
+  },
 
-  // Obtener entregas/deliveries
-  getDeliveries: (webhookId?: string, params?: any) =>
-    apiClient.get(`/api/webhooks/deliveries`, {
-      params: { webhookid: webhookId, ...params },
-    }),
+  // ✅ ACTUALIZADO: Obtener entregas/deliveries con filtros
+  getDeliveries: (params?: {
+    webhookId?: string;
+    page?: number;
+    limit?: number;
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+  }) => apiClient.get(`/api/webhooks/deliveries`, { params }),
 
-  // Estadísticas de webhook
-  getStats: (webhookId: string) =>
+  // ✅ NUEVO: Entregas con filtros avanzados
+  getDeliveriesAdvanced: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    filters?: string; // JSON string
+    sort?: string; // JSON string
+  }) => apiClient.get(`/api/webhooks/deliveries/advanced`, { params }),
+
+  // Estadísticas de webhook específico (original)
+  getWebhookStats: (webhookId: string) =>
     apiClient.get(`/api/webhooks/${webhookId}/stats`),
 
-  // Reintentar entrega
+  // Reintentar entrega (original)
   retryDelivery: (deliveryId: string) =>
     apiClient.post(`/api/webhooks/deliveries/${deliveryId}/retry`),
 
-  // Obtener estadísticas globales
-  getGlobalStats: () => apiClient.get("/api/webhooks/stats/global"),
+  // ✅ NUEVO: Estadísticas globales detalladas
+  getGlobalStats: (days: number = 30) =>
+    apiClient.get("/api/webhooks/stats/global", { params: { days } }),
+
+  // ✅ NUEVO: Eventos únicos (para filtros)
+  getUniqueEvents: () => apiClient.get("/api/webhooks/events/unique"),
+
+  // ✅ NUEVO: Collections únicas (para filtros)
+  getUniqueCollections: () => apiClient.get("/api/webhooks/collections/unique"),
+
+  // ✅ NUEVO: URLs únicas (para filtros)
+  getUniqueUrls: () => apiClient.get("/api/webhooks/urls/unique"),
 };
 
 // Analytics API
@@ -395,7 +632,7 @@ export const analyticsAPI = {
   getDashboard: () => apiClient.get("/api/admin/analytics/dashboard"),
 };
 
-// ✅ Realtime API - NUEVA SECCIÓN
+// ✅ Realtime API
 export const realtimeAPI = {
   // Estadísticas de conexiones en tiempo real
   getStats: () => apiClient.get("/api/realtime/stats"),
@@ -483,6 +720,126 @@ export const storageAPI = {
     apiClient.post(`/api/storage/${fileId}/move`, { folder }),
 
   cleanup: () => apiClient.post("/api/storage/cleanup"),
+};
+
+// ✅ NUEVOS: Helper types para filtros avanzados
+export interface AdvancedFilter {
+  field: string;
+  operator:
+    | "eq"
+    | "ne"
+    | "gt"
+    | "gte"
+    | "lt"
+    | "lte"
+    | "like"
+    | "not_like"
+    | "starts_with"
+    | "ends_with"
+    | "in"
+    | "not_in"
+    | "between"
+    | "is_null"
+    | "is_not_null";
+  value: any;
+}
+
+export interface AdvancedSort {
+  field: string;
+  direction: "ASC" | "DESC";
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  filters?: AdvancedFilter[];
+  sort?: AdvancedSort[];
+  search?: string;
+}
+
+// ✅ NUEVO: Helper para construir filtros
+export const filterHelpers = {
+  buildFiltersString: (filters: AdvancedFilter[]): string => {
+    return JSON.stringify(filters);
+  },
+
+  buildSortString: (sort: AdvancedSort[]): string => {
+    return JSON.stringify(sort);
+  },
+
+  // Filtros comunes predefinidos
+  common: {
+    // Filtros de fecha
+    lastDays: (field: string, days: number): AdvancedFilter => ({
+      field,
+      operator: "gte",
+      value: new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+    }),
+
+    thisWeek: (field: string): AdvancedFilter => {
+      const today = new Date();
+      const firstDay = new Date(
+        today.setDate(today.getDate() - today.getDay())
+      );
+      return {
+        field,
+        operator: "gte",
+        value: firstDay.toISOString().split("T")[0],
+      };
+    },
+
+    thisMonth: (field: string): AdvancedFilter => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      return {
+        field,
+        operator: "gte",
+        value: firstDay.toISOString().split("T")[0],
+      };
+    },
+
+    // Filtros de estado
+    activeOnly: (): AdvancedFilter => ({
+      field: "is_active",
+      operator: "eq",
+      value: true,
+    }),
+
+    inactiveOnly: (): AdvancedFilter => ({
+      field: "is_active",
+      operator: "eq",
+      value: false,
+    }),
+
+    // Filtros de rol
+    byRole: (role: string): AdvancedFilter => ({
+      field: "role",
+      operator: "eq",
+      value: role,
+    }),
+
+    // Filtros de estado de webhook/logs
+    successOnly: (): AdvancedFilter => ({
+      field: "status",
+      operator: "eq",
+      value: "success",
+    }),
+
+    failedOnly: (): AdvancedFilter => ({
+      field: "status",
+      operator: "eq",
+      value: "failed",
+    }),
+  },
 };
 
 export default apiClient;

@@ -86,7 +86,7 @@
             <option value="">Todos los roles</option>
             <option value="admin">Admin</option>
             <option value="user">Usuario</option>
-            <option value="moderator">Moderador</option>
+            <option value="developer">Desarrollador</option>
           </select>
           <select
             v-model.number="meta.limit"
@@ -194,7 +194,7 @@
                 'px-2 py-1 rounded-full text-xs font-medium',
                 user.role === 'admin'
                   ? 'bg-purple-100 text-purple-800'
-                  : user.role === 'moderator'
+                  : user.role === 'developer'
                   ? 'bg-yellow-100 text-yellow-800'
                   : 'bg-green-100 text-green-800',
               ]"
@@ -397,7 +397,7 @@
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="user">Usuario</option>
-              <option value="moderator">Moderador</option>
+              <option value="developer">Desarrollador</option>
               <option value="admin">Administrador</option>
             </select>
           </div>
@@ -470,19 +470,52 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import { usersAPI } from "../../services/api";
 
+// ✅ TIPOS TypeScript
+interface User {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: 'admin' | 'user' | 'developer';
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface UserForm {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'user' | 'developer';
+  is_active: boolean;
+}
+
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+interface APIResponse {
+  data: User[];
+  meta: PaginationMeta;
+}
+
 // State
-const loading = ref(false);
-const saving = ref(false);
-const deleting = ref(false);
+const loading = ref<boolean>(false);
+const saving = ref<boolean>(false);
+const deleting = ref<boolean>(false);
 const error = ref<string | null>(null);
 const formError = ref<string | null>(null);
 
 // Data
-const users = ref<any[]>([]);
-const meta = ref({
+const users = ref<User[]>([]);
+const meta = ref<PaginationMeta>({
   page: 1,
   limit: 12,
   total: 0,
@@ -490,17 +523,17 @@ const meta = ref({
 });
 
 // Filters
-const searchQuery = ref("");
-const selectedRole = ref("");
+const searchQuery = ref<string>("");
+const selectedRole = ref<string>("");
 
 // Modals
-const showModal = ref(false);
-const showDeleteModal = ref(false);
-const isEditing = ref(false);
-const userToDelete = ref<any>(null);
+const showModal = ref<boolean>(false);
+const showDeleteModal = ref<boolean>(false);
+const isEditing = ref<boolean>(false);
+const userToDelete = ref<User | null>(null);
 
 // Form
-const userForm = ref({
+const userForm = ref<UserForm>({
   first_name: "",
   last_name: "",
   email: "",
@@ -508,18 +541,18 @@ const userForm = ref({
   role: "user",
   is_active: true,
 });
-const editingUser = ref<any>(null);
+const editingUser = ref<User | null>(null);
 
 // Debounce search
 let searchTimeout: NodeJS.Timeout;
 
-// API Functions
-async function loadUsers() {
+// ✅ CORREGIDO: API Functions con tipos TypeScript
+async function loadUsers(): Promise<void> {
   try {
     loading.value = true;
     error.value = null;
 
-    const params: any = {
+    const params: Record<string, any> = {
       page: meta.value.page,
       limit: meta.value.limit,
     };
@@ -533,7 +566,8 @@ async function loadUsers() {
     }
 
     const response = await usersAPI.getAll(params);
-    const data = response.data;
+    // ✅ CORREGIDO: Tipo assertion para response.data
+    const data = response.data as APIResponse;
 
     users.value = data.data || [];
     meta.value = {
@@ -551,7 +585,7 @@ async function loadUsers() {
   }
 }
 
-async function saveUser() {
+async function saveUser(): Promise<void> {
   try {
     saving.value = true;
     formError.value = null;
@@ -559,7 +593,6 @@ async function saveUser() {
     if (isEditing.value && editingUser.value) {
       // Update user - excluir password del update
       const { password, ...updateData } = userForm.value;
-
       await usersAPI.update(editingUser.value.id, updateData);
     } else {
       // Create user
@@ -577,7 +610,7 @@ async function saveUser() {
   }
 }
 
-async function deleteUser() {
+async function deleteUser(): Promise<void> {
   if (!userToDelete.value) return;
 
   try {
@@ -595,7 +628,7 @@ async function deleteUser() {
   }
 }
 
-async function toggleUserStatus(user: any) {
+async function toggleUserStatus(user: User): Promise<void> {
   try {
     await usersAPI.update(user.id, { is_active: !user.is_active });
     await loadUsers();
@@ -608,7 +641,7 @@ async function toggleUserStatus(user: any) {
   }
 }
 
-async function resetUserPassword(user: any) {
+async function resetUserPassword(user: User): Promise<void> {
   if (
     !confirm(
       `¿Restablecer la contraseña de ${user.first_name} ${user.last_name}?`
@@ -627,7 +660,7 @@ async function resetUserPassword(user: any) {
 }
 
 // UI Functions
-function openCreateUser() {
+function openCreateUser(): void {
   isEditing.value = false;
   editingUser.value = null;
   userForm.value = {
@@ -641,7 +674,7 @@ function openCreateUser() {
   showModal.value = true;
 }
 
-function openEditUser(user: any) {
+function openEditUser(user: User): void {
   isEditing.value = true;
   editingUser.value = user;
   userForm.value = {
@@ -655,28 +688,28 @@ function openEditUser(user: any) {
   showModal.value = true;
 }
 
-function closeModal() {
+function closeModal(): void {
   showModal.value = false;
   formError.value = null;
 }
 
-function confirmDeleteUser(user: any) {
+function confirmDeleteUser(user: User): void {
   userToDelete.value = user;
   showDeleteModal.value = true;
 }
 
-async function refreshUsers() {
+async function refreshUsers(): Promise<void> {
   await loadUsers();
 }
 
-function goToPage(page: number) {
+function goToPage(page: number): void {
   if (page >= 1 && page <= meta.value.pages) {
     meta.value.page = page;
     loadUsers();
   }
 }
 
-function handleSearch() {
+function handleSearch(): void {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     meta.value.page = 1;
@@ -684,13 +717,13 @@ function handleSearch() {
   }, 500);
 }
 
-function applyFilters() {
+function applyFilters(): void {
   meta.value.page = 1;
   loadUsers();
 }
 
 // Utilities
-function getUserInitials(user: any): string {
+function getUserInitials(user: User): string {
   const first = user.first_name?.[0] || "";
   const last = user.last_name?.[0] || "";
   return (first + last).toUpperCase() || "?";

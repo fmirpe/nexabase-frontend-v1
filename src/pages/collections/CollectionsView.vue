@@ -1,604 +1,212 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Gestión de Colecciones</h1>
-        <p class="mt-2 text-sm text-gray-600">
-          Administra colecciones dinámicas y esquemas de datos
-        </p>
-      </div>
-      <div class="mt-4 sm:mt-0 flex items-center gap-2">
-        <button
-          @click="openCreateCollection"
-          class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Nueva Colección
-        </button>
-        <button
-          @click="toggleAdvancedFilters"
-          :class="[
-            'px-3 py-2 rounded-lg transition-colors',
-            showAdvancedFilters 
-              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          ]"
-          title="Filtros Avanzados"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
-          </svg>
-        </button>
-        <button
-          @click="exportCollections"
-          class="px-3 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
-          title="Exportar"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </button>
-        <button
-          @click="refreshCollections"
-          class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          title="Refrescar"
-        >
-          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
-      </div>
-    </div>
+    <CollectionHeader
+      :current-collection="currentCollection"
+      :show-advanced-filters="showAdvancedFilters"
+      :can-insert-records="canInsertRecords"
+      @toggle-advanced-filters="toggleAdvancedFilters"
+      @go-back="goBack"
+      @open-insert-modal="openInsertModal"
+      @open-create="openCreate"
+    />
 
-    <!-- Basic Filters -->
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-      <div class="flex flex-col sm:flex-row gap-4">
-        <div class="flex-1">
-          <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              v-model="searchQuery"
-              @input="handleSearch"
-              type="text"
-              placeholder="Buscar colecciones por nombre..."
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <select
-            v-model="selectedStatus"
-            @change="applyFilters"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Todos los estados</option>
-            <option value="true">Activas</option>
-            <option value="false">Inactivas</option>
-          </select>
-          <select
-            v-model.number="meta.limit"
-            @change="goToPage(1)"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option :value="10">10</option>
-            <option :value="25">25</option>
-            <option :value="50">50</option>
-            <option :value="100">100</option>
-          </select>
-        </div>
-      </div>
-    </div>
+    <!-- Stats Cards -->
+    <CollectionStats
+      v-if="!currentCollection && collectionsStats"
+      :stats="collectionsStats"
+    />
+    <RecordStats
+      v-else-if="currentCollection && recordsStats"
+      :stats="recordsStats"
+      :filtered-count="filteredRecordsCount"
+      :selected-count="selectedRecords.length"
+      :fields-count="Object.keys(currentCollection?.schema?.fields || {}).length"
+    />
 
-    <!-- ✅ NUEVO: Advanced Filters Panel -->
-    <div 
-      v-if="showAdvancedFilters" 
-      class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4"
-    >
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-medium text-gray-900">Filtros Avanzados</h3>
-        <button 
-          @click="clearAdvancedFilters"
-          class="text-sm text-gray-500 hover:text-gray-700"
-        >
-          Limpiar filtros
-        </button>
-      </div>
+    <!-- Advanced Filters -->
+    <CollectionAdvancedFilters
+      v-if="!currentCollection && showAdvancedFilters"
+      v-model:active-filters="activeCollectionFilters"
+      v-model:new-filter="newCollectionFilter"
+      @add-filter="addCollectionFilter"
+      @remove-filter="removeCollectionFilter"
+      @clear-filters="clearAdvancedFilters"
+    />
+    <RecordAdvancedFilters
+      v-else-if="currentCollection && showAdvancedFilters"
+      v-model:active-filters="activeRecordFilters"
+      v-model:new-filter="newRecordFilter"
+      :collection="currentCollection"
+      @add-filter="addRecordFilter"
+      @remove-filter="removeRecordFilter"
+      @clear-filters="clearAdvancedFilters"
+    />
 
-      <!-- Active Filters Display -->
-      <div v-if="activeFilters.length > 0" class="flex flex-wrap gap-2">
-        <div
-          v-for="(filter, index) in activeFilters"
-          :key="index"
-          class="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-        >
-          <span>{{ getFilterDisplayName(filter.field) }}</span>
-          <span class="text-blue-600">{{ getOperatorDisplayName(filter.operator) }}</span>
-          <span class="font-medium">{{ getFilterValueDisplay(filter) }}</span>
-          <button 
-            @click="removeFilter(index)"
-            class="text-blue-600 hover:text-blue-800"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
+    <!-- Search and Basic Filters -->
+    <SearchAndFilters
+      :current-collection="currentCollection"
+      :search-query="searchQuery"
+      :collection-filters="collectionFilters"
+      :pagination="pagination"
+      :filtered-collections-count="filteredCollectionsCount"
+      :filtered-records-count="filteredRecordsCount"
+      :selected-records="selectedRecords"
+      :auto-refresh="autoRefresh"
+      :exporting-records="exportingRecords"
+      :exporting-collections="exportingCollections"
+      @search-input="handleSearchInput"
+      @apply-filters="applyFilters"
+      @go-to-page="goToPage"
+      @clear-filters="clearAllFilters"
+      @export-records="exportRecords"
+      @export-collections="exportCollections"
+      @toggle-auto-refresh="toggleAutoRefresh"
+      @open-bulk-delete="openBulkDeleteModal"
+    />
 
-      <!-- Filter Builder -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Campo</label>
-          <select
-            v-model="newFilter.field"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Seleccionar campo</option>
-            <option value="name">Nombre</option>
-            <option value="is_active">Estado</option>
-            <option value="record_count">Cantidad de registros</option>
-            <option value="created_at">Fecha de creación</option>
-            <option value="updated_at">Última actualización</option>
-          </select>
-        </div>
+    <!-- Loading State -->
+    <LoadingState v-if="loading" />
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Operador</label>
-          <select
-            v-model="newFilter.operator"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Seleccionar operador</option>
-            <option v-for="op in getAvailableOperators(newFilter.field)" :key="op.value" :value="op.value">
-              {{ op.label }}
-            </option>
-          </select>
-        </div>
+    <!-- Collections Table -->
+    <CollectionsTable
+      v-else-if="!currentCollection"
+      :collections="paginatedCollections"
+      :filtered-collections="filteredCollections"
+      :has-active-filters="hasActiveCollectionFilters"
+      @view-data="viewData"
+      @view-collection="viewCollection"
+      @open-edit="openEdit"
+      @open-delete="openDelete"
+    />
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Valor</label>
-          <!-- Text input for most fields -->
-          <input
-            v-if="!['is_active'].includes(newFilter.field) && !['between'].includes(newFilter.operator)"
-            v-model="newFilter.value"
-            :type="['record_count'].includes(newFilter.field) ? 'number' : 'text'"
-            placeholder="Ingrese valor..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-          />
-          <!-- Select for status -->
-          <select
-            v-else-if="newFilter.field === 'is_active'"
-            v-model="newFilter.value"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Seleccionar estado</option>
-            <option :value="true">Activa</option>
-            <option :value="false">Inactiva</option>
-          </select>
-          <!-- Date range for between operator -->
-          <div v-else-if="newFilter.operator === 'between'" class="flex gap-2">
-            <input
-              v-model="newFilter.value[0]"
-              type="date"
-              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              v-model="newFilter.value[1]"
-              type="date"
-              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div class="flex items-end">
-          <button
-            @click="addFilter"
-            :disabled="!canAddFilter"
-            class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
-          >
-            Agregar Filtro
-          </button>
-        </div>
-      </div>
-
-      <!-- Date Range Quick Filters -->
-      <div class="flex flex-wrap gap-2">
-        <span class="text-sm font-medium text-gray-700">Filtros rápidos:</span>
-        <button
-          v-for="quickFilter in quickFilters"
-          :key="quickFilter.label"
-          @click="applyQuickFilter(quickFilter)"
-          class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-full transition-colors"
-        >
-          {{ quickFilter.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- ✅ NUEVO: Stats Cards -->
-    <div v-if="stats" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-          </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Total Colecciones</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ stats.totalCollections }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Activas</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ stats.activeCollections }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-          </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Total Registros</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ formatNumber(stats.totalRecords) }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Recientes</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ stats.recentlyCreated?.length || 0 }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Error/Loading -->
-    <div v-if="error" class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-      {{ error }}
-      <button
-        @click="loadCollections"
-        class="ml-4 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-      >
-        Reintentar
-      </button>
-    </div>
-    <div v-if="loading" class="bg-white border border-gray-200 rounded-lg p-4">
-      Cargando colecciones...
-    </div>
-
-    <!-- Collections Grid -->
-    <div v-if="!loading && collections.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div
-        v-for="collection in collections"
-        :key="collection.id"
-        class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
-      >
-        <div class="flex items-start justify-between mb-4">
-          <div class="flex items-center">
-            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="font-semibold text-gray-900">{{ collection.name }}</h3>
-              <p class="text-sm text-gray-500">{{ collection.metadata?.description || 'Sin descripción' }}</p>
-            </div>
-          </div>
-          <div class="flex items-center space-x-1">
-            <button
-              @click="openEditCollection(collection)"
-              class="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
-              title="Editar"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-            <button
-              @click="viewCollectionData(collection)"
-              class="p-1.5 text-gray-400 hover:text-green-600 transition-colors"
-              title="Ver datos"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </button>
-            <button
-              @click="confirmDeleteCollection(collection)"
-              class="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
-              title="Eliminar"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-600">Estado:</span>
-            <span :class="[
-                'px-2 py-1 rounded-full text-xs font-medium',
-                collection.is_active
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800',
-              ]">
-              {{ collection.is_active ? "Activa" : "Inactiva" }}
-            </span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-600">Registros:</span>
-            <span class="text-sm font-medium text-gray-900">{{ formatNumber(collection.record_count) }}</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-600">Campos:</span>
-            <span class="text-sm text-gray-900">{{ Object.keys(collection.schema?.fields || {}).length }}</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-600">Creada:</span>
-            <span class="text-sm text-gray-900">{{ formatDate(collection.created_at) }}</span>
-          </div>
-        </div>
-
-        <div class="mt-4 pt-4 border-t border-gray-200 flex gap-2">
-          <button
-            @click="toggleCollectionStatus(collection)"
-            :class="[
-              'flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
-              collection.is_active
-                ? 'bg-red-50 hover:bg-red-100 text-red-700'
-                : 'bg-green-50 hover:bg-green-100 text-green-700',
-            ]"
-          >
-            {{ collection.is_active ? "Desactivar" : "Activar" }}
-          </button>
-          <button
-            @click="duplicateCollection(collection)"
-            class="flex-1 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-colors"
-          >
-            Duplicar
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="!loading" class="text-center py-12">
-      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900">No hay colecciones</h3>
-      <p class="mt-1 text-sm text-gray-500">
-        {{ hasActiveFilters ? 'No se encontraron colecciones con los filtros aplicados.' : 'Comienza creando tu primera colección.' }}
-      </p>
-      <div class="mt-6 flex justify-center gap-3">
-        <button
-          v-if="hasActiveFilters"
-          @click="clearAllFilters"
-          class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors"
-        >
-          Limpiar Filtros
-        </button>
-        <button
-          @click="openCreateCollection"
-          class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Nueva Colección
-        </button>
-      </div>
-    </div>
+    <!-- Records Table -->
+    <RecordsTable
+      v-else
+      :collection="currentCollection"
+      :records="paginatedRecords"
+      :selected-records="selectedRecords"
+      :has-active-filters="hasActiveRecordFilters"
+      :can-update-records="canUpdateRecords"
+      :can-delete-records="canDeleteRecords"
+      :sort-field="sortField"
+      :sort-direction="sortDirection"
+      @toggle-select-record="toggleSelectRecord"
+      @toggle-select-all-visible="toggleSelectAllVisibleRecords"
+      @sort-by="sortBy"
+      @open-edit-record="openEditRecord"
+      @open-delete-record="openDeleteRecord"
+    />
 
     <!-- Pagination -->
-    <div v-if="!loading && meta.pages > 1" class="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
-      <div class="text-sm text-gray-600">
-        Página {{ meta.page }} de {{ meta.pages }} • {{ meta.total }} total
-        <span v-if="hasActiveFilters" class="text-blue-600">
-          (filtrado de {{ stats?.totalCollections || meta.total }})
-        </span>
-      </div>
-      <div class="flex items-center gap-2">
-        <button
-          @click="goToPage(meta.page - 1)"
-          :disabled="meta.page <= 1"
-          class="px-3 py-1.5 rounded border text-sm disabled:opacity-50"
-        >
-          Anterior
-        </button>
-        <button
-          @click="goToPage(meta.page + 1)"
-          :disabled="meta.page >= meta.pages"
-          class="px-3 py-1.5 rounded border text-sm disabled:opacity-50"
-        >
-          Siguiente
-        </button>
-      </div>
-    </div>
+    <PaginationControls
+      v-if="!loading && totalPages > 1"
+      :pagination="pagination"
+      :total-items="totalItems"
+      :total-pages="totalPages"
+      :has-active-filters="hasActiveFilters"
+      @go-to-page="goToPage"
+    />
 
-    <!-- Create/Edit Collection Modal -->
-    <div
-      v-if="showModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-      @click="closeModal"
-    >
-      <div
-        class="relative top-6 mx-auto p-5 w-full max-w-2xl shadow-lg rounded-md bg-white border"
-        @click.stop
-      >
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-          {{ isEditing ? "Editar Colección" : "Nueva Colección" }}
-        </h3>
+    <!-- Modals -->
+    <CreateCollectionModal
+      v-if="showCreateModal"
+      :editing-collection="editingCollection"
+      :form="form"
+      :schema-fields="schemaFields"
+      :relation-list="relationList"
+      :indexes-input="indexesInput"
+      :auth-create-input="authCreateInput"
+      :auth-read-input="authReadInput"
+      :auth-update-input="authUpdateInput"
+      :auth-delete-input="authDeleteInput"
+      :saving="saving"
+      @close="closeCreateModal"
+      @save="saveCollection"
+      @add-field="addSchemaField"
+      @remove-field="removeSchemaField"
+      @add-relation="addRelation"
+      @remove-relation="removeRelation"
+      @update:indexes-input="(val) => indexesInput = val"
+      @update:auth-create-input="(val) => authCreateInput = val"
+      @update:auth-read-input="(val) => authReadInput = val"
+      @update:auth-update-input="(val) => authUpdateInput = val"
+      @update:auth-delete-input="(val) => authDeleteInput = val"
+      @update-form="updateForm"
+      @update-form-metadata="updateFormMetadata"
+      @update-form-schema="updateFormSchema"
+      @update-schema-field="updateSchemaField"
+      @update-relation="updateRelation"
+    />
 
-        <div
-          v-if="formError"
-          class="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-lg p-3"
-        >
-          {{ formError }}
-        </div>
+    <RecordModal
+      v-if="showInsertModal"
+      :collection="currentCollection"
+      :editing-record="editingRecord"
+      :record-form="recordForm"
+      :json-errors="jsonErrors"
+      :upload-progress="uploadProgress"
+      :saving-record="savingRecord"
+      @close="closeInsertModal"
+      @save="saveRecord"
+      @validate-json="validateJSON"
+    />
 
-        <form @submit.prevent="saveCollection" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-            <input
-              v-model="collectionForm.name"
-              type="text"
-              required
-              :disabled="isEditing"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="nombre_coleccion"
-            />
-            <p class="text-xs text-gray-500 mt-1">Solo letras minúsculas, números y guiones bajos</p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-            <input
-              v-model="collectionForm.description"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Descripción de la colección"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Schema (JSON)</label>
-            <textarea
-              v-model="collectionForm.schemaJson"
-              rows="10"
-              required
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-              placeholder='{"fields": {"name": {"type": "string", "required": true}}}'
-            ></textarea>
-            <p class="text-xs text-gray-500 mt-1">Define los campos y tipos de datos en formato JSON</p>
-          </div>
-
-          <div class="flex items-center">
-            <input
-              v-model="collectionForm.is_active"
-              type="checkbox"
-              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label class="ml-2 text-sm text-gray-700">Colección activa</label>
-          </div>
-
-          <div class="flex gap-3 pt-4">
-            <button
-              type="button"
-              @click="closeModal"
-              class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              :disabled="saving"
-              class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium rounded-lg transition-colors"
-            >
-              {{ saving ? "Guardando..." : isEditing ? "Actualizar" : "Crear" }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div
+    <DeleteModal
       v-if="showDeleteModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center"
-      @click="showDeleteModal = false"
-    >
-      <div
-        class="bg-white border rounded-lg p-6 w-full max-w-md mx-4"
-        @click.stop
-      >
-        <h4 class="text-lg font-semibold text-gray-900">Eliminar Colección</h4>
-        <p class="text-sm text-gray-600 mt-2">
-          ¿Estás seguro de que deseas eliminar la colección
-          <strong>{{ collectionToDelete?.name }}</strong>? 
-          Esta acción eliminará todos los datos y no se puede deshacer.
-        </p>
-        <div class="flex gap-3 mt-6">
-          <button
-            @click="showDeleteModal = false"
-            class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
-          >
-            Cancelar
-          </button>
-          <button
-            @click="deleteCollection"
-            :disabled="deleting"
-            class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white rounded"
-          >
-            {{ deleting ? "Eliminando..." : "Eliminar" }}
-          </button>
-        </div>
-      </div>
-    </div>
+      :deleting-collection="deletingCollection"
+      :collection-to-delete="collectionToDelete"
+      :record-to-delete="recordToDelete"
+      @close="closeDeleteModal"
+      @confirm="confirmDelete"
+    />
+
+    <BulkDeleteModal
+      v-if="showBulkDeleteModal"
+      :selected-count="selectedRecords.length"
+      :bulk-deleting="bulkDeleting"
+      @close="closeBulkDeleteModal"
+      @confirm="confirmBulkDelete"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
-import { useRouter } from "vue-router";
-import { adminCollections } from "../../services/api";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useAuthStore } from "../../stores/auth";
+import { adminCollections, recordsAPI } from "../../services/api";
+import { useNotifications } from '../../composables/useNotifications';
 
-// ✅ TIPOS TypeScript
+// Components
+import CollectionHeader from "./components/CollectionHeader.vue";
+import CollectionStats from "./components/CollectionStats.vue";
+import RecordStats from "./components/RecordStats.vue";
+import CollectionAdvancedFilters from "./components/CollectionAdvancedFilters.vue";
+import RecordAdvancedFilters from "./components/RecordAdvancedFilters.vue";
+import SearchAndFilters from "./components/SearchAndFilters.vue";
+import LoadingState from "./components/LoadingState.vue";
+import CollectionsTable from "./components/CollectionsTable.vue";
+import RecordsTable from "./components/RecordsTable.vue";
+import PaginationControls from "./components/PaginationControls.vue";
+import CreateCollectionModal from "./components/CreateCollectionModal.vue";
+import RecordModal from "./components/RecordModal.vue";
+import DeleteModal from "./components/DeleteModal.vue";
+import BulkDeleteModal from "./components/BulkDeleteModal.vue";
+
+const { showSuccess, showError } = useNotifications();
+
+// Interfaces
 interface Collection {
   id: string;
   name: string;
   is_active: boolean;
   record_count: number;
   schema: any;
-  metadata?: { description?: string };
+  metadata: any;
+  auth_rules: any;
   created_at: string;
-  updated_at?: string;
-}
-
-interface CollectionForm {
-  name: string;
-  description: string;
-  schemaJson: string;
-  is_active: boolean;
+  updated_at: string;
 }
 
 interface Filter {
@@ -607,558 +215,1131 @@ interface Filter {
   value: any;
 }
 
-interface Stats {
-  totalCollections: number;
-  activeCollections: number;
-  totalRecords: number;
-  topCollectionsByRecords: Array<{ name: string; record_count: number }>;
-  recentlyCreated: Array<{ name: string; created_at: string }>;
-}
-
-interface PaginationMeta {
+interface Pagination {
   page: number;
   limit: number;
-  total: number;
-  pages: number;
 }
 
-interface APIResponse {
-  data: Collection[];
-  meta: PaginationMeta;
-}
-
+const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 
 // State
-const loading = ref<boolean>(false);
-const saving = ref<boolean>(false);
-const deleting = ref<boolean>(false);
-const error = ref<string | null>(null);
-const formError = ref<string | null>(null);
+const loading = ref(true);
+const saving = ref(false);
+const savingRecord = ref(false);
+const deletingCollection = ref(false);
+const bulkDeleting = ref(false);
+const exportingCollections = ref(false);
+const exportingRecords = ref(false);
 
-// Data
+// Collections
 const collections = ref<Collection[]>([]);
-const stats = ref<Stats | null>(null);
-const meta = ref<PaginationMeta>({
+const currentCollection = ref<Collection | null>(null);
+const collectionsStats = ref<any>(null);
+
+// Records
+const records = ref<any[]>([]);
+const recordsStats = ref<any>(null);
+const selectedRecords = ref<string[]>([]);
+
+// Filters
+const showAdvancedFilters = ref(false);
+const activeCollectionFilters = ref<Filter[]>([]);
+const activeRecordFilters = ref<Filter[]>([]);
+const newCollectionFilter = ref<Filter>({ field: '', operator: '', value: '' });
+const newRecordFilter = ref<Filter>({ field: '', operator: '', value: '' });
+const searchQuery = ref("");
+const collectionFilters = ref({
+  is_active: "",
+});
+
+// Pagination
+const pagination = ref<Pagination>({
   page: 1,
-  limit: 12,
-  total: 0,
-  pages: 0,
+  limit: 25
 });
 
-// ✅ Advanced Filters
-const showAdvancedFilters = ref<boolean>(false);
-const activeFilters = ref<Filter[]>([]);
-const newFilter = ref<Filter>({
-  field: '',
-  operator: '',
-  value: ''
-});
+// Sorting
+const sortField = ref("");
+const sortDirection = ref<"asc" | "desc">("asc");
 
-// Basic Filters
-const searchQuery = ref<string>("");
-const selectedStatus = ref<string>("");
-
-// Modals
-const showModal = ref<boolean>(false);
-const showDeleteModal = ref<boolean>(false);
-const isEditing = ref<boolean>(false);
-const collectionToDelete = ref<Collection | null>(null);
-
-// Form
-const collectionForm = ref<CollectionForm>({
-  name: "",
-  description: "",
-  schemaJson: "",
-  is_active: true,
-});
-const editingCollection = ref<Collection | null>(null);
-
-// Debounce search
+// Auto refresh
+const autoRefresh = ref(false);
+let refreshInterval: NodeJS.Timeout | null = null;
 let searchTimeout: NodeJS.Timeout;
 
-// ✅ Quick Filters
-const quickFilters = [
-  {
-    label: 'Últimos 7 días',
-    filter: { field: 'created_at', operator: 'gte', value: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] }
-  },
-  {
-    label: 'Últimos 30 días',
-    filter: { field: 'created_at', operator: 'gte', value: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] }
-  },
-  {
-    label: 'Solo activas',
-    filter: { field: 'is_active', operator: 'eq', value: true }
-  },
-  {
-    label: 'Con más de 100 registros',
-    filter: { field: 'record_count', operator: 'gt', value: 100 }
-  }
-];
+// Modals
+const showCreateModal = ref(false);
+const showInsertModal = ref(false);
+const showDeleteModal = ref(false);
+const showBulkDeleteModal = ref(false);
+const editingCollection = ref<Collection | null>(null);
+const editingRecord = ref<any>(null);
+const collectionToDelete = ref<Collection | null>(null);
+const recordToDelete = ref<any>(null);
 
-// ✅ COMPUTED
+// Forms
+const form = ref({
+  name: "",
+  is_active: true,
+  metadata: { description: "" },
+  auth_rules: {
+    select: "authenticated",
+    insert: "authenticated", 
+    update: "owner",
+    delete: "owner"
+  },
+  schema: {
+    fields: {},
+    relations: {},
+    timestamps: true,
+    indexes: []
+  }
+});
+
+const schemaFields = ref<any[]>([]);
+const relationList = ref<any[]>([]);
+const indexesInput = ref("");
+const authCreateInput = ref("authenticated");
+const authReadInput = ref("public");
+const authUpdateInput = ref("owner, admin");
+const authDeleteInput = ref("admin");
+
+const recordForm = ref<any>({});
+const jsonErrors = ref<any>({});
+const uploadProgress = ref<any>({});
+
+// Computed properties
+const canInsertRecords = computed(() => {
+  return currentCollection.value?.auth_rules?.insert !== "none";
+});
+
+const canUpdateRecords = computed(() => {
+  return currentCollection.value?.auth_rules?.update !== "none";
+});
+
+const canDeleteRecords = computed(() => {
+  return currentCollection.value?.auth_rules?.delete !== "none";
+});
+
+const hasActiveCollectionFilters = computed(() => {
+  return activeCollectionFilters.value.length > 0 || 
+         searchQuery.value.length > 0 ||
+         collectionFilters.value.is_active !== "";
+});
+
+const hasActiveRecordFilters = computed(() => {
+  return activeRecordFilters.value.length > 0 || 
+         searchQuery.value.length > 0;
+});
+
 const hasActiveFilters = computed(() => {
-  return activeFilters.value.length > 0 || searchQuery.value.trim() || selectedStatus.value;
+  return currentCollection.value ? hasActiveRecordFilters.value : hasActiveCollectionFilters.value;
 });
 
-const canAddFilter = computed(() => {
-  return newFilter.value.field && newFilter.value.operator && 
-         (newFilter.value.value !== '' && newFilter.value.value !== null);
-});
-
-// ✅ Advanced Filters Functions
-function toggleAdvancedFilters(): void {
-  showAdvancedFilters.value = !showAdvancedFilters.value;
-}
-
-function getAvailableOperators(field: string) {
-  const textOperators = [
-    { value: 'eq', label: 'Igual a' },
-    { value: 'ne', label: 'Diferente de' },
-    { value: 'like', label: 'Contiene' },
-    { value: 'starts_with', label: 'Empieza con' },
-    { value: 'ends_with', label: 'Termina con' }
-  ];
-
-  const numberOperators = [
-    { value: 'eq', label: 'Igual a' },
-    { value: 'ne', label: 'Diferente de' },
-    { value: 'gt', label: 'Mayor que' },
-    { value: 'gte', label: 'Mayor o igual que' },
-    { value: 'lt', label: 'Menor que' },
-    { value: 'lte', label: 'Menor o igual que' }
-  ];
-
-  const dateOperators = [
-    { value: 'eq', label: 'Igual a' },
-    { value: 'ne', label: 'Diferente de' },
-    { value: 'gt', label: 'Después de' },
-    { value: 'gte', label: 'Desde' },
-    { value: 'lt', label: 'Antes de' },
-    { value: 'lte', label: 'Hasta' },
-    { value: 'between', label: 'Entre fechas' }
-  ];
-
-  const selectOperators = [
-    { value: 'eq', label: 'Igual a' },
-    { value: 'ne', label: 'Diferente de' }
-  ];
-
-  if (['created_at', 'updated_at'].includes(field)) {
-    return dateOperators;
-  }
-  if (['record_count'].includes(field)) {
-    return numberOperators;
-  }
-  if (['is_active'].includes(field)) {
-    return selectOperators;
-  }
-  return textOperators;
-}
-
-function getFilterDisplayName(field: string): string {
-  const names: Record<string, string> = {
-    name: 'Nombre',
-    is_active: 'Estado',
-    record_count: 'Cantidad de registros',
-    created_at: 'Fecha de creación',
-    updated_at: 'Última actualización'
-  };
-  return names[field] || field;
-}
-
-function getOperatorDisplayName(operator: string): string {
-  const operators: Record<string, string> = {
-    eq: '=',
-    ne: '≠',
-    gt: '>',
-    gte: '≥',
-    lt: '<',
-    lte: '≤',
-    like: 'contiene',
-    starts_with: 'empieza con',
-    ends_with: 'termina con',
-    between: 'entre'
-  };
-  return operators[operator] || operator;
-}
-
-function getFilterValueDisplay(filter: Filter): string {
-  if (Array.isArray(filter.value)) {
-    return filter.value.join(' - ');
-  }
-  if (filter.field === 'is_active') {
-    return filter.value ? 'Activa' : 'Inactiva';
-  }
-  return String(filter.value);
-}
-
-function addFilter(): void {
-  if (!canAddFilter.value) return;
-
-  let value = newFilter.value.value;
+const filteredCollections = computed(() => {
+  let filtered = [...collections.value];
   
-  if (newFilter.value.operator === 'between') {
-    if (!Array.isArray(value)) {
-      value = ['', ''];
-    }
+  // Apply search
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(c => 
+      c.name.toLowerCase().includes(query) ||
+      c.metadata?.description?.toLowerCase().includes(query)
+    );
   }
-
-  activeFilters.value.push({
-    field: newFilter.value.field,
-    operator: newFilter.value.operator,
-    value: value
+  
+  // Apply basic filters
+  if (collectionFilters.value.is_active !== "") {
+    const isActive = collectionFilters.value.is_active === "true";
+    filtered = filtered.filter(c => c.is_active === isActive);
+  }
+  
+  // Apply advanced filters
+  activeCollectionFilters.value.forEach(filter => {
+    filtered = filtered.filter(item => {
+      const value = item[filter.field as keyof Collection];
+      switch (filter.operator) {
+        case 'eq': return value === filter.value;
+        case 'ne': return value !== filter.value;
+        case 'gt': return Number(value) > Number(filter.value);
+        case 'gte': return Number(value) >= Number(filter.value);
+        case 'lt': return Number(value) < Number(filter.value);
+        case 'lte': return Number(value) <= Number(filter.value);
+        case 'like': return String(value).toLowerCase().includes(String(filter.value).toLowerCase());
+        case 'starts_with': return String(value).toLowerCase().startsWith(String(filter.value).toLowerCase());
+        case 'ends_with': return String(value).toLowerCase().endsWith(String(filter.value).toLowerCase());
+        default: return true;
+      }
+    });
   });
+  
+  return filtered;
+});
 
-  newFilter.value = {
-    field: '',
-    operator: '',
-    value: ''
-  };
-
-  applyFilters();
-}
-
-function removeFilter(index: number): void {
-  activeFilters.value.splice(index, 1);
-  applyFilters();
-}
-
-function clearAdvancedFilters(): void {
-  activeFilters.value = [];
-  applyFilters();
-}
-
-function clearAllFilters(): void {
-  activeFilters.value = [];
-  searchQuery.value = '';
-  selectedStatus.value = '';
-  applyFilters();
-}
-
-function applyQuickFilter(quickFilter: any): void {
-  const exists = activeFilters.value.some(f => 
-    f.field === quickFilter.filter.field && 
-    f.operator === quickFilter.filter.operator &&
-    f.value === quickFilter.filter.value
-  );
-
-  if (!exists) {
-    activeFilters.value.push(quickFilter.filter);
-    applyFilters();
+const filteredRecords = computed(() => {
+  let filtered = [...records.value];
+  
+  // Apply search
+  if (searchQuery.value && currentCollection.value) {
+    const query = searchQuery.value.toLowerCase();
+    const searchableFields = Object.keys(currentCollection.value.schema?.fields || {})
+      .filter(field => {
+        const fieldType = currentCollection.value!.schema.fields[field].type;
+        return ['string', 'text', 'email', 'url'].includes(fieldType);
+      });
+    
+    filtered = filtered.filter(record => 
+      searchableFields.some(field => 
+        String(record[field] || '').toLowerCase().includes(query)
+      )
+    );
   }
-}
+  
+  // Apply advanced filters
+  activeRecordFilters.value.forEach(filter => {
+    filtered = filtered.filter(item => {
+      const value = item[filter.field];
+      switch (filter.operator) {
+        case 'eq': return value === filter.value;
+        case 'ne': return value !== filter.value;
+        case 'gt': return Number(value) > Number(filter.value);
+        case 'gte': return Number(value) >= Number(filter.value);
+        case 'lt': return Number(value) < Number(filter.value);
+        case 'lte': return Number(value) <= Number(filter.value);
+        case 'like': return String(value).toLowerCase().includes(String(filter.value).toLowerCase());
+        case 'starts_with': return String(value).toLowerCase().startsWith(String(filter.value).toLowerCase());
+        case 'ends_with': return String(value).toLowerCase().endsWith(String(filter.value).toLowerCase());
+        default: return true;
+      }
+    });
+  });
+  
+  return filtered;
+});
 
-// ✅ API Functions
-async function loadCollections(): Promise<void> {
+const filteredCollectionsCount = computed(() => filteredCollections.value.length);
+const filteredRecordsCount = computed(() => filteredRecords.value.length);
+
+const totalItems = computed(() => {
+  return currentCollection.value ? filteredRecordsCount.value : filteredCollectionsCount.value;
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(totalItems.value / pagination.value.limit);
+});
+
+const paginatedCollections = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.limit;
+  const end = start + pagination.value.limit;
+  return filteredCollections.value.slice(start, end);
+});
+
+const paginatedRecords = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.limit;
+  const end = start + pagination.value.limit;
+  return filteredRecords.value.slice(start, end);
+});
+
+// Methods
+async function loadCollections() {
   try {
     loading.value = true;
-    error.value = null;
-
-    const useAdvanced = activeFilters.value.length > 0;
     
-    const params: Record<string, any> = {
-      page: meta.value.page,
-      limit: meta.value.limit,
-    };
-
-    if (searchQuery.value.trim()) {
-      params.search = searchQuery.value.trim();
-    }
-
-    if (useAdvanced) {
-      const filters = [...activeFilters.value];
-      
-      if (selectedStatus.value) {
-        filters.push({ field: 'is_active', operator: 'eq', value: selectedStatus.value === 'true' });
-      }
-
-      if (filters.length > 0) {
-        params.filters = JSON.stringify(filters);
-      }
-
-      params.sort = JSON.stringify([{ field: 'created_at', direction: 'DESC' }]);
-
-      const response = await adminCollections.listAdvanced(params);
-      // ✅ CORRECCIÓN: Type assertion para response.data
-      const data = response.data as APIResponse;
-
-      collections.value = data.data || [];
-      meta.value = {
-        page: data.meta?.page || 1,
-        limit: data.meta?.limit || 12,
-        total: data.meta?.total || 0,
-        pages: data.meta?.pages || 0,
-      };
-    } else {
-      const legacyParams: any = {
-        page: meta.value.page,
-        limit: meta.value.limit,
-      };
-
-      if (searchQuery.value.trim()) {
-        legacyParams.q = searchQuery.value.trim();
-      }
-
-      const response = await adminCollections.list(legacyParams);
-      // ✅ CORRECCIÓN: Type assertion para response.data
-      const data = response.data as APIResponse;
-
-      collections.value = data.data || [];
-      meta.value = {
-        page: data.meta?.page || 1,
-        limit: data.meta?.limit || 12,
-        total: data.meta?.total || 0,
-        pages: data.meta?.pages || 0,
-      };
-    }
-  } catch (e: any) {
-    console.error("Error loading collections:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error cargando colecciones";
+    const response = await adminCollections.list({
+      page: 1,
+      limit: 1000
+    });
+    
+    const responseData = response.data as any;
+    collections.value = responseData.data || [];
+    
+    await loadCollectionsStats();
+    
+  } catch (error: any) {
+    console.error("Error loading collections:", error);
   } finally {
     loading.value = false;
   }
 }
 
-async function loadStats(): Promise<void> {
+async function loadCollectionsStats() {
   try {
-    const response = await adminCollections.getStats();
-    stats.value = response.data as Stats;
-  } catch (e: any) {
-    console.error("Error loading stats:", e);
-    // No mostrar error para stats, es opcional
-  }
-}
-
-async function exportCollections(): Promise<void> {
-  try {
-    const params: any = {
-      limit: 1000,
+    const statsResponse = await adminCollections.getStats();
+    const responseData = statsResponse.data as any;
+    
+    if (responseData?.success === true && responseData?.data) {
+      collectionsStats.value = responseData.data;
+    } else {
+      throw new Error('Invalid stats response format');
+    }
+  } catch (error: any) {
+    console.warn("Stats endpoint failed, calculating locally:", error.message);
+    
+    // Fallback calculation
+    const total = collections.value.length;
+    const active = collections.value.filter(c => c.is_active).length;
+    const totalRecords = collections.value.reduce((sum, c) => sum + (c.record_count || 0), 0);
+    
+    collectionsStats.value = {
+      total,
+      active,
+      totalRecords,
+      averageRecords: total > 0 ? Math.round(totalRecords / total) : 0,
+      topCollectionsByRecords: [],
+      recentlyCreated: []
     };
-
-    if (searchQuery.value.trim()) {
-      params.search = searchQuery.value.trim();
-    }
-
-    if (activeFilters.value.length > 0) {
-      const filters = [...activeFilters.value];
-      
-      if (selectedStatus.value) {
-        filters.push({ field: 'is_active', operator: 'eq', value: selectedStatus.value === 'true' });
-      }
-
-      params.filters = JSON.stringify(filters);
-    }
-
-    const response = await adminCollections.listAdvanced(params);
-    // ✅ CORRECCIÓN: Type assertion para response.data
-    const responseData = response.data as APIResponse;
-    const collections = responseData.data || [];
-
-    const csvContent = [
-      ['Nombre', 'Estado', 'Registros', 'Campos', 'Descripción', 'Fecha de Creación'].join(','),
-      ...collections.map((collection: any) => [
-        collection.name,
-        collection.is_active ? 'Activa' : 'Inactiva',
-        collection.record_count,
-        Object.keys(collection.schema?.fields || {}).length,
-        collection.metadata?.description || 'Sin descripción',
-        new Date(collection.created_at).toLocaleDateString('es-ES')
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `colecciones_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } catch (e: any) {
-    console.error("Error exporting collections:", e);
-    error.value = "Error exportando colecciones";
   }
 }
 
-async function saveCollection(): Promise<void> {
+async function loadRecords() {
+  if (!currentCollection.value) return;
+  
+  try {
+    loading.value = true;
+    
+    const response = await recordsAPI.getAll(currentCollection.value.name, {
+      page: pagination.value.page,
+      limit: pagination.value.limit,
+      search: searchQuery.value,
+      filters: JSON.stringify(activeRecordFilters.value),
+      sort: sortField.value ? JSON.stringify([{
+        field: sortField.value,
+        direction: sortDirection.value.toUpperCase()
+      }]) : undefined
+    });
+    
+    const responseData = response.data as any;
+    records.value = responseData.data || [];
+    
+    // Load record stats
+    recordsStats.value = {
+      total: responseData.meta?.total || records.value.length,
+      filtered: filteredRecordsCount.value
+    };
+    
+  } catch (error: any) {
+    console.error("Error loading records:", error);
+  } finally {
+    loading.value = false;
+  }
+}
+
+function handleSearchInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  searchQuery.value = target.value;
+  
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    pagination.value.page = 1;
+    if (currentCollection.value) {
+      loadRecords();
+    }
+  }, 300);
+}
+
+function goToPage(page: number) {
+  pagination.value.page = page;
+  if (currentCollection.value) {
+    loadRecords();
+  }
+}
+
+function sortBy(field: string) {
+  if (sortField.value === field) {
+    sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
+  } else {
+    sortField.value = field;
+    sortDirection.value = "asc";
+  }
+  
+  if (currentCollection.value) {
+    loadRecords();
+  }
+}
+
+// View and navigation functions
+function viewData(collection: Collection) {
+  //router.push(`/admin/collections/${collection.name}/data`);
+  viewCollection(collection);
+}
+
+function viewCollection(collection: Collection) {
+  currentCollection.value = collection;
+  selectedRecords.value = [];
+  pagination.value.page = 1;
+  searchQuery.value = "";
+  activeRecordFilters.value = [];
+  loadRecords();
+}
+
+function goBack() {
+  currentCollection.value = null;
+  recordsStats.value = null;
+  selectedRecords.value = [];
+  pagination.value.page = 1;
+  searchQuery.value = "";
+  activeRecordFilters.value = [];
+  router.push({path: '/collections'});
+}
+
+// Modal functions
+function openCreate() {
+  editingCollection.value = null;
+  resetForm();
+  showCreateModal.value = true;
+}
+
+function openEdit(collection: Collection) {
+  editingCollection.value = collection;
+  populateForm(collection);
+  showCreateModal.value = true;
+}
+
+function closeCreateModal() {
+  showCreateModal.value = false;
+  editingCollection.value = null;
+  resetForm();
+}
+
+function openInsertModal() {
+  editingRecord.value = null;
+  resetRecordForm();
+  showInsertModal.value = true;
+}
+
+function openEditRecord(record: any) {
+  editingRecord.value = record;
+  populateRecordForm(record);
+  showInsertModal.value = true;
+}
+
+function closeInsertModal() {
+  showInsertModal.value = false;
+  editingRecord.value = null;
+  resetRecordForm();
+}
+
+function openDelete(collection: Collection) {
+  collectionToDelete.value = collection;
+  showDeleteModal.value = true;
+}
+
+function openDeleteRecord(record: any) {
+  recordToDelete.value = record;
+  showDeleteModal.value = true;
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false;
+  collectionToDelete.value = null;
+  recordToDelete.value = null;
+}
+
+function openBulkDeleteModal() {
+  showBulkDeleteModal.value = true;
+}
+
+function closeBulkDeleteModal() {
+  showBulkDeleteModal.value = false;
+}
+
+// Event handlers para CreateCollectionModal
+function updateForm(key: string, value: any) {
+  form.value = { ...form.value, [key]: value };
+}
+
+function updateFormMetadata(key: string, value: any) {
+  form.value.metadata = { ...form.value.metadata, [key]: value };
+}
+
+function updateFormSchema(key: string, value: any) {
+  form.value.schema = { ...form.value.schema, [key]: value };
+}
+
+function updateSchemaField(index: number, key: string, value: any) {
+  if (schemaFields.value[index]) {
+    schemaFields.value[index] = { ...schemaFields.value[index], [key]: value };
+  }
+}
+
+function updateRelation(index: number, key: string, value: any) {
+  if (relationList.value[index]) {
+    relationList.value[index] = { ...relationList.value[index], [key]: value };
+  }
+}
+
+// Form management
+function resetForm() {
+  form.value = {
+    name: "",
+    is_active: true,
+    metadata: { description: "" },
+    auth_rules: {
+      select: "authenticated",
+      insert: "authenticated", 
+      update: "owner",
+      delete: "owner"
+    },
+    schema: {
+      fields: {},
+      relations: {},
+      timestamps: true,
+      indexes: []
+    }
+  };
+  schemaFields.value = [];
+  relationList.value = [];
+  indexesInput.value = "";
+  authCreateInput.value = "authenticated";
+  authReadInput.value = "public";
+  authUpdateInput.value = "owner, admin";
+  authDeleteInput.value = "admin";
+}
+
+function populateForm(collection: Collection) {
+  form.value.name = collection.name;
+  form.value.is_active = collection.is_active;
+  form.value.metadata = collection.metadata || { description: "" };
+  form.value.auth_rules = collection.auth_rules || {
+    select: "authenticated",
+    insert: "authenticated",
+    update: "owner",
+    delete: "owner"
+  };
+  form.value.schema = collection.schema || {
+    fields: {},
+    relations: {},
+    timestamps: true,
+    indexes: []
+  };
+
+  // Populate schema fields
+  schemaFields.value = [];
+  const fields = collection.schema?.fields || {};
+  for (const [fieldName, fieldConfig] of Object.entries(fields)) {
+    const config = fieldConfig as any;
+    schemaFields.value.push({
+      id: cryptoRandomId(),
+      name: fieldName,
+      type: config.type || 'string',
+      required: config.required || false,
+      unique: config.unique || false,
+      default: config.default || '',
+      maxLength: config.maxLength || undefined,
+      min: config.min || undefined,
+      max: config.max || undefined
+    });
+  }
+
+  // Populate relations
+  relationList.value = [];
+  const relations = collection.schema?.relations || {};
+  for (const [fieldName, relationConfig] of Object.entries(relations)) {
+    const config = relationConfig as any;
+    relationList.value.push({
+      _id: cryptoRandomId(),
+      field: fieldName,
+      type: config.type || 'belongs_to',
+      references: config.references || '',
+      extra: config.through || config.display_field || 'name'
+    });
+  }
+
+  // Populate auth inputs
+  const ar = collection.auth_rules as any;
+  authCreateInput.value = Array.isArray(ar?.create) ? ar.create.join(", ") : "authenticated";
+  authReadInput.value = Array.isArray(ar?.read) ? ar.read.join(", ") : "public";
+  authUpdateInput.value = Array.isArray(ar?.update) ? ar.update.join(", ") : "owner, admin";
+  authDeleteInput.value = Array.isArray(ar?.delete) ? ar.delete.join(", ") : "admin";
+
+  // Populate indexes
+  indexesInput.value = Array.isArray(collection.schema?.indexes) ? collection.schema.indexes.join(", ") : "";
+}
+
+function resetRecordForm() {
+  recordForm.value = {};
+  jsonErrors.value = {};
+  uploadProgress.value = {};
+  
+  if (currentCollection.value?.schema?.fields) {
+    Object.keys(currentCollection.value.schema.fields).forEach(fieldName => {
+      const fieldDef = currentCollection.value!.schema.fields[fieldName];
+      if (fieldDef.type === 'json') {
+        recordForm.value[fieldName + '_json_string'] = '';
+      }
+    });
+  }
+}
+
+function populateRecordForm(record: any) {
+  recordForm.value = { ...record };
+  jsonErrors.value = {};
+  
+  if (currentCollection.value?.schema?.fields) {
+    Object.keys(currentCollection.value.schema.fields).forEach(fieldName => {
+      const fieldDef = currentCollection.value!.schema.fields[fieldName];
+      
+      // Manejar campos JSON
+      if (fieldDef.type === 'json' && record[fieldName]) {
+        recordForm.value[fieldName + '_json_string'] = JSON.stringify(record[fieldName], null, 2);
+      }
+      
+      // Manejar relaciones belongs_to
+      if (currentCollection.value!.schema?.relations?.[fieldName]?.type === 'belongs_to') {
+        if (typeof record[fieldName] === 'object' && record[fieldName]?.id) {
+          // Si viene como objeto con relación expandida
+          recordForm.value[fieldName] = record[fieldName].id;
+        } else if (typeof record[fieldName] === 'string' || typeof record[fieldName] === 'number') {
+          // Si viene como ID directo
+          recordForm.value[fieldName] = record[fieldName].toString();
+        } else {
+          // Si es null o undefined
+          recordForm.value[fieldName] = '';
+        }
+      }
+    });
+  }
+}
+
+// Schema field management
+function addSchemaField() {
+  schemaFields.value.push({
+    id: cryptoRandomId(),
+    name: "",
+    type: "string",
+    required: false,
+    unique: false,
+    default: "",
+    maxLength: undefined,
+    min: undefined,
+    max: undefined
+  });
+}
+
+function removeSchemaField(index: number) {
+  schemaFields.value.splice(index, 1);
+}
+
+// Relation management
+function addRelation() {
+  relationList.value.push({
+    _id: cryptoRandomId(),
+    field: "",
+    type: "belongs_to",
+    references: "",
+    extra: "name"
+  });
+}
+
+function removeRelation(index: number) {
+  relationList.value.splice(index, 1);
+}
+
+function cryptoRandomId(): string {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+// Filter management
+function toggleAdvancedFilters() {
+  showAdvancedFilters.value = !showAdvancedFilters.value;
+}
+
+function addCollectionFilter() {
+  if (newCollectionFilter.value.field && newCollectionFilter.value.operator && newCollectionFilter.value.value) {
+    activeCollectionFilters.value.push({ ...newCollectionFilter.value });
+    newCollectionFilter.value = { field: '', operator: '', value: '' };
+    pagination.value.page = 1;
+  }
+}
+
+function removeCollectionFilter(index: number) {
+  activeCollectionFilters.value.splice(index, 1);
+  pagination.value.page = 1;
+}
+
+function addRecordFilter() {
+  if (newRecordFilter.value.field && newRecordFilter.value.operator && newRecordFilter.value.value) {
+    activeRecordFilters.value.push({ ...newRecordFilter.value });
+    newRecordFilter.value = { field: '', operator: '', value: '' };
+    pagination.value.page = 1;
+    if (currentCollection.value) {
+      loadRecords();
+    }
+  }
+}
+
+function removeRecordFilter(index: number) {
+  activeRecordFilters.value.splice(index, 1);
+  pagination.value.page = 1;
+  if (currentCollection.value) {
+    loadRecords();
+  }
+}
+
+function clearAdvancedFilters() {
+  if (currentCollection.value) {
+    activeRecordFilters.value = [];
+    loadRecords();
+  } else {
+    activeCollectionFilters.value = [];
+  }
+  pagination.value.page = 1;
+}
+
+function applyFilters() {
+  pagination.value.page = 1;
+  if (currentCollection.value) {
+    loadRecords();
+  }
+}
+
+function clearAllFilters() {
+  searchQuery.value = "";
+  collectionFilters.value.is_active = "";
+  activeCollectionFilters.value = [];
+  activeRecordFilters.value = [];
+  pagination.value.page = 1;
+  
+  if (currentCollection.value) {
+    loadRecords();
+  }
+}
+
+// Record selection
+function toggleSelectRecord(recordId: string) {
+  const index = selectedRecords.value.indexOf(recordId);
+  if (index > -1) {
+    selectedRecords.value.splice(index, 1);
+  } else {
+    selectedRecords.value.push(recordId);
+  }
+}
+
+function toggleSelectAllVisibleRecords() {
+  const visibleRecordIds = paginatedRecords.value.map(r => r.id);
+  const allSelected = visibleRecordIds.every(id => selectedRecords.value.includes(id));
+  
+  if (allSelected) {
+    // Deselect all visible
+    selectedRecords.value = selectedRecords.value.filter(id => !visibleRecordIds.includes(id));
+  } else {
+    // Select all visible
+    visibleRecordIds.forEach(id => {
+      if (!selectedRecords.value.includes(id)) {
+        selectedRecords.value.push(id);
+      }
+    });
+  }
+}
+
+// Auto refresh
+function toggleAutoRefresh() {
+  autoRefresh.value = !autoRefresh.value;
+  
+  if (autoRefresh.value) {
+    refreshInterval = setInterval(() => {
+      if (currentCollection.value) {
+        loadRecords();
+      } else {
+        loadCollections();
+      }
+    }, 30000); // 30 seconds
+  } else {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+      refreshInterval = null;
+    }
+  }
+}
+
+// Export functions
+async function exportCollections() {
+  exportingCollections.value = true;
+  try {
+    const collectionsData = filteredCollections.value.map(c => ({
+      name: c.name,
+      is_active: c.is_active,
+      record_count: c.record_count,
+      description: c.metadata?.description,
+      created_at: c.created_at
+    }));
+    
+    const csvContent = generateCSV(collectionsData);
+    downloadCSV(csvContent, 'collections.csv');
+  } catch (error: any) {
+    console.error("Error exporting collections:", error);
+  } finally {
+    exportingCollections.value = false;
+  }
+}
+
+async function exportRecords() {
+  if (!currentCollection.value) return;
+  
+  exportingRecords.value = true;
+  try {
+    const recordsData = filteredRecords.value.map(record => {
+      const exportRecord: any = {};
+      Object.keys(currentCollection.value!.schema.fields).forEach(field => {
+        exportRecord[field] = record[field];
+      });
+      exportRecord.created_at = record.created_at;
+      exportRecord.updated_at = record.updated_at;
+      return exportRecord;
+    });
+    
+    const csvContent = generateCSV(recordsData);
+    downloadCSV(csvContent, `${currentCollection.value.name}_records.csv`);
+  } catch (error: any) {
+    console.error("Error exporting records:", error);
+  } finally {
+    exportingRecords.value = false;
+  }
+}
+
+function generateCSV(data: any[]): string {
+  if (data.length === 0) return '';
+  
+  const headers = Object.keys(data[0]);
+  const csvRows = [headers.join(',')];
+  
+  for (const row of data) {
+    const values = headers.map(header => {
+      const value = row[header];
+      return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
+    });
+    csvRows.push(values.join(','));
+  }
+  
+  return csvRows.join('\n');
+}
+
+function downloadCSV(content: string, filename: string) {
+  const blob = new Blob([content], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
+// Save operations
+async function saveCollection() {
   try {
     saving.value = true;
-    formError.value = null;
-
-    let schema;
-    try {
-      schema = JSON.parse(collectionForm.value.schemaJson);
-    } catch (e) {
-      throw new Error('Schema JSON inválido');
-    }
-
-    const payload = {
-      name: collectionForm.value.name,
-      schema,
-      metadata: {
-        description: collectionForm.value.description
-      },
-      is_active: collectionForm.value.is_active
+    
+    // Build schema from fields
+    const fields: any = {};
+    schemaFields.value.forEach(field => {
+      if (field.name) {
+        const fieldConfig: any = {
+          type: field.type,
+        };
+        
+        if (field.required) fieldConfig.required = field.required;
+        if (field.unique) fieldConfig.unique = field.unique;
+        if (field.default !== '' && field.default !== undefined && field.default !== null) {
+          fieldConfig.default = field.default;
+        }
+        if (field.maxLength && field.maxLength > 0) fieldConfig.maxLength = field.maxLength;
+        if (field.min !== undefined && field.min !== null && field.min !== '') fieldConfig.min = field.min;
+        if (field.max !== undefined && field.max !== null && field.max !== '') fieldConfig.max = field.max;
+        
+        fields[field.name] = fieldConfig;
+      }
+    });
+    
+    // Build relations
+    const relations: any = {};
+    relationList.value.forEach(rel => {
+      if (rel.field && rel.references) {
+        const relationConfig: any = {
+          type: rel.type,
+          references: rel.references
+        };
+        
+        if (rel.type === 'many_to_many' && rel.extra) {
+          relationConfig.through = rel.extra;
+        } else if (rel.extra && rel.extra !== 'name' && rel.extra !== '') {
+          relationConfig.display_field = rel.extra;
+        }
+        
+        relations[rel.field] = relationConfig;
+      }
+    });
+    
+    // Build auth rules
+    const authRules = {
+      create: authCreateInput.value ? authCreateInput.value.split(',').map(s => s.trim()).filter(Boolean) : [],
+      read: authReadInput.value ? authReadInput.value.split(',').map(s => s.trim()).filter(Boolean) : [],
+      update: authUpdateInput.value ? authUpdateInput.value.split(',').map(s => s.trim()).filter(Boolean) : [],
+      delete: authDeleteInput.value ? authDeleteInput.value.split(',').map(s => s.trim()).filter(Boolean) : []
     };
-
-    if (isEditing.value && editingCollection.value) {
-      await adminCollections.update(editingCollection.value.name, payload);
+    
+    // Build indexes
+    const indexes = indexesInput.value ? indexesInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+    
+    let collectionData: any;
+    
+    if (editingCollection.value) {
+      // PAYLOAD PARA EDITAR - Solo campos permitidos por UpdateCollectionDto
+      collectionData = {
+        schema: {
+          fields,
+          relations: Object.keys(relations).length > 0 ? relations : undefined,
+          timestamps: form.value.schema.timestamps,
+          indexes: indexes.length > 0 ? indexes : undefined
+        },
+        auth_rules: authRules,
+        metadata: {
+          description: form.value.metadata?.description || ''
+        },
+        is_active: form.value.is_active
+      };
+      
+      // Limpiar campos undefined del schema
+      Object.keys(collectionData.schema).forEach(key => {
+        if (collectionData.schema[key] === undefined) {
+          delete collectionData.schema[key];
+        }
+      });
+      
     } else {
-      await adminCollections.create(payload);
+      // PAYLOAD PARA CREAR - Incluye todos los campos necesarios
+      collectionData = {
+        name: form.value.name,
+        schema: {
+          fields,
+          relations: Object.keys(relations).length > 0 ? relations : undefined,
+          timestamps: form.value.schema.timestamps,
+          indexes: indexes.length > 0 ? indexes : undefined
+        },
+        auth_rules: authRules,
+        metadata: {
+          description: form.value.metadata?.description || ''
+        },
+        is_active: form.value.is_active
+      };
+      
+      // Limpiar undefined del schema
+      Object.keys(collectionData.schema).forEach(key => {
+        if (collectionData.schema[key] === undefined) {
+          delete collectionData.schema[key];
+        }
+      });
     }
-
-    closeModal();
-    await Promise.all([loadCollections(), loadStats()]);
-  } catch (e: any) {
-    console.error("Error saving collection:", e);
-    formError.value = e?.response?.data?.message || e?.message || "Error guardando colección";
+    
+    console.log('=== PAYLOAD DEBUG ===');
+    console.log('Editing:', !!editingCollection.value);
+    console.log('Collection name:', editingCollection.value?.name || form.value.name);
+    console.log('Payload:', JSON.stringify(collectionData, null, 2));
+    
+    if (editingCollection.value) {
+      await adminCollections.update(editingCollection.value.name, collectionData);
+      showSuccess(
+        'Collection actualizada', 
+        `La collection "${editingCollection.value.name}" se actualizó correctamente.`
+      );
+    } else {
+      await adminCollections.create(collectionData);
+      showSuccess(
+        'Collection creada', 
+        `La collection "${form.value.name}" se creó correctamente.`
+      );
+    }
+    
+    await loadCollections();
+    closeCreateModal();
+    
+  } catch (error: any) {
+    console.error("Error saving collection:", error);
+    console.error("Response data:", error.response?.data);
+    
+    let errorMessage = 'Error desconocido al guardar la collection.';
+    
+    // Mostrar mensaje específico del backend
+    if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
+      console.error("Backend validation errors:", error.response.data.message);
+      errorMessage = `Errores de validación:\n${error.response.data.message.join('\n')}`;
+    } else if (error.response?.data?.message) {
+      console.error("Backend error message:", error.response.data.message);
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    showError(
+      'Error al guardar collection',
+      errorMessage
+    );
   } finally {
     saving.value = false;
   }
 }
 
-async function deleteCollection(): Promise<void> {
-  if (!collectionToDelete.value) return;
-
+async function saveRecord() {
+  if (!currentCollection.value) return;
+  
   try {
-    deleting.value = true;
-    await adminCollections.delete(collectionToDelete.value.name);
-    showDeleteModal.value = false;
-    collectionToDelete.value = null;
-    await Promise.all([loadCollections(), loadStats()]);
-  } catch (e: any) {
-    console.error("Error deleting collection:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error eliminando colección";
+    savingRecord.value = true;
+    
+    const recordData = { ...recordForm.value };
+    
+    // ✅ ELIMINAR campos del sistema que el backend maneja automáticamente
+    delete recordData.id;
+    delete recordData.created_at;
+    delete recordData.updated_at;
+    
+    // Process JSON fields
+    if (currentCollection.value.schema?.fields) {
+      Object.keys(currentCollection.value.schema.fields).forEach(fieldName => {
+        const fieldDef = currentCollection.value!.schema.fields[fieldName];
+        if (fieldDef.type === 'json') {
+          const jsonString = recordData[fieldName + '_json_string'];
+          if (jsonString) {
+            try {
+              recordData[fieldName] = JSON.parse(jsonString);
+            } catch (error) {
+              jsonErrors.value[fieldName] = 'JSON inválido';
+              throw new Error(`Invalid JSON in field ${fieldName}`);
+            }
+          }
+          delete recordData[fieldName + '_json_string'];
+        }
+      });
+    }
+    
+    if (editingRecord.value) {
+      await recordsAPI.update(currentCollection.value.name, editingRecord.value.id, recordData);
+    } else {
+      await recordsAPI.create(currentCollection.value.name, recordData);
+    }
+    
+    await loadRecords();
+    closeInsertModal();
+  } catch (error: any) {
+    console.error("Error saving record:", error);
   } finally {
-    deleting.value = false;
+    savingRecord.value = false;
   }
 }
 
-async function toggleCollectionStatus(collection: Collection): Promise<void> {
+// Delete operations
+async function confirmDelete() {
   try {
-    await adminCollections.update(collection.name, { is_active: !collection.is_active });
-    await Promise.all([loadCollections(), loadStats()]);
-  } catch (e: any) {
-    console.error("Error updating collection status:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error actualizando estado de la colección";
+    deletingCollection.value = true;
+    
+    if (collectionToDelete.value) {
+      console.log('=== DELETING COLLECTION ===');
+      console.log('Collection:', collectionToDelete.value.name);
+      await adminCollections.delete(collectionToDelete.value.name);
+      await loadCollections();
+    } else if (recordToDelete.value && currentCollection.value) {
+      console.log('=== DELETING RECORD ===');
+      console.log('Collection:', currentCollection.value.name);
+      console.log('Record ID:', recordToDelete.value.id);
+      console.log('Record data:', recordToDelete.value);
+      
+      await recordsAPI.delete(currentCollection.value.name, recordToDelete.value.id);
+      await loadRecords();
+    }
+    
+    closeDeleteModal();
+  } catch (error: any) {
+    console.error("Error deleting:", error);
+    console.error("Response:", error.response?.data);
+    
+    showError(
+      'Error al eliminar',
+      error.response?.data?.message || error.message || 'Error desconocido'
+    );
+  } finally {
+    deletingCollection.value = false;
   }
 }
 
-async function duplicateCollection(collection: Collection): Promise<void> {
+async function confirmBulkDelete() {
+  if (!currentCollection.value || selectedRecords.value.length === 0) return;
+  
   try {
-    const newName = `${collection.name}_copy_${Date.now()}`;
-    const payload = {
-      name: newName,
-      schema: collection.schema,
-      metadata: {
-        description: `Copia de ${collection.name}`
-      },
-      is_active: false
-    };
-
-    await adminCollections.create(payload);
-    await Promise.all([loadCollections(), loadStats()]);
-  } catch (e: any) {
-    console.error("Error duplicating collection:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error duplicando colección";
+    bulkDeleting.value = true;
+    
+    await Promise.all(
+      selectedRecords.value.map(recordId =>
+        recordsAPI.delete(currentCollection.value!.name, recordId)
+      )
+    );
+    
+    selectedRecords.value = [];
+    await loadRecords();
+    closeBulkDeleteModal();
+  } catch (error: any) {
+    console.error("Error bulk deleting:", error);
+  } finally {
+    bulkDeleting.value = false;
   }
 }
 
-// UI Functions
-function openCreateCollection(): void {
-  isEditing.value = false;
-  editingCollection.value = null;
-  collectionForm.value = {
-    name: "",
-    description: "",
-    schemaJson: '{\n  "fields": {\n    "name": {\n      "type": "string",\n      "required": true\n    }\n  }\n}',
-    is_active: true,
-  };
-  showModal.value = true;
-}
-
-function openEditCollection(collection: Collection): void {
-  isEditing.value = true;
-  editingCollection.value = collection;
-  collectionForm.value = {
-    name: collection.name,
-    description: collection.metadata?.description || "",
-    schemaJson: JSON.stringify(collection.schema, null, 2),
-    is_active: collection.is_active,
-  };
-  showModal.value = true;
-}
-
-function closeModal(): void {
-  showModal.value = false;
-  formError.value = null;
-}
-
-function confirmDeleteCollection(collection: Collection): void {
-  collectionToDelete.value = collection;
-  showDeleteModal.value = true;
-}
-
-function viewCollectionData(collection: Collection): void {
-  router.push(`/admin/collections/${collection.name}/data`);
-}
-
-async function refreshCollections(): Promise<void> {
-  await Promise.all([loadCollections(), loadStats()]);
-}
-
-function goToPage(page: number): void {
-  if (page >= 1 && page <= meta.value.pages) {
-    meta.value.page = page;
-    loadCollections();
-  }
-}
-
-function handleSearch(): void {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    meta.value.page = 1;
-    loadCollections();
-  }, 500);
-}
-
-function applyFilters(): void {
-  meta.value.page = 1;
-  loadCollections();
-}
-
-// Utilities
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatNumber(num: number): string {
-  return new Intl.NumberFormat('es-ES').format(num);
-}
-
-// ✅ WATCH: Reset operator and value when field changes
-watch(() => newFilter.value.field, () => {
-  newFilter.value.operator = '';
-  newFilter.value.value = '';
-});
-
-watch(() => newFilter.value.operator, () => {
-  if (newFilter.value.operator === 'between') {
-    newFilter.value.value = ['', ''];
+// JSON validation
+function validateJSON(fieldName: string) {
+  const jsonString = recordForm.value[fieldName + '_json_string'];
+  if (jsonString) {
+    try {
+      JSON.parse(jsonString);
+      delete jsonErrors.value[fieldName];
+    } catch (error) {
+      jsonErrors.value[fieldName] = 'JSON inválido';
+    }
   } else {
-    newFilter.value.value = '';
+    delete jsonErrors.value[fieldName];
   }
-});
+}
 
 // Lifecycle
 onMounted(() => {
-  Promise.all([loadCollections(), loadStats()]);
+  const collectionName = route.params.collectionName as string;
+  if (collectionName) {
+    // Load specific collection
+    adminCollections.getByName(collectionName).then(response => {
+      currentCollection.value = response.data;
+      loadRecords();
+    }).catch(() => {
+      router.push('/admin/collections');
+    });
+  } else {
+    loadCollections();
+  }
+});
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+  clearTimeout(searchTimeout);
+});
+
+// Watch for route changes
+watch(() => route.params.collectionName, (newCollectionName) => {
+  if (newCollectionName) {
+    adminCollections.getByName(newCollectionName as string).then(response => {
+      currentCollection.value = response.data;
+      selectedRecords.value = [];
+      pagination.value.page = 1;
+      searchQuery.value = "";
+      activeRecordFilters.value = [];
+      loadRecords();
+    }).catch(() => {
+      router.push('/admin/collections');
+    });
+  } else {
+    goBack();
+  }
 });
 </script>

@@ -169,6 +169,18 @@ export const adminCollections = {
   // ✅ NUEVO: Estadísticas generales de collections
   getStats: () => apiClient.get("/api/admin/collections/stats"),
 
+  findByName: (name: string) =>
+    apiClient.get(`/api/admin/collections/${encodeURIComponent(name)}`),
+
+  updateByName: (name: string, payload: any) =>
+    apiClient.put(
+      `/api/admin/collections/${encodeURIComponent(name)}`,
+      payload
+    ),
+
+  removeByName: (name: string) =>
+    apiClient.delete(`/api/admin/collections/${encodeURIComponent(name)}`),
+
   getByName: (name: string) =>
     apiClient.get(`/api/admin/collections/${encodeURIComponent(name)}`),
 
@@ -675,6 +687,42 @@ export const realtimeAPI = {
 
   // Cleanup
   cleanup: () => apiClient.post("/api/realtime/cleanup"),
+};
+
+export const recordsAPI = {
+  // Mapea a tu dynamic.controller.ts endpoints
+  getAll: (
+    collectionName: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      filters?: string;
+      sort?: string;
+    }
+  ) => dynamicCollections.list(collectionName, params),
+
+  // Crear registro
+  create: (collectionName: string, data: any) =>
+    dynamicCollections.create(collectionName, data),
+
+  // Obtener por ID
+  getById: (collectionName: string, id: string) =>
+    dynamicCollections.getById(collectionName, id),
+
+  // Actualizar registro
+  update: (collectionName: string, id: string, data: any) =>
+    dynamicCollections.update(collectionName, id, data),
+
+  // Eliminar registro (nota: tu controller usa 'remove', dynamicCollections también)
+  delete: (collectionName: string, id: string) =>
+    dynamicCollections.remove(collectionName, id),
+
+  // Estadísticas de registros (si las implementas en el controller)
+  getStats: (collectionName: string) => {
+    // Puedes implementar esto más tarde o usar las stats del collection
+    return adminCollections.stats(collectionName);
+  },
 };
 
 // Storage API

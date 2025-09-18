@@ -741,12 +741,6 @@ async function loadDashboardStats(): Promise<void> {
     }
 
     lastUpdateTime.value = new Date().toLocaleTimeString('es-ES');
-    console.log('Dashboard updated with trends:', {
-      collections: `${collectionsCount} ${collectionsTrend.change}`,
-      records: `${totalRecords} ${recordsTrend.change}`,
-      users: `${usersCount} ${usersTrend.change}`,
-      activity: `${activityCount} ${activityTrend.change}`
-    });
 
   } catch (e: any) {
     console.error("Error loading dashboard stats:", e);

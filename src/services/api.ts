@@ -1,4 +1,4 @@
-// frontend/services/api.ts - VERSIÓN COMPLETA ACTUALIZADA
+// frontend/services/api.ts - VERSIÓN COMPLETA MULTI-TENANT
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -29,7 +29,7 @@ function processQueue(error: any, token: string | null = null) {
   failedQueue = [];
 }
 
-// Response: intenta refresh una vez en 401
+// ✅ RESPONSE INTERCEPTOR ACTUALIZADO CON MULTI-TENANT
 apiClient.interceptors.response.use(
   (response: any) => response,
   async (error: any) => {
@@ -52,6 +52,20 @@ apiClient.interceptors.response.use(
           .then((token) => {
             originalRequest.headers = originalRequest.headers ?? {};
             originalRequest.headers.Authorization = `Bearer ${token}`;
+
+            // ✅ AGREGAR TENANT AL RETRY DESDE LA COLA
+            const rawUserRetry = localStorage.getItem("nexa_user");
+            if (rawUserRetry) {
+              try {
+                const userRetry = JSON.parse(rawUserRetry);
+                if (userRetry?.tenantId) {
+                  originalRequest.headers["X-Tenant-ID"] = userRetry.tenantId;
+                }
+              } catch {
+                // Ignorar errores de parsing
+              }
+            }
+
             return apiClient(originalRequest);
           })
           .catch((err) => {
@@ -70,12 +84,32 @@ apiClient.interceptors.response.use(
             const resp = await axios.post(`${BASE_URL}/auth/refresh`, {
               refresh_token: parsed.refresh_token,
             });
-            const newTokens = resp.data as {
+
+            // ✅ TYPE ASSERTION para arreglar TypeScript
+            const refreshData = resp.data as {
               access_token: string;
               refresh_token: string;
+              expires_in?: number;
+              token_type?: string;
+              user?: any;
+            };
+
+            const newTokens = {
+              access_token: refreshData.access_token,
+              refresh_token: refreshData.refresh_token,
+              expires_in: refreshData.expires_in,
+              token_type: refreshData.token_type || "Bearer",
             };
 
             localStorage.setItem("nexa_tokens", JSON.stringify(newTokens));
+
+            // ✅ Si viene user data actualizada, guardarla
+            if (refreshData.user) {
+              localStorage.setItem(
+                "nexa_user",
+                JSON.stringify(refreshData.user)
+              );
+            }
 
             // Procesar la cola con el nuevo token
             processQueue(null, newTokens.access_token);
@@ -83,6 +117,20 @@ apiClient.interceptors.response.use(
             // Reintentar el request original
             originalRequest.headers = originalRequest.headers ?? {};
             originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
+
+            // ✅ AGREGAR TENANT AL RETRY
+            const rawUserRetry = localStorage.getItem("nexa_user");
+            if (rawUserRetry) {
+              try {
+                const userRetry = JSON.parse(rawUserRetry);
+                if (userRetry?.tenantId) {
+                  originalRequest.headers["X-Tenant-ID"] = userRetry.tenantId;
+                }
+              } catch {
+                // Ignorar errores de parsing
+              }
+            }
+
             return apiClient(originalRequest);
           }
         }
@@ -112,12 +160,14 @@ apiClient.interceptors.response.use(
   }
 );
 
+// ✅ REQUEST INTERCEPTOR ACTUALIZADO CON MULTI-TENANT
 apiClient.interceptors.request.use(
   (config: any) => {
-    const raw = localStorage.getItem("nexa_tokens");
-    if (raw) {
+    // ✅ AGREGAR TOKEN
+    const rawTokens = localStorage.getItem("nexa_tokens");
+    if (rawTokens) {
       try {
-        const tokens = JSON.parse(raw);
+        const tokens = JSON.parse(rawTokens);
         if (tokens?.access_token) {
           config.headers = config.headers ?? {};
           config.headers.Authorization = `Bearer ${tokens.access_token}`;
@@ -126,6 +176,21 @@ apiClient.interceptors.request.use(
         console.error("Failed to parse tokens:", e);
       }
     }
+
+    // ✅ AGREGAR TENANT-ID AUTOMÁTICO
+    const rawUser = localStorage.getItem("nexa_user");
+    if (rawUser) {
+      try {
+        const user = JSON.parse(rawUser);
+        if (user?.tenantId) {
+          config.headers = config.headers ?? {};
+          config.headers["X-Tenant-ID"] = user.tenantId;
+        }
+      } catch (e) {
+        console.error("Failed to parse user for tenant:", e);
+      }
+    }
+
     return config;
   },
   (error: any) => Promise.reject(error)

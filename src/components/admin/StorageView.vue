@@ -188,10 +188,11 @@
                   <div class="flex-shrink-0 w-12 h-12">
                     <div v-if="isImage(file.mime_type)" class="w-12 h-12 rounded-lg overflow-hidden">
                       <img 
-                        :src="getFileUrl(file.id)" 
+                        :src="getSecureImageUrl(file.id)"
                         :alt="file.original_name"
                         class="w-full h-full object-cover"
                         @error="handleImageError"
+                        loading="lazy"
                       />
                     </div>
                     <div v-else class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -218,13 +219,12 @@
                 {{ formatDate(file.created_at) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                <a
-                  :href="getDownloadUrl(file.id)"
-                  target="_blank"
+                <button
+                  @click="downloadFile(file.id, file.original_name)"
                   class="text-blue-600 hover:text-blue-900"
                 >
                   Descargar
-                </a>
+                </button>
                 <button
                   @click="confirmDeleteFile(file)"
                   class="text-red-600 hover:text-red-900"
@@ -350,6 +350,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { storageAPI } from '../../services/api';
+import { useAuthStore } from '../../stores/auth';
 
 interface StorageFile {
   id: string;
@@ -370,6 +371,9 @@ const searchQuery = ref('');
 const selectedFolder = ref('');
 const selectedType = ref('');
 
+// Image cache
+const imageUrlCache = ref<Map<string, string>>(new Map());
+
 // Upload modal
 const uploadModalOpen = ref(false);
 const uploadFolder = ref('');
@@ -380,6 +384,9 @@ const uploading = ref(false);
 const deleteConfirmOpen = ref(false);
 const fileToDelete = ref<StorageFile | null>(null);
 const deleting = ref(false);
+
+// Auth store
+const authStore = useAuthStore();
 
 // Stats
 const stats = computed(() => {
@@ -519,6 +526,78 @@ async function submitDeleteFile() {
   }
 }
 
+// ✅ FUNCIÓN SEGURA PARA IMÁGENES CON JWT
+function getSecureImageUrl(fileId: string): string {
+  if (!fileId) return getFallbackImageUrl();
+  
+  // Verificar cache
+  if (imageUrlCache.value.has(fileId)) {
+    return imageUrlCache.value.get(fileId)!;
+  }
+  
+  // Crear placeholder mientras carga
+  const fallbackUrl = getFallbackImageUrl();
+  
+  // Cargar imagen de forma asíncrona
+  loadSecureImage(fileId);
+  
+  return fallbackUrl;
+}
+
+async function loadSecureImage(fileId: string) {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/storage/${fileId}/download`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.tokens?.access_token}`,
+        'X-Tenant-ID': authStore.currentTenantId || ''
+      }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch image');
+
+    const blob = await response.blob();
+    const imageUrl = URL.createObjectURL(blob);
+    
+    // Cache la URL y actualiza la imagen
+    imageUrlCache.value.set(fileId, imageUrl);
+    
+    // Forzar actualización de las imágenes en pantalla
+    const images = document.querySelectorAll(`img[data-file-id="${fileId}"]`);
+    images.forEach((img: any) => {
+      img.src = imageUrl;
+    });
+    
+  } catch (error) {
+    console.warn('Error loading secure image:', error);
+  }
+}
+
+// ✅ DESCARGA SEGURA CON JWT
+async function downloadFile(fileId: string, filename: string) {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/storage/${fileId}/download`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.tokens?.access_token}`,
+        'X-Tenant-ID': authStore.currentTenantId || ''
+      }
+    });
+
+    if (!response.ok) throw new Error('Error downloading file');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e: any) {
+    error.value = e?.message || 'Error descargando archivo';
+  }
+}
+
 // Utilities
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -542,19 +621,13 @@ function isImage(mimeType: string): boolean {
   return mimeType.startsWith('image/');
 }
 
-function getFileUrl(fileId: string): string {
-  if (!fileId) return '';
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-  return `${baseUrl}/api/storage/${fileId}/download`; // ✅ CORRECTO
-}
-
-function getDownloadUrl(fileId: string): string {
-  return getFileUrl(fileId);
+function getFallbackImageUrl(): string {
+  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwYXRoIGQ9Im0yMSAxNS0zLjA4Ni0zLjA4NmE0Ljg4OCA0Ljg4OCAwIDAwLTYuODI4IDBsMTAgMTMiLz48L3N2Zz4=';
 }
 
 function handleImageError(event: Event) {
   const img = event.target as HTMLImageElement;
-  img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwYXRoIGQ9Im0yMSAxNS0zLjA4Ni0zLjA4NmE0Ljg4OCA0Ljg4OCAwIDAwLTYuODI4IDBMMTAgMTMiLz48L3N2Zz4=';
+  img.src = getFallbackImageUrl();
 }
 
 // Lifecycle

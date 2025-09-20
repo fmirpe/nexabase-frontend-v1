@@ -1,5 +1,6 @@
+// src/stores/auth.ts
 import { defineStore } from "pinia";
-import { ref, computed, readonly } from "vue"; // ✅ Agregar readonly al import
+import { ref, computed } from "vue";
 import { authAPI } from "../services/api";
 
 interface Tokens {
@@ -14,9 +15,44 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
-  role: "user" | "admin" | "moderator";
+  role: "user" | "admin" | "developer";
+  tenantId?: string;
+  status: string;
+  is_active: boolean;
   created_at: string;
-  is_active?: boolean;
+  avatar_url?: string;
+  last_login_at?: string;
+}
+
+// ✅ INTERFACES PARA LAS RESPUESTAS DEL BACKEND
+interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
+  user: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    role: string;
+    tenantId?: string;
+    status: string;
+    is_active: boolean;
+    created_at: string;
+  };
+}
+
+interface UserResponse {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  tenantId?: string;
+  status: string;
+  is_active: boolean;
+  created_at: string;
   avatar_url?: string;
   last_login_at?: string;
 }
@@ -30,11 +66,12 @@ export const useAuthStore = defineStore("auth", () => {
   // Computed properties
   const isAuthenticated = computed(() => !!tokens.value?.access_token);
   const isAdmin = computed(() => user.value?.role === "admin");
-  const isModerator = computed(
-    () => user.value?.role === "moderator" || isAdmin.value
-  );
+  const isDeveloper = computed(() => user.value?.role === "developer");
+  const isModerator = computed(() => isAdmin.value || isDeveloper.value);
 
-  // Full name helper
+  const currentTenantId = computed(() => user.value?.tenantId);
+  const hasTenant = computed(() => !!currentTenantId.value);
+
   const fullName = computed(() => {
     if (!user.value) return "";
     return (
@@ -43,7 +80,6 @@ export const useAuthStore = defineStore("auth", () => {
     );
   });
 
-  // User initials helper
   const userInitials = computed(() => {
     if (!user.value) return "?";
     const first = user.value.first_name?.[0] || "";
@@ -53,7 +89,6 @@ export const useAuthStore = defineStore("auth", () => {
     );
   });
 
-  // Actions
   const clearError = () => (error.value = null);
 
   const initializeAuth = () => {
@@ -83,17 +118,22 @@ export const useAuthStore = defineStore("auth", () => {
 
     try {
       const res = await authAPI.getCurrentUser();
+      const userData = res.data as UserResponse; // ✅ TYPE ASSERTION
+
       const u: User = {
-        id: res.data.id,
-        email: res.data.email,
-        first_name: res.data.first_name ?? "",
-        last_name: res.data.last_name ?? "",
-        role: res.data.role ?? "user",
-        created_at: res.data.created_at ?? new Date().toISOString(),
-        is_active: res.data.is_active ?? true,
-        avatar_url: res.data.avatar_url,
-        last_login_at: res.data.last_login_at,
+        id: userData.id,
+        email: userData.email,
+        first_name: userData.first_name ?? "",
+        last_name: userData.last_name ?? "",
+        role: userData.role as "user" | "admin" | "developer",
+        tenantId: userData.tenantId,
+        status: userData.status,
+        is_active: userData.is_active ?? true,
+        created_at: userData.created_at ?? new Date().toISOString(),
+        avatar_url: userData.avatar_url,
+        last_login_at: userData.last_login_at,
       };
+
       user.value = u;
       localStorage.setItem("nexa_user", JSON.stringify(u));
       return u;
@@ -108,17 +148,31 @@ export const useAuthStore = defineStore("auth", () => {
     error.value = null;
     try {
       const res = await authAPI.login(data);
-      const t: Tokens = {
-        access_token: res.data.access_token,
-        refresh_token: res.data.refresh_token,
-        expires_in: res.data.expires_in,
-        token_type: res.data.token_type || "Bearer",
-      };
-      tokens.value = t;
-      persistSession(t, user.value);
+      const loginData = res.data as LoginResponse; // ✅ TYPE ASSERTION
 
-      // Obtener perfil actual
-      await fetchCurrentUser();
+      const t: Tokens = {
+        access_token: loginData.access_token,
+        refresh_token: loginData.refresh_token,
+        expires_in: loginData.expires_in,
+        token_type: loginData.token_type || "Bearer",
+      };
+
+      const u: User = {
+        id: loginData.user.id,
+        email: loginData.user.email,
+        first_name: loginData.user.first_name,
+        last_name: loginData.user.last_name,
+        role: loginData.user.role as "user" | "admin" | "developer",
+        tenantId: loginData.user.tenantId,
+        status: loginData.user.status,
+        is_active: loginData.user.is_active,
+        created_at: loginData.user.created_at,
+      };
+
+      tokens.value = t;
+      user.value = u;
+      persistSession(t, u);
+
       return { success: true };
     } catch (e: any) {
       error.value =
@@ -139,18 +193,39 @@ export const useAuthStore = defineStore("auth", () => {
     error.value = null;
     try {
       const res = await authAPI.register(data);
-      const access = res.data?.access_token;
-      if (access) {
+
+      // ✅ VERIFICAR SI EXISTE access_token
+      if (
+        res.data &&
+        typeof res.data === "object" &&
+        "access_token" in res.data
+      ) {
+        const loginData = res.data as LoginResponse;
+
         const t: Tokens = {
-          access_token: res.data.access_token,
-          refresh_token: res.data.refresh_token,
-          expires_in: res.data.expires_in,
-          token_type: res.data.token_type || "Bearer",
+          access_token: loginData.access_token,
+          refresh_token: loginData.refresh_token,
+          expires_in: loginData.expires_in,
+          token_type: loginData.token_type || "Bearer",
         };
+
+        const u: User = {
+          id: loginData.user.id,
+          email: loginData.user.email,
+          first_name: loginData.user.first_name,
+          last_name: loginData.user.last_name,
+          role: loginData.user.role as "user" | "admin" | "developer",
+          tenantId: loginData.user.tenantId,
+          status: loginData.user.status,
+          is_active: loginData.user.is_active,
+          created_at: loginData.user.created_at,
+        };
+
         tokens.value = t;
-        persistSession(t, user.value);
-        await fetchCurrentUser();
+        user.value = u;
+        persistSession(t, u);
       }
+
       return { success: true };
     } catch (e: any) {
       error.value =
@@ -169,9 +244,13 @@ export const useAuthStore = defineStore("auth", () => {
     error.value = null;
     try {
       const res = await authAPI.updateProfile(profileData);
-      const updatedUser = { ...user.value, ...res.data.user };
-      user.value = updatedUser;
-      localStorage.setItem("nexa_user", JSON.stringify(updatedUser));
+
+      if (res.data && typeof res.data === "object" && "user" in res.data) {
+        const updatedUser = { ...user.value, ...(res.data as any).user };
+        user.value = updatedUser;
+        localStorage.setItem("nexa_user", JSON.stringify(updatedUser));
+      }
+
       return { success: true };
     } catch (e: any) {
       error.value =
@@ -210,12 +289,20 @@ export const useAuthStore = defineStore("auth", () => {
 
     try {
       const res = await authAPI.refresh(tokens.value.refresh_token);
+      const refreshData = res.data as any; // ✅ TYPE ASSERTION TEMPORAL
+
       const newTokens: Tokens = {
-        access_token: res.data.access_token,
-        refresh_token: res.data.refresh_token,
-        expires_in: res.data.expires_in,
-        token_type: res.data.token_type || "Bearer",
+        access_token: refreshData.access_token,
+        refresh_token: refreshData.refresh_token,
+        expires_in: refreshData.expires_in,
+        token_type: refreshData.token_type || "Bearer",
       };
+
+      if (refreshData.user) {
+        user.value = { ...user.value, ...refreshData.user };
+        localStorage.setItem("nexa_user", JSON.stringify(user.value));
+      }
+
       tokens.value = newTokens;
       localStorage.setItem("nexa_tokens", JSON.stringify(newTokens));
       return true;
@@ -227,17 +314,14 @@ export const useAuthStore = defineStore("auth", () => {
   };
 
   const logout = async () => {
-    // Intentar cerrar sesión en el servidor (opcional)
     if (tokens.value?.access_token) {
       try {
         await authAPI.logout();
       } catch (e) {
-        // Ignorar errores de logout del servidor
         console.warn("Logout API call failed:", e);
       }
     }
 
-    // Limpiar estado local
     tokens.value = null;
     user.value = null;
     error.value = null;
@@ -247,35 +331,28 @@ export const useAuthStore = defineStore("auth", () => {
 
   const checkTokenExpiration = () => {
     if (!tokens.value?.expires_in) return true;
-
-    // Implementar lógica de verificación de expiración si es necesario
-    // Por ahora, asumimos que el interceptor maneja el refresh automáticamente
     return true;
   };
 
-  // Initialize auth when store is created
   initializeAuth();
 
-  // Auto-fetch user if we have tokens but no user data
   if (tokens.value?.access_token && !user.value) {
     fetchCurrentUser();
   }
 
   return {
-    // State - sin readonly para simplificar
     user,
     tokens,
     loading,
     error,
-
-    // Computed
     isAuthenticated,
     isAdmin,
+    isDeveloper,
     isModerator,
     fullName,
     userInitials,
-
-    // Actions
+    currentTenantId,
+    hasTenant,
     initializeAuth,
     login,
     register,

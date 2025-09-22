@@ -286,7 +286,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
+import { storageAPI } from '../../../services/api';
+import { useAuthStore } from '../../../stores/auth';
 
 interface Props {
   collection: any;
@@ -310,13 +312,19 @@ defineEmits<{
   'open-bulk-delete': [];
 }>();
 
+// Auth store para headers seguros
+const authStore = useAuthStore();
+
+// Cache para URLs de archivos seguros
+const fileUrlCache = ref<Map<string, string>>(new Map());
+
 const areAllVisibleSelected = computed(() => {
   return props.records.length > 0 && props.records.every(record => 
     props.selectedRecords.includes(record.id)
   );
 });
 
-// ✅ Funciones para relaciones
+// ✅ Funciones para relaciones (sin cambios)
 function isRelationField(fieldName: string): boolean {
   const relations = props.collection?.schema?.relations;
   return !!(relations && relations[fieldName] && relations[fieldName].type === 'belongs_to');
@@ -343,11 +351,51 @@ function getRelationDisplayValue(relationValue: any, fieldName: string): string 
   return `ID: ${relationValue}`;
 }
 
-// ✅ Funciones para archivos e imágenes (sin cambios)
+// ✅ FUNCIÓN SEGURA PARA ARCHIVOS CON JWT
 function getFileUrl(fileId: string): string {
-  if (!fileId) return '';
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-  return `${baseUrl}/api/storage/${fileId}/download`;
+  if (!fileId) return getFallbackImageUrl();
+  
+  // Verificar cache
+  if (fileUrlCache.value.has(fileId)) {
+    return fileUrlCache.value.get(fileId)!;
+  }
+  
+  // Crear placeholder mientras carga
+  const fallbackUrl = getFallbackImageUrl();
+  
+  // Cargar archivo de forma asíncrona
+  loadSecureFile(fileId);
+  
+  return fallbackUrl;
+}
+
+// ✅ CARGAR ARCHIVO SEGURO CON JWT
+async function loadSecureFile(fileId: string) {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/storage/${fileId}/download`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.tokens?.access_token}`,
+        'X-Tenant-ID': authStore.currentTenantId || ''
+      }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch file');
+
+    const blob = await response.blob();
+    const fileUrl = URL.createObjectURL(blob);
+    
+    // Cache la URL
+    fileUrlCache.value.set(fileId, fileUrl);
+    
+    // Actualizar las imágenes en pantalla
+    const images = document.querySelectorAll(`img[data-file-id="${fileId}"]`);
+    images.forEach((img: any) => {
+      img.src = fileUrl;
+    });
+    
+  } catch (error) {
+    console.warn('Error loading secure file:', error);
+  }
 }
 
 function getFileName(fileId: string): string {
@@ -355,9 +403,13 @@ function getFileName(fileId: string): string {
   return `archivo_${fileId.slice(0, 8)}`;
 }
 
+function getFallbackImageUrl(): string {
+  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwYXRoIGQ9Im0yMSAxNS0zLjA4Ni0zLjA4NmE0Ljg4OCA0Ljg4OCAwIDAwLTYuODI4IDBsMTAgMTMiLz48L3N2Zz4=';
+}
+
 function handleImageError(event: Event) {
   const img = event.target as HTMLImageElement;
-  img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwYXRoIGQ9Im0yMSAxNS0zLjA4Ni0zLjA4NmE0Ljg4OCA0Ljg4OCAwIDAwLTYuODI4IDBMMTAgMTMiLz48L3N2Zz4=';
+  img.src = getFallbackImageUrl();
 }
 
 function formatDate(dateString: string): string {
@@ -387,3 +439,4 @@ function truncateUrl(url: string): string {
   return url;
 }
 </script>
+

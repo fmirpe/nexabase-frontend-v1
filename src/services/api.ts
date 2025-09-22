@@ -785,7 +785,6 @@ export const recordsAPI = {
 
   // Estadísticas de registros (si las implementas en el controller)
   getStats: (collectionName: string) => {
-    // Puedes implementar esto más tarde o usar las stats del collection
     return adminCollections.stats(collectionName);
   },
 };
@@ -825,6 +824,12 @@ export const storageAPI = {
   getStats: () => apiClient.get("/api/storage/stats"),
 
   delete: (fileId: string) => apiClient.delete(`/api/storage/${fileId}`),
+
+  // ✅ CORREGIDO: Para descargar archivos como blob
+  download: (fileId: string) =>
+    apiClient.get(`/api/storage/${fileId}/download`, {
+      responseType: "blob", // ✅ IMPORTANTE: Para manejar archivos binarios
+    }),
 
   getUrl: (fileId: string, expires?: number) =>
     apiClient.get(`/api/storage/${fileId}/url`, { params: { expires } }),

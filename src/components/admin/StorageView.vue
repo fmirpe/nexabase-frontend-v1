@@ -363,8 +363,19 @@ interface StorageFile {
   created_at: string;
 }
 
-// State
+// ✅ ACTUALIZAR LA INTERFACE DE RESPUESTA
+interface StorageResponse {
+  data: StorageFile[];
+  tenantInfo?: {
+    id: string;
+    isFiltered: boolean;
+    contextInfo?: any;
+  };
+}
+
+// State - ✅ CAMBIAR PARA MANEJAR LA NUEVA ESTRUCTURA
 const files = ref<StorageFile[]>([]);
+const tenantInfo = ref<any>(null); // ✅ NUEVO: Para info del tenant
 const loading = ref(false);
 const error = ref<string | null>(null);
 const searchQuery = ref('');
@@ -388,12 +399,13 @@ const deleting = ref(false);
 // Auth store
 const authStore = useAuthStore();
 
-// Stats
+// ✅ CORREGIR STATS - LÍNEA 394 Y SIMILARES
 const stats = computed(() => {
-  const totalFiles = files.value.length;
-  const totalSize = files.value.reduce((sum, file) => sum + file.size, 0);
-  const imageCount = files.value.filter(f => f.mime_type.startsWith('image/')).length;
-  const folders = new Set(files.value.map(f => f.folder || 'general'));
+  const filesArray = files.value || []; // ✅ ASEGURAR QUE SEA ARRAY
+  const totalFiles = filesArray.length;
+  const totalSize = filesArray.reduce((sum, file) => sum + file.size, 0); // ✅ ESTA ES LA LÍNEA 394 CORREGIDA
+  const imageCount = filesArray.filter(f => f.mime_type.startsWith('image/')).length;
+  const folders = new Set(filesArray.map(f => f.folder || 'general'));
   
   return {
     totalFiles,
@@ -404,12 +416,14 @@ const stats = computed(() => {
 });
 
 const folders = computed(() => {
-  const folderSet = new Set(files.value.map(f => f.folder || 'general'));
+  const filesArray = files.value || []; // ✅ ASEGURAR QUE SEA ARRAY
+  const folderSet = new Set(filesArray.map(f => f.folder || 'general'));
   return Array.from(folderSet).sort();
 });
 
 const filteredFiles = computed(() => {
-  let result = files.value;
+  const filesArray = files.value || []; // ✅ ASEGURAR QUE SEA ARRAY
+  let result = filesArray;
   
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
@@ -449,15 +463,35 @@ const filteredFiles = computed(() => {
   return result;
 });
 
-// Functions
+// ✅ ACTUALIZAR loadFiles PARA MANEJAR LA NUEVA ESTRUCTURA
 async function loadFiles() {
   loading.value = true;
   error.value = null;
   try {
     const response = await storageAPI.list();
-    files.value = response.data as StorageFile[];
+    console.log('🔍 Storage API response:', response.data); // ✅ DEBUG
+    
+    // ✅ MANEJAR AMBOS CASOS: nueva estructura y legacy
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      // ✅ NUEVA ESTRUCTURA: { data: [...], tenantInfo: {...} }
+      const storageResponse = response.data as StorageResponse;
+      files.value = storageResponse.data || [];
+      tenantInfo.value = storageResponse.tenantInfo || null;
+      console.log('✅ Using new structure - Files:', files.value.length, 'TenantInfo:', tenantInfo.value);
+    } else if (Array.isArray(response.data)) {
+      // ✅ ESTRUCTURA LEGACY: [...]
+      files.value = response.data as StorageFile[];
+      tenantInfo.value = null;
+      console.log('✅ Using legacy structure - Files:', files.value.length);
+    } else {
+      // ✅ FALLBACK
+      files.value = [];
+      console.warn('⚠️ Unexpected response structure:', response.data);
+    }
   } catch (e: any) {
+    console.error('❌ Error loading files:', e);
     error.value = e?.response?.data?.message || e?.message || 'Error cargando archivos';
+    files.value = []; // ✅ RESET A ARRAY VACÍO
   } finally {
     loading.value = false;
   }
@@ -530,17 +564,12 @@ async function submitDeleteFile() {
 function getSecureImageUrl(fileId: string): string {
   if (!fileId) return getFallbackImageUrl();
   
-  // Verificar cache
   if (imageUrlCache.value.has(fileId)) {
     return imageUrlCache.value.get(fileId)!;
   }
   
-  // Crear placeholder mientras carga
   const fallbackUrl = getFallbackImageUrl();
-  
-  // Cargar imagen de forma asíncrona
   loadSecureImage(fileId);
-  
   return fallbackUrl;
 }
 
@@ -558,10 +587,8 @@ async function loadSecureImage(fileId: string) {
     const blob = await response.blob();
     const imageUrl = URL.createObjectURL(blob);
     
-    // Cache la URL y actualiza la imagen
     imageUrlCache.value.set(fileId, imageUrl);
     
-    // Forzar actualización de las imágenes en pantalla
     const images = document.querySelectorAll(`img[data-file-id="${fileId}"]`);
     images.forEach((img: any) => {
       img.src = imageUrl;
@@ -572,7 +599,6 @@ async function loadSecureImage(fileId: string) {
   }
 }
 
-// ✅ DESCARGA SEGURA CON JWT
 async function downloadFile(fileId: string, filename: string) {
   try {
     const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/storage/${fileId}/download`, {
@@ -633,3 +659,4 @@ function handleImageError(event: Event) {
 // Lifecycle
 onMounted(loadFiles);
 </script>
+

@@ -290,6 +290,12 @@
                   >
                     {{ backup.type }}
                   </span>
+                  <span
+                    v-if="backup.method"
+                    class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
+                  >
+                    {{ backup.method }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -443,18 +449,41 @@ const showDeleteModal = ref(false);
 const selectedBackupFile = ref("");
 const backupToDelete = ref<any>(null);
 
-// Functions
+// ✅ FUNCTIONS CORREGIDAS
+
 async function loadBackups() {
   try {
     loading.value = true;
     error.value = null;
 
-    const { data } = await backupAPI.list();
-    backups.value = data.backups || [];
+    console.log('🔍 Frontend: Calling backup list API...');
+    const response = await backupAPI.list();
+    
+    console.log('🔍 Frontend: Full response:', response);
+    console.log('🔍 Frontend: response.data:', response.data);
+    console.log('🔍 Frontend: response.data.data:', response.data?.data);
+
+    // ✅ CORRECCIÓN: Acceso correcto a la estructura de respuesta
+    const responseData = response.data;
+    
+    if (responseData?.data?.backups) {
+      // Estructura: { success: true, data: { backups: [...] } }
+      backups.value = responseData.data.backups;
+    } else if (responseData?.backups) {
+      // Estructura: { backups: [...] }
+      backups.value = responseData.backups;
+    } else if (Array.isArray(responseData)) {
+      // Estructura: [...]
+      backups.value = responseData;
+    } else {
+      backups.value = [];
+    }
+    
+    console.log(`✅ Frontend: Loaded ${backups.value.length} backups`);
+    console.log('🔍 Frontend: Final backups array:', backups.value);
   } catch (e: any) {
     console.error("Error loading backups:", e);
-    error.value =
-      e?.response?.data?.message || e?.message || "Error cargando backups";
+    error.value = e?.response?.data?.message || e?.message || "Error cargando backups";
   } finally {
     loading.value = false;
   }
@@ -466,16 +495,24 @@ async function createBackup() {
     error.value = null;
     successMessage.value = null;
 
-    const { data } = await backupAPI.create("manual");
+    console.log('🔍 Frontend: Creating backup...');
+    const response = await backupAPI.create("manual");
+    
+    console.log('🔍 Frontend: Create backup response:', response);
+    console.log('🔍 Frontend: Create backup response.data:', response.data);
 
-    successMessage.value = `Backup creado exitosamente: ${data.backup.filename}`;
+    // ✅ CORRECCIÓN: El backend devuelve data directamente
+    const backup = response.data;
+
+    // ✅ CORRECCIÓN: Acceso correcto al filename
+    successMessage.value = `Backup creado exitosamente: ${backup.filename}`;
     setTimeout(() => (successMessage.value = null), 5000);
 
+    // ✅ RECARGAR LISTA
     await loadBackups();
   } catch (e: any) {
     console.error("Error creating backup:", e);
-    error.value =
-      e?.response?.data?.message || e?.message || "Error creando backup";
+    error.value = e?.response?.data?.message || e?.message || "Error creando backup";
     setTimeout(() => (error.value = null), 5000);
   } finally {
     creatingBackup.value = false;
@@ -505,8 +542,7 @@ async function restoreBackup(filename: string) {
     selectedBackupFile.value = "";
   } catch (e: any) {
     console.error("Error restoring backup:", e);
-    error.value =
-      e?.response?.data?.message || e?.message || "Error restaurando backup";
+    error.value = e?.response?.data?.message || e?.message || "Error restaurando backup";
     setTimeout(() => (error.value = null), 5000);
   } finally {
     restoring.value = false;
@@ -539,8 +575,7 @@ async function deleteBackup() {
     await loadBackups();
   } catch (e: any) {
     console.error("Error deleting backup:", e);
-    error.value =
-      e?.response?.data?.message || e?.message || "Error eliminando backup";
+    error.value = e?.response?.data?.message || e?.message || "Error eliminando backup";
     setTimeout(() => (error.value = null), 5000);
   } finally {
     deleting.value = false;
@@ -555,16 +590,16 @@ async function cleanupBackups() {
     error.value = null;
     successMessage.value = null;
 
-    const { data } = await backupAPI.cleanup(30);
+    const response = await backupAPI.cleanup(30);
+    const data = response.data;
 
-    successMessage.value = data.message;
+    successMessage.value = data.message || `Limpieza completada`;
     setTimeout(() => (successMessage.value = null), 5000);
 
     await loadBackups();
   } catch (e: any) {
     console.error("Error cleaning backups:", e);
-    error.value =
-      e?.response?.data?.message || e?.message || "Error limpiando backups";
+    error.value = e?.response?.data?.message || e?.message || "Error limpiando backups";
     setTimeout(() => (error.value = null), 5000);
   } finally {
     cleaning.value = false;

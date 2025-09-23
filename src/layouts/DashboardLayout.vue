@@ -403,7 +403,7 @@ const notifications = ref([
     id: 1,
     type: "success",
     title: "Sistema iniciado",
-    message: "nexaBase está funcionando correctamente",
+    message: "NexaBase está funcionando correctamente",
     created_at: new Date().toISOString(),
   },
 ]);

@@ -135,7 +135,7 @@ router.beforeEach(async (to, from, next) => {
 
   // Set page title
   if (to.meta?.title) {
-    document.title = `${to.meta.title} - nexaBase`;
+    document.title = `${to.meta.title} - NexaBase`;
   }
 
   // ✅ Si va a login y ya está autenticado, redirigir al dashboard

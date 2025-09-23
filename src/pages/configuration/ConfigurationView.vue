@@ -6,7 +6,7 @@
           Configuración del Sistema
         </h1>
         <p class="mt-2 text-sm text-gray-600">
-          Gestiona las configuraciones globales de nexaBase
+          Gestiona las configuraciones globales de NexaBase
         </p>
       </div>
       <div class="mt-4 sm:mt-0">

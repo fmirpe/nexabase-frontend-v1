@@ -16,6 +16,9 @@ COPY . .
 # Construir la aplicación sin chequeo de tipos para evitar error de vue-tsc
 RUN npm run build:prod
 
+# Verificar que los archivos se construyeron correctamente
+RUN ls -la /app/dist
+
 # Etapa de producción con nginx
 FROM nginx:alpine as production-stage
 
@@ -25,8 +28,8 @@ COPY --from=build-stage /app/dist /usr/share/nginx/html
 # Copiar configuración personalizada de nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Exponer puerto 9000
-EXPOSE 9000
+# Exponer puerto 80
+EXPOSE 80
 
 # Comando por defecto
 CMD ["nginx", "-g", "daemon off;"]

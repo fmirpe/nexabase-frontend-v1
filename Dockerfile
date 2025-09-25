@@ -25,8 +25,8 @@ COPY --from=build-stage /app/dist /usr/share/nginx/html
 # Copiar configuración personalizada de nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Exponer puerto 80
-EXPOSE 80
+# Exponer puerto 9000
+EXPOSE 9000
 
 # Comando por defecto
 CMD ["nginx", "-g", "daemon off;"]

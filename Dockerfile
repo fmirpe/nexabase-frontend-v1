@@ -1,5 +1,5 @@
 # Dockerfile para aplicación Vue.js con Vite
-FROM node:18-alpine as build-stage
+FROM node:20-alpine as build-stage
 
 # Establecer directorio de trabajo
 WORKDIR /app
@@ -13,8 +13,8 @@ RUN npm ci
 # Copiar código fuente
 COPY . .
 
-# Construir la aplicación sin chequeo de tipos para evitar problemas de compatibilidad
-RUN npm run build:prod
+# Construir la aplicación
+RUN npm run build
 
 # Etapa de producción con nginx
 FROM nginx:alpine as production-stage

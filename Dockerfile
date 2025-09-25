@@ -1,35 +1,31 @@
-# Dockerfile para aplicación Vue.js con Vite
-FROM node:20-alpine as build-stage
+# ---- Stage 1: Build ----
+FROM node:20-alpine AS build
 
-# Establecer directorio de trabajo
+# Establece directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copiar dependencias primero (para aprovechar cache)
 COPY package*.json ./
+COPY tsconfig*.json ./
 
-# Instalar todas las dependencias (incluyendo devDependencies para el build)
-RUN npm ci
+# Instalar dependencias
+RUN npm install
 
-# Copiar código fuente
+# Copiar resto del código
 COPY . .
 
-# Construir la aplicación sin chequeo de tipos para evitar error de vue-tsc
-RUN npm run build:prod
+# Construir la app
+RUN npm run build
 
-# Verificar que los archivos se construyeron correctamente
-RUN ls -la /app/dist
+# ---- Stage 2: NGINX ----
+FROM nginx:1.27-alpine
 
-# Etapa de producción con nginx
-FROM nginx:alpine as production-stage
+# Copiar build a la carpeta de NGINX
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copiar archivos construidos
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# Reemplazar la configuración por defecto de NGINX
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copiar configuración personalizada de nginx
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Exponer puerto 80
 EXPOSE 80
 
-# Comando por defecto
 CMD ["nginx", "-g", "daemon off;"]

@@ -97,7 +97,7 @@
               <input
                 v-if="typeof config.value === 'boolean'"
                 :checked="config.value"
-                @change="updateConfig(config.key, $event.target.checked)"
+                @change="updateConfig(config.key, ($event.target as HTMLInputElement).checked)"
                 type="checkbox"
                 class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
@@ -105,7 +105,7 @@
                 v-else-if="typeof config.value === 'number'"
                 :value="config.value"
                 @blur="
-                  updateConfig(config.key, parseInt($event.target.value) || 0)
+                  updateConfig(config.key, parseInt(($event.target as HTMLInputElement).value) || 0)
                 "
                 type="number"
                 class="px-3 py-2 border border-gray-300 rounded-lg w-32 text-sm"
@@ -113,7 +113,7 @@
               <input
                 v-else
                 :value="config.value"
-                @blur="updateConfig(config.key, $event.target.value)"
+                @blur="updateConfig(config.key, ($event.target as HTMLInputElement).value)"
                 type="text"
                 class="px-3 py-2 border border-gray-300 rounded-lg w-48 text-sm"
               />
@@ -129,10 +129,17 @@
 import { ref, computed, onMounted } from "vue";
 import { configAPI } from "../../services/api";
 
+interface Configuration {
+  key: string;
+  value: any;
+  description?: string;
+  category: string;
+}
+
 const loading = ref(true);
 const initializing = ref(false);
 const error = ref<string | null>(null);
-const configurations = ref<any[]>([]);
+const configurations = ref<Configuration[]>([]);
 
 const categories = computed(() => {
   const cats = [...new Set(configurations.value.map((c) => c.category))];
@@ -148,7 +155,7 @@ async function loadConfigurations() {
     loading.value = true;
     error.value = null;
     const { data } = await configAPI.getAll();
-    configurations.value = data;
+    configurations.value = data as Configuration[];
   } catch (e: any) {
     console.error("Error loading configurations:", e);
     error.value =

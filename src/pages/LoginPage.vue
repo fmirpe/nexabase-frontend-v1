@@ -2,7 +2,8 @@
   <div class="h-screen flex overflow-hidden">
     <!-- Left Side - Logo and Branding -->
     <div
-      class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 flex-col justify-center items-center p-12 text-white"
+      class="hidden lg:flex lg:w-1/2 animated-background flex-col justify-center items-center p-12 text-white"
+      :style="{ backgroundImage: 'url(/src/assets/images/fondo.png)', backgroundSize: 'cover', backgroundPosition: 'center' }"
     >
       <div class="text-center">
         <!-- Logo -->
@@ -30,7 +31,7 @@
 
         <!-- Footer -->
         <p class="text-sm text-blue-200">
-          © 2025 NexaBase Dashboard v1. Built with Vue.js & TypeScript
+          © 2025 NexaBase Dashboard v1. Powered by Vue.js & TypeScript
         </p>
       </div>
     </div>
@@ -63,6 +64,12 @@
           </div>
           <h1 class="text-2xl font-bold text-gray-900">NexaBase Dashboard</h1>
           <p class="text-gray-600 mt-2">Professional BaaS Management</p>
+        </div>
+
+        <!-- Title -->
+        <div class="text-center mb-8">
+          <h1 class="text-4xl font-bold text-gray-900"><span class="text-blue-600">NexaBase</span> v1</h1>
+          <p class="text-xl text-gray-600 mt-2">Welcome back</p>
         </div>
 
         <!-- Login Form -->
@@ -309,3 +316,15 @@ async function handleLogin() {
   }
 }
 </script>
+
+<style scoped>
+.animated-background {
+  animation: moveBackground 20s ease-in-out infinite;
+}
+
+@keyframes moveBackground {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+</style>

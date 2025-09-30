@@ -3,7 +3,7 @@
     <!-- Left Side - Logo and Branding -->
     <div
       class="hidden lg:flex lg:w-1/2 animated-background flex-col justify-center items-center p-12 text-white"
-      :style="{ backgroundImage: 'url(/src/assets/images/fondo.png)', backgroundSize: 'cover', backgroundPosition: 'center' }"
+      :style="{ backgroundImage: `url(${fondoUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
     >
       <div class="text-center">
         <!-- Logo -->
@@ -276,6 +276,7 @@ import { useAuthStore } from "../stores/auth";
 
 // Usamos el logo desde public
 const logoUrl = "/logo.png";
+const fondoUrl = "/fondo.png";
 
 const authStore = useAuthStore();
 const router = useRouter(); // ✅ Agregar router

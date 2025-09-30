@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-8">
     <!-- Enhanced Welcome Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-700 rounded-xl p-8 text-white relative overflow-hidden">
+    <div class="animated-background rounded-xl p-8 text-white relative overflow-hidden" :style="{ backgroundImage: `url(${fondoUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
       <div class="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
       <div class="relative z-10 flex items-center justify-between">
         <div>
@@ -541,6 +541,7 @@ interface SystemStatus {
 
 const router = useRouter();
 const authStore = useAuthStore();
+const fondoUrl = "/fondo.png";
 
 // State
 const loading = ref<boolean>(true);
@@ -959,3 +960,15 @@ onUnmounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.animated-background {
+  animation: moveBackground 20s ease-in-out infinite;
+}
+
+@keyframes moveBackground {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+</style>

@@ -25,6 +25,7 @@ import WebhooksView from "./pages/webhooks/WebhooksView.vue";
 
 // Auth/Login view
 import LoginView from "./pages/LoginPage.vue";
+import OAuthCallbackView from "./pages/OAuthCallback.vue";
 
 // Router actualizado
 const routes = [
@@ -34,6 +35,13 @@ const routes = [
     name: "Login",
     component: LoginView,
     meta: { requiresAuth: false, title: "Iniciar Sesión" },
+  },
+
+  {
+    path: "/auth/callback",
+    name: "OAuthCallback",
+    component: OAuthCallbackView,
+    meta: { requiresAuth: false, title: "Authenticating..." },
   },
 
   // Protected routes (con DashboardLayout)

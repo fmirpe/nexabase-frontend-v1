@@ -329,6 +329,41 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem("nexa_user");
   };
 
+  const handleOAuthCallback = async (token: string) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      // El token ya viene firmado del backend, solo necesitamos validarlo
+      // y obtener la información del usuario
+      tokens.value = {
+        access_token: token,
+        token_type: "Bearer",
+      };
+
+      // Persistir el token temporalmente
+      localStorage.setItem("nexa_tokens", JSON.stringify(tokens.value));
+
+      // Obtener información del usuario
+      const userData = await fetchCurrentUser();
+
+      if (userData) {
+        return { success: true };
+      } else {
+        throw new Error("Failed to fetch user data");
+      }
+    } catch (e: any) {
+      error.value = e?.message || "OAuth authentication failed";
+      tokens.value = null;
+      user.value = null;
+      localStorage.removeItem("nexa_tokens");
+      localStorage.removeItem("nexa_user");
+      return { success: false, error: error.value };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const checkTokenExpiration = () => {
     if (!tokens.value?.expires_in) return true;
     return true;
@@ -363,5 +398,6 @@ export const useAuthStore = defineStore("auth", () => {
     fetchCurrentUser,
     clearError,
     checkTokenExpiration,
+    handleOAuthCallback,
   };
 });

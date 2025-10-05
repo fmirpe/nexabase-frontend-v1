@@ -213,6 +213,14 @@ export const authAPI = {
   changePassword: (data: { current_password: string; new_password: string }) =>
     apiClient.patch("/auth/change-password", data),
   updateProfile: (data: any) => apiClient.patch("/auth/profile", data),
+
+  createFirstOrganization: (data: {
+    name: string;
+    slug?: string;
+    description?: string;
+    planId?: string;
+    paymentMethod?: string;
+  }) => apiClient.post("/api/organizations/create-first", data),
 };
 
 // ✅ ACTUALIZADO: Admin Collections API con filtros avanzados
@@ -838,6 +846,41 @@ export const storageAPI = {
     apiClient.post(`/api/storage/${fileId}/move`, { folder }),
 
   cleanup: () => apiClient.post("/api/storage/cleanup"),
+};
+
+export const plansAPI = {
+  getAll: () => apiClient.get("/api/plans"),
+  getCurrentSubscription: () => apiClient.get("/api/plans/subscription"),
+  getUsageStats: () => apiClient.get("/api/plans/usage"),
+  upgrade: (planId: string) => apiClient.put("/api/plans/upgrade", { planId }),
+};
+
+export const tenantsAPI = {
+  getUserOrganizations: () =>
+    apiClient.get("/api/organizations/user-organizations"),
+  switchOrganization: (tenantId: string) =>
+    apiClient.post(`/api/organizations/switch/${tenantId}`),
+  getCurrentOrganization: () => apiClient.get("/api/organizations/current"),
+  createFirst: (data: any) =>
+    apiClient.post("/api/organizations/create-first", data),
+
+  getMembers: (params?: any) =>
+    apiClient.get("/api/organizations/members", { params }),
+  inviteUser: (data: {
+    email: string;
+    role: "admin" | "member";
+    message?: string;
+  }) => apiClient.post("/api/organizations/invite", data),
+  updateOrganization: (data: {
+    name?: string;
+    description?: string;
+    settings?: any;
+  }) => apiClient.put("/api/organizations/settings", data),
+  removeMember: (userId: string) =>
+    apiClient.delete(`/api/organizations/members/${userId}`),
+
+  createAdditional: (data: any) =>
+    apiClient.post("/api/organizations/create-additional", data),
 };
 
 // ✅ NUEVOS: Helper types para filtros avanzados

@@ -26,6 +26,8 @@ import WebhooksView from "./pages/webhooks/WebhooksView.vue";
 // Auth/Login view
 import LoginView from "./pages/LoginPage.vue";
 import OAuthCallbackView from "./pages/OAuthCallback.vue";
+import CreateOrganizationView from "./pages/tenants/CreateOrganization.vue"; // ✅ AGREGAR
+import OrganizationSettingsView from "./pages/tenants/OrganizationSettingsView.vue";
 
 // Router actualizado
 const routes = [
@@ -35,6 +37,13 @@ const routes = [
     name: "Login",
     component: LoginView,
     meta: { requiresAuth: false, title: "Iniciar Sesión" },
+  },
+
+  {
+    path: "/create-organization",
+    name: "CreateOrganization",
+    component: CreateOrganizationView,
+    meta: { requiresAuth: true, title: "Create Organization" },
   },
 
   {
@@ -117,6 +126,16 @@ const routes = [
         component: ApiKeysView,
         meta: { requiresAuth: true, requiresAdmin: true, title: "API Keys" },
       },
+      {
+        path: "organization-settings",
+        name: "OrganizationSettings",
+        component: OrganizationSettingsView,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: false, // Cualquier usuario con organización puede acceder
+          title: "Organization Settings",
+        },
+      },
     ],
   },
 
@@ -146,11 +165,28 @@ router.beforeEach(async (to, from, next) => {
     document.title = `${to.meta.title} - NexaBase`;
   }
 
-  // ✅ Si va a login y ya está autenticado, redirigir al dashboard
+  // ✅ Si va a login y ya está autenticado, redirigir según tenga organización
   if (to.name === "Login" && authStore.isAuthenticated) {
+    if (authStore.user && !authStore.user.tenantId) {
+      next("/create-organization");
+    } else {
+      next("/");
+    }
+    return;
+  }
+
+  // ❌ COMENTAR O ELIMINAR ESTA SECCIÓN COMPLETA
+  /*
+  if (
+    to.name === "CreateOrganization" &&
+    authStore.isAuthenticated &&
+    authStore.user &&
+    authStore.user.tenantId
+  ) {
     next("/");
     return;
   }
+  */
 
   // ✅ Si requiere auth pero no está autenticado, ir a login
   if (to.meta?.requiresAuth && !authStore.isAuthenticated) {
@@ -158,7 +194,20 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
-  // ✅ Si requiere admin pero no es admin, ir al dashboard (no login)
+  // ✅ Si está autenticado pero requiere organización SOLO para rutas específicas
+  if (
+    authStore.isAuthenticated &&
+    authStore.user &&
+    !authStore.user.tenantId &&
+    to.name !== "CreateOrganization" &&
+    to.name !== "OAuthCallback" &&
+    to.name !== "Login"
+  ) {
+    next("/create-organization");
+    return;
+  }
+
+  // ✅ Si requiere admin pero no es admin, ir al dashboard
   if (to.meta?.requiresAdmin && !authStore.isAdmin) {
     next("/");
     return;

@@ -13,7 +13,8 @@
           <div
             class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm"
           >
-            <svg
+            <img class="mx-auto h-10 w-10" :src="logoUrl" alt="NexaBase" />
+            <!-- <svg
               class="w-5 h-5 text-white"
               fill="currentColor"
               viewBox="0 0 20 20"
@@ -21,7 +22,7 @@
               <path
                 d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
               />
-            </svg>
+            </svg> -->
           </div>
           <div v-show="sidebarOpen" class="transition-all duration-300">
             <h1 class="font-bold text-lg">NexaBase</h1>
@@ -107,6 +108,7 @@
 
       <!-- User Section -->
       <div class="p-4 border-t border-blue-500/20">
+        
         <div class="flex items-center gap-3">
           <div
             class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm"
@@ -258,6 +260,7 @@
             >
               {{ authStore.user?.role?.toUpperCase() || "USER" }}
             </span>
+            <OrganizationSwitcher v-if="authStore.user?.tenantId" />
           </div>
         </div>
 
@@ -376,11 +379,13 @@ function getUserInitials(
 }
 
 // Tu script existente completo va aquí...
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, nextTick  } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import { adminCollections, usersAPI } from "../services/api";
+import OrganizationSwitcher from '../components/OrganizationSwitcher.vue';
 
+const logoUrl = '/icono.png';
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
@@ -559,9 +564,18 @@ function formatRelativeTime(dateString: string): string {
 }
 
 let refreshInterval: NodeJS.Timeout;
-onMounted(() => {
+onMounted(async () => {
   loadSystemStats();
   refreshInterval = setInterval(loadSystemStats, 5 * 60 * 1000);
+
+  await nextTick();
+  if (authStore.user?.tenantId) {
+    // Forzar carga de organizaciones para el OrganizationSwitcher
+    const orgSwitcher = document.querySelector('[data-org-switcher]');
+    if (orgSwitcher) {
+      orgSwitcher.dispatchEvent(new CustomEvent('load-organizations'));
+    }
+  }
 });
 
 if (typeof window !== "undefined") {

@@ -1,7 +1,8 @@
-// src/stores/auth.ts
+// src/stores/auth.ts - VERSIÓN COMPLETA CORREGIDA
+
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { authAPI } from "../services/api";
+import { authAPI, tenantsAPI } from "../services/api";
 
 interface Tokens {
   access_token: string;
@@ -16,7 +17,7 @@ interface User {
   first_name: string;
   last_name: string;
   role: "user" | "admin" | "developer";
-  tenantId?: string;
+  tenantId?: string | null;
   status: string;
   is_active: boolean;
   created_at: string;
@@ -24,19 +25,20 @@ interface User {
   last_login_at?: string;
 }
 
-// ✅ INTERFACES PARA LAS RESPUESTAS DEL BACKEND
+// ✅ INTERFACES PARA RESPUESTAS API
 interface LoginResponse {
   access_token: string;
   refresh_token: string;
   expires_in: number;
   token_type: string;
+  requires_organization?: boolean;
   user: {
     id: string;
     email: string;
     first_name: string;
     last_name: string;
     role: string;
-    tenantId?: string;
+    tenantId?: string | null;
     status: string;
     is_active: boolean;
     created_at: string;
@@ -49,7 +51,7 @@ interface UserResponse {
   first_name: string;
   last_name: string;
   role: string;
-  tenantId?: string;
+  tenantId?: string | null;
   status: string;
   is_active: boolean;
   created_at: string;
@@ -57,22 +59,60 @@ interface UserResponse {
   last_login_at?: string;
 }
 
+interface CreateOrganizationResponse {
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+  };
+  user: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    role: string;
+    tenantId: string;
+    requires_organization: boolean;
+  };
+}
+
+interface RefreshResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
+  user?: Partial<User>;
+}
+
+interface UpdateProfileResponse {
+  user: Partial<User>;
+}
+
+interface ApiErrorResponse {
+  message: string;
+}
+
 export const useAuthStore = defineStore("auth", () => {
   const user = ref<User | null>(null);
   const tokens = ref<Tokens | null>(null);
   const loading = ref(false);
-  const error = ref<string | null>(null);
+  const error = ref<string | undefined>(undefined); // ✅ CAMBIO: undefined en lugar de null
 
   // Computed properties
-  const isAuthenticated = computed(() => !!tokens.value?.access_token);
-  const isAdmin = computed(() => user.value?.role === "admin");
-  const isDeveloper = computed(() => user.value?.role === "developer");
-  const isModerator = computed(() => isAdmin.value || isDeveloper.value);
+  const isAuthenticated = computed((): boolean => !!tokens.value?.access_token);
+  const isAdmin = computed((): boolean => user.value?.role === "admin");
+  const isDeveloper = computed((): boolean => user.value?.role === "developer");
+  const isModerator = computed(
+    (): boolean => isAdmin.value || isDeveloper.value
+  );
 
-  const currentTenantId = computed(() => user.value?.tenantId);
-  const hasTenant = computed(() => !!currentTenantId.value);
+  const currentTenantId = computed(
+    (): string | null | undefined => user.value?.tenantId
+  );
+  const hasTenant = computed((): boolean => !!currentTenantId.value);
 
-  const fullName = computed(() => {
+  const fullName = computed((): string => {
     if (!user.value) return "";
     return (
       `${user.value.first_name} ${user.value.last_name}`.trim() ||
@@ -80,7 +120,7 @@ export const useAuthStore = defineStore("auth", () => {
     );
   });
 
-  const userInitials = computed(() => {
+  const userInitials = computed((): string => {
     if (!user.value) return "?";
     const first = user.value.first_name?.[0] || "";
     const last = user.value.last_name?.[0] || "";
@@ -89,23 +129,35 @@ export const useAuthStore = defineStore("auth", () => {
     );
   });
 
-  const clearError = () => (error.value = null);
+  const requiresOrganization = computed((): boolean => {
+    return (
+      !user.value ||
+      !user.value.tenantId ||
+      user.value.tenantId === null ||
+      user.value.tenantId === "null"
+    );
+  });
 
-  const initializeAuth = () => {
+  const clearError = (): void => {
+    error.value = undefined; // ✅ CAMBIO
+  };
+
+  const initializeAuth = (): void => {
     try {
       const rawT = localStorage.getItem("nexa_tokens");
       const rawU = localStorage.getItem("nexa_user");
-      if (rawT) tokens.value = JSON.parse(rawT);
-      if (rawU) user.value = JSON.parse(rawU);
+      if (rawT) tokens.value = JSON.parse(rawT) as Tokens;
+      if (rawU) user.value = JSON.parse(rawU) as User;
     } catch {
       tokens.value = null;
       user.value = null;
+      error.value = undefined; // ✅ CAMBIO
       localStorage.removeItem("nexa_tokens");
       localStorage.removeItem("nexa_user");
     }
   };
 
-  const persistSession = (t: Tokens | null, u: User | null) => {
+  const persistSession = (t: Tokens | null, u: User | null): void => {
     if (t?.access_token) localStorage.setItem("nexa_tokens", JSON.stringify(t));
     else localStorage.removeItem("nexa_tokens");
 
@@ -113,12 +165,12 @@ export const useAuthStore = defineStore("auth", () => {
     else localStorage.removeItem("nexa_user");
   };
 
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = async (): Promise<User | null> => {
     if (!tokens.value?.access_token) return null;
 
     try {
       const res = await authAPI.getCurrentUser();
-      const userData = res.data as UserResponse; // ✅ TYPE ASSERTION
+      const userData = res.data as UserResponse;
 
       const u: User = {
         id: userData.id,
@@ -143,12 +195,15 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
-  const login = async (data: { email: string; password: string }) => {
+  const login = async (data: {
+    email: string;
+    password: string;
+  }): Promise<{ success: boolean; error?: string }> => {
     loading.value = true;
-    error.value = null;
+    error.value = undefined; // ✅ CAMBIO
     try {
       const res = await authAPI.login(data);
-      const loginData = res.data as LoginResponse; // ✅ TYPE ASSERTION
+      const loginData = res.data as LoginResponse;
 
       const t: Tokens = {
         access_token: loginData.access_token,
@@ -175,8 +230,8 @@ export const useAuthStore = defineStore("auth", () => {
 
       return { success: true };
     } catch (e: any) {
-      error.value =
-        e?.response?.data?.message || e?.message || "Error de autenticación";
+      const apiError = e?.response?.data as ApiErrorResponse;
+      error.value = apiError?.message || e?.message || "Error de autenticación";
       return { success: false, error: error.value };
     } finally {
       loading.value = false;
@@ -188,13 +243,12 @@ export const useAuthStore = defineStore("auth", () => {
     password: string;
     first_name?: string;
     last_name?: string;
-  }) => {
+  }): Promise<{ success: boolean; error?: string }> => {
     loading.value = true;
-    error.value = null;
+    error.value = undefined; // ✅ CAMBIO
     try {
       const res = await authAPI.register(data);
 
-      // ✅ VERIFICAR SI EXISTE access_token
       if (
         res.data &&
         typeof res.data === "object" &&
@@ -228,33 +282,37 @@ export const useAuthStore = defineStore("auth", () => {
 
       return { success: true };
     } catch (e: any) {
-      error.value =
-        e?.response?.data?.message || e?.message || "Error al registrar";
+      const apiError = e?.response?.data as ApiErrorResponse;
+      error.value = apiError?.message || e?.message || "Error al registrar";
       return { success: false, error: error.value };
     } finally {
       loading.value = false;
     }
   };
 
-  const updateProfile = async (profileData: Partial<User>) => {
+  const updateProfile = async (
+    profileData: Partial<User>
+  ): Promise<{ success: boolean; error?: string }> => {
     if (!tokens.value?.access_token)
       return { success: false, error: "No authenticated" };
 
     loading.value = true;
-    error.value = null;
+    error.value = undefined; // ✅ CAMBIO
     try {
       const res = await authAPI.updateProfile(profileData);
 
       if (res.data && typeof res.data === "object" && "user" in res.data) {
-        const updatedUser = { ...user.value, ...(res.data as any).user };
+        const updateResponse = res.data as UpdateProfileResponse;
+        const updatedUser = { ...user.value, ...updateResponse.user } as User;
         user.value = updatedUser;
         localStorage.setItem("nexa_user", JSON.stringify(updatedUser));
       }
 
       return { success: true };
     } catch (e: any) {
+      const apiError = e?.response?.data as ApiErrorResponse;
       error.value =
-        e?.response?.data?.message || e?.message || "Error actualizando perfil";
+        apiError?.message || e?.message || "Error actualizando perfil";
       return { success: false, error: error.value };
     } finally {
       loading.value = false;
@@ -264,32 +322,31 @@ export const useAuthStore = defineStore("auth", () => {
   const changePassword = async (passwordData: {
     current_password: string;
     new_password: string;
-  }) => {
+  }): Promise<{ success: boolean; error?: string }> => {
     if (!tokens.value?.access_token)
       return { success: false, error: "No authenticated" };
 
     loading.value = true;
-    error.value = null;
+    error.value = undefined; // ✅ CAMBIO
     try {
       await authAPI.changePassword(passwordData);
       return { success: true };
     } catch (e: any) {
+      const apiError = e?.response?.data as ApiErrorResponse;
       error.value =
-        e?.response?.data?.message ||
-        e?.message ||
-        "Error cambiando contraseña";
+        apiError?.message || e?.message || "Error cambiando contraseña";
       return { success: false, error: error.value };
     } finally {
       loading.value = false;
     }
   };
 
-  const refreshTokens = async () => {
+  const refreshTokens = async (): Promise<boolean> => {
     if (!tokens.value?.refresh_token) return false;
 
     try {
       const res = await authAPI.refresh(tokens.value.refresh_token);
-      const refreshData = res.data as any; // ✅ TYPE ASSERTION TEMPORAL
+      const refreshData = res.data as RefreshResponse;
 
       const newTokens: Tokens = {
         access_token: refreshData.access_token,
@@ -298,7 +355,7 @@ export const useAuthStore = defineStore("auth", () => {
         token_type: refreshData.token_type || "Bearer",
       };
 
-      if (refreshData.user) {
+      if (refreshData.user && user.value) {
         user.value = { ...user.value, ...refreshData.user };
         localStorage.setItem("nexa_user", JSON.stringify(user.value));
       }
@@ -313,7 +370,7 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     if (tokens.value?.access_token) {
       try {
         await authAPI.logout();
@@ -324,27 +381,25 @@ export const useAuthStore = defineStore("auth", () => {
 
     tokens.value = null;
     user.value = null;
-    error.value = null;
+    error.value = undefined; // ✅ CAMBIO
     localStorage.removeItem("nexa_tokens");
     localStorage.removeItem("nexa_user");
   };
 
-  const handleOAuthCallback = async (token: string) => {
+  const handleOAuthCallback = async (
+    token: string
+  ): Promise<{ success: boolean; error?: string }> => {
     loading.value = true;
-    error.value = null;
+    error.value = undefined; // ✅ CAMBIO
 
     try {
-      // El token ya viene firmado del backend, solo necesitamos validarlo
-      // y obtener la información del usuario
       tokens.value = {
         access_token: token,
         token_type: "Bearer",
       };
 
-      // Persistir el token temporalmente
       localStorage.setItem("nexa_tokens", JSON.stringify(tokens.value));
 
-      // Obtener información del usuario
       const userData = await fetchCurrentUser();
 
       if (userData) {
@@ -357,18 +412,75 @@ export const useAuthStore = defineStore("auth", () => {
       tokens.value = null;
       user.value = null;
       localStorage.removeItem("nexa_tokens");
-      localStorage.removeItem("nexa_user");
+      localStorage.removeItem("nexa_user"); // ✅ CORREGIDO
       return { success: false, error: error.value };
     } finally {
       loading.value = false;
     }
   };
 
-  const checkTokenExpiration = () => {
+  const checkTokenExpiration = (): boolean => {
     if (!tokens.value?.expires_in) return true;
     return true;
   };
 
+  const refreshCurrentOrganization = async (): Promise<void> => {
+    if (!tokens.value?.access_token) return;
+
+    try {
+      const response = await tenantsAPI.getUserOrganizations();
+      const data = response.data as {
+        organizations: any[];
+        currentTenantId: string | null;
+      };
+
+      if (data.organizations && data.organizations.length > 0 && user.value) {
+        const currentOrg = data.organizations.find((org) => org.isActive);
+        if (currentOrg) {
+          user.value.tenantId = currentOrg.id;
+          localStorage.setItem("nexa_user", JSON.stringify(user.value));
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to refresh organization:", error);
+    }
+  };
+
+  const createFirstOrganization = async (orgData: {
+    name: string;
+    slug?: string;
+    description?: string;
+    planId?: string;
+    paymentMethod?: string;
+  }): Promise<{ success: boolean; error?: string; organization?: any }> => {
+    loading.value = true;
+    error.value = undefined; // ✅ CAMBIO
+
+    try {
+      const res = await authAPI.createFirstOrganization(orgData);
+      const responseData = res.data as CreateOrganizationResponse;
+
+      if (user.value && responseData.user) {
+        user.value = {
+          ...user.value,
+          tenantId: responseData.user.tenantId,
+        };
+
+        localStorage.setItem("nexa_user", JSON.stringify(user.value));
+      }
+
+      return { success: true, organization: responseData.organization };
+    } catch (e: any) {
+      const apiError = e?.response?.data as ApiErrorResponse;
+      error.value =
+        apiError?.message || e?.message || "Error creando organización";
+      return { success: false, error: error.value };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Initialize
   initializeAuth();
 
   if (tokens.value?.access_token && !user.value) {
@@ -388,6 +500,7 @@ export const useAuthStore = defineStore("auth", () => {
     userInitials,
     currentTenantId,
     hasTenant,
+    requiresOrganization,
     initializeAuth,
     login,
     register,
@@ -399,5 +512,7 @@ export const useAuthStore = defineStore("auth", () => {
     clearError,
     checkTokenExpiration,
     handleOAuthCallback,
+    createFirstOrganization,
+    refreshCurrentOrganization,
   };
 });

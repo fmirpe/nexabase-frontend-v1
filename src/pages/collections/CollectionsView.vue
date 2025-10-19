@@ -1,184 +1,383 @@
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <CollectionHeader
-      :current-collection="currentCollection"
-      :show-advanced-filters="showAdvancedFilters"
-      :can-insert-records="canInsertRecords"
-      @toggle-advanced-filters="toggleAdvancedFilters"
-      @go-back="goBack"
-      @open-insert-modal="openInsertModal"
-      @open-create="openCreate"
-    />
+  <div class="space-y-8 min-h-screen bg-gray-50 p-6">
+    <!-- Enhanced Header Premium -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <CollectionHeader
+        :current-collection="currentCollection"
+        :show-advanced-filters="showAdvancedFilters"
+        :can-insert-records="canInsertRecords"
+        @toggle-advanced-filters="toggleAdvancedFilters"
+        @go-back="goBack"
+        @open-insert-modal="openInsertModal"
+        @open-create="openCreate"
+        class="premium-header"
+      />
+    </div>
 
-    <!-- Stats Cards -->
-    <CollectionStats
-      v-if="!currentCollection && collectionsStats"
-      :stats="collectionsStats"
-    />
-    <RecordStats
-      v-else-if="currentCollection && recordsStats"
-      :stats="recordsStats"
-      :filtered-count="filteredRecordsCount"
-      :selected-count="selectedRecords.length"
-      :fields-count="Object.keys(currentCollection?.schema?.fields || {}).length"
-    />
+    <!-- Enhanced Stats Cards Premium -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <CollectionStats
+        v-if="!currentCollection && collectionsStats"
+        :stats="collectionsStats"
+        class="premium-stats"
+      />
+      <RecordStats
+        v-else-if="currentCollection && recordsStats"
+        :stats="recordsStats"
+        :filtered-count="filteredRecordsCount"
+        :selected-count="selectedRecords.length"
+        :fields-count="Object.keys(currentCollection?.schema?.fields || {}).length"
+        class="premium-stats"
+      />
+    </div>
 
-    <!-- Advanced Filters -->
-    <CollectionAdvancedFilters
-      v-if="!currentCollection && showAdvancedFilters"
-      v-model:active-filters="activeCollectionFilters"
-      v-model:new-filter="newCollectionFilter"
-      @add-filter="addCollectionFilter"
-      @remove-filter="removeCollectionFilter"
-      @clear-filters="clearAdvancedFilters"
-    />
-    <RecordAdvancedFilters
-      v-else-if="currentCollection && showAdvancedFilters"
-      v-model:active-filters="activeRecordFilters"
-      v-model:new-filter="newRecordFilter"
-      :collection="currentCollection"
-      @add-filter="addRecordFilter"
-      @remove-filter="removeRecordFilter"
-      @clear-filters="clearAdvancedFilters"
-    />
+    <!-- Enhanced Advanced Filters Premium -->
+    <div v-if="showAdvancedFilters" class="space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900">Filtros Avanzados</h3>
+                <p class="text-gray-600 mt-1 text-sm">
+                  {{ currentCollection ? `Búsqueda avanzada en ${currentCollection.name}` : 'Búsqueda avanzada de collections' }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                {{ (currentCollection ? activeRecordFilters.length : activeCollectionFilters.length) }} filtros activos
+              </span>
+            </div>
+          </div>
+        </div>
 
-    <!-- Search and Basic Filters -->
-    <SearchAndFilters
-      :current-collection="currentCollection"
-      :search-query="searchQuery"
-      :collection-filters="collectionFilters"
-      :pagination="pagination"
-      :filtered-collections-count="filteredCollectionsCount"
-      :filtered-records-count="filteredRecordsCount"
-      :selected-records="selectedRecords"
-      :auto-refresh="autoRefresh"
-      :exporting-records="exportingRecords"
-      :exporting-collections="exportingCollections"
-      @search-input="handleSearchInput"
-      @apply-filters="applyFilters"
-      @go-to-page="goToPage"
-      @clear-filters="clearAllFilters"
-      @export-records="exportRecords"
-      @export-collections="exportCollections"
-      @toggle-auto-refresh="toggleAutoRefresh"
-      @open-bulk-delete="openBulkDeleteModal"
-    />
+        <div class="p-6">
+          <CollectionAdvancedFilters
+            v-if="!currentCollection"
+            v-model:active-filters="activeCollectionFilters"
+            v-model:new-filter="newCollectionFilter"
+            @add-filter="addCollectionFilter"
+            @remove-filter="removeCollectionFilter"
+            @clear-filters="clearAdvancedFilters"
+            class="premium-filters"
+          />
+          <RecordAdvancedFilters
+            v-else
+            v-model:active-filters="activeRecordFilters"
+            v-model:new-filter="newRecordFilter"
+            :collection="currentCollection"
+            @add-filter="addRecordFilter"
+            @remove-filter="removeRecordFilter"
+            @clear-filters="clearAdvancedFilters"
+            class="premium-filters"
+          />
+        </div>
+      </div>
+    </div>
 
-    <!-- Loading State -->
-    <LoadingState v-if="loading" />
+    <!-- Enhanced Search and Basic Filters Premium -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-gray-900">
+                {{ currentCollection ? `Búsqueda en ${currentCollection.name}` : 'Búsqueda y Filtros' }}
+              </h3>
+              <p class="text-gray-600 mt-1 text-sm">
+                {{ currentCollection 
+                  ? `${filteredRecordsCount} registros encontrados de ${recordsStats?.total || 0} totales`
+                  : `${filteredCollectionsCount} collections encontradas de ${collections.length} totales`
+                }}
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div v-if="autoRefresh" class="flex items-center text-green-600 bg-green-50 px-3 py-1.5 rounded-lg">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
+              <span class="text-sm font-medium">Auto-refresh activo</span>
+            </div>
+            <div v-if="selectedRecords.length > 0" class="flex items-center text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
+              <span class="text-sm font-medium">{{ selectedRecords.length }} seleccionados</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Collections Table -->
-    <CollectionsTable
-      v-else-if="!currentCollection"
-      :collections="paginatedCollections"
-      :filtered-collections="filteredCollections"
-      :has-active-filters="hasActiveCollectionFilters"
-      @view-data="viewData"
-      @view-collection="viewCollection"
-      @open-edit="openEdit"
-      @open-delete="openDelete"
-    />
+      <div class="p-6">
+        <SearchAndFilters
+          :current-collection="currentCollection"
+          :search-query="searchQuery"
+          :collection-filters="collectionFilters"
+          :pagination="pagination"
+          :filtered-collections-count="filteredCollectionsCount"
+          :filtered-records-count="filteredRecordsCount"
+          :selected-records="selectedRecords"
+          :auto-refresh="autoRefresh"
+          :exporting-records="exportingRecords"
+          :exporting-collections="exportingCollections"
+          @search-input="handleSearchInput"
+          @apply-filters="applyFilters"
+          @go-to-page="goToPage"
+          @clear-filters="clearAllFilters"
+          @export-records="exportRecords"
+          @export-collections="exportCollections"
+          @toggle-auto-refresh="toggleAutoRefresh"
+          @open-bulk-delete="openBulkDeleteModal"
+          class="premium-search-filters"
+        />
+      </div>
+    </div>
 
-    <!-- Records Table -->
-    <RecordsTable
-      v-else
-      :collection="currentCollection"
-      :records="paginatedRecords"
-      :selected-records="selectedRecords"
-      :has-active-filters="hasActiveRecordFilters"
-      :can-update-records="canUpdateRecords"
-      :can-delete-records="canDeleteRecords"
-      :sort-field="sortField"
-      :sort-direction="sortDirection"
-      @toggle-select-record="toggleSelectRecord"
-      @toggle-select-all-visible="toggleSelectAllVisibleRecords"
-      @sort-by="sortBy"
-      @open-edit-record="openEditRecord"
-      @open-delete-record="openDeleteRecord"
-    />
+    <!-- Enhanced Loading State Premium -->
+    <div v-if="loading" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl mb-6">
+          <svg class="w-10 h-10 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-3">
+          {{ currentCollection ? 'Cargando Registros' : 'Cargando Collections' }}
+        </h3>
+        <p class="text-gray-600 text-lg max-w-md mx-auto">
+          {{ currentCollection 
+            ? `Obteniendo datos de la collection "${currentCollection.name}"...`
+            : 'Obteniendo información de todas las collections...'
+          }}
+        </p>
+        <div class="mt-6 flex items-center justify-center space-x-2">
+          <div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+      </div>
+    </div>
 
-    <!-- Pagination -->
-    <PaginationControls
-      v-if="!loading && totalPages > 1"
-      :pagination="pagination"
-      :total-items="totalItems"
-      :total-pages="totalPages"
-      :has-active-filters="hasActiveFilters"
-      @go-to-page="goToPage"
-    />
+    <!-- Enhanced Data Tables Premium -->
+    <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div :class="[
+              'w-10 h-10 rounded-xl flex items-center justify-center',
+              currentCollection 
+                ? 'bg-gradient-to-br from-blue-500 to-indigo-600' 
+                : 'bg-gradient-to-br from-purple-500 to-pink-600'
+            ]">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path v-if="currentCollection" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-gray-900">
+                {{ currentCollection ? `Registros de ${currentCollection.name}` : 'Collections del Sistema' }}
+              </h3>
+              <p class="text-gray-600 mt-1 text-sm">
+                {{ currentCollection 
+                  ? `${filteredRecordsCount} registros ${hasActiveRecordFilters ? 'filtrados' : 'totales'}`
+                  : `${filteredCollectionsCount} collections ${hasActiveCollectionFilters ? 'filtradas' : 'totales'}`
+                }}
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div v-if="currentCollection && selectedRecords.length > 0" class="flex items-center text-blue-600 bg-blue-50 px-4 py-2 rounded-xl">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="font-semibold">{{ selectedRecords.length }} seleccionados</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Modals -->
-    <CreateCollectionModal
-      v-if="showCreateModal"
-      :editing-collection="editingCollection"
-      :form="form"
-      :schema-fields="schemaFields"
-      :relation-list="relationList"
-      :indexes-input="indexesInput"
-      :auth-create-input="authCreateInput"
-      :auth-read-input="authReadInput"
-      :auth-update-input="authUpdateInput"
-      :auth-delete-input="authDeleteInput"
-      :saving="saving"
-      @close="closeCreateModal"
-      @save="saveCollection"
-      @add-field="addSchemaField"
-      @remove-field="removeSchemaField"
-      @add-relation="addRelation"
-      @remove-relation="removeRelation"
-      @update:indexes-input="(val) => indexesInput = val"
-      @update:auth-create-input="(val) => authCreateInput = val"
-      @update:auth-read-input="(val) => authReadInput = val"
-      @update:auth-update-input="(val) => authUpdateInput = val"
-      @update:auth-delete-input="(val) => authDeleteInput = val"
-      @update-form="updateForm"
-      @update-form-metadata="updateFormMetadata"
-      @update-form-schema="updateFormSchema"
-      @update-schema-field="updateSchemaField"
-      @update-relation="updateRelation"
-    />
+      <div class="overflow-hidden">
+        <!-- Collections Table -->
+        <CollectionsTable
+          v-if="!currentCollection"
+          :collections="paginatedCollections"
+          :filtered-collections="filteredCollections"
+          :has-active-filters="hasActiveCollectionFilters"
+          @view-data="viewData"
+          @view-collection="viewCollection"
+          @open-edit="openEdit"
+          @open-delete="openDelete"
+          class="premium-table"
+        />
 
-    <RecordModal
-      v-if="showInsertModal"
-      :collection="currentCollection"
-      :editing-record="editingRecord"
-      :record-form="recordForm"
-      :json-errors="jsonErrors"
-      :upload-progress="uploadProgress"
-      :saving-record="savingRecord"
-      @close="closeInsertModal"
-      @save="saveRecord"
-      @validate-json="validateJSON"
-    />
+        <!-- Records Table -->
+        <RecordsTable
+          v-else
+          :collection="currentCollection"
+          :records="paginatedRecords"
+          :selected-records="selectedRecords"
+          :has-active-filters="hasActiveRecordFilters"
+          :can-update-records="canUpdateRecords"
+          :can-delete-records="canDeleteRecords"
+          :sort-field="sortField"
+          :sort-direction="sortDirection"
+          @toggle-select-record="toggleSelectRecord"
+          @toggle-select-all-visible="toggleSelectAllVisibleRecords"
+          @sort-by="sortBy"
+          @open-edit-record="openEditRecord"
+          @open-delete-record="openDeleteRecord"
+          class="premium-table"
+        />
+      </div>
+    </div>
 
-    <DeleteModal
-      v-if="showDeleteModal"
-      :deleting-collection="deletingCollection"
-      :collection-to-delete="collectionToDelete"
-      :record-to-delete="recordToDelete"
-      @close="closeDeleteModal"
-      @confirm="confirmDelete"
-    />
+    <!-- Enhanced Pagination Premium -->
+    <div v-if="!loading && totalPages > 1" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <PaginationControls
+        :pagination="pagination"
+        :total-items="totalItems"
+        :total-pages="totalPages"
+        :has-active-filters="hasActiveFilters"
+        @go-to-page="goToPage"
+        class="premium-pagination"
+      />
+    </div>
 
-    <BulkDeleteModal
-      v-if="showBulkDeleteModal"
-      :selected-count="selectedRecords.length"
-      :bulk-deleting="bulkDeleting"
-      @close="closeBulkDeleteModal"
-      @confirm="confirmBulkDelete"
-    />
+    <!-- System Info Panel -->
+    <div v-if="!loading" class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200 p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-lg font-bold text-indigo-900">Información del Sistema</h4>
+            <div class="flex items-center space-x-6 mt-2 text-sm text-indigo-700">
+              <span class="flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                </svg>
+                {{ collections.length }} Collections
+              </span>
+              <span v-if="currentCollection" class="flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {{ Object.keys(currentCollection.schema?.fields || {}).length }} Campos
+              </span>
+              <span class="flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Actualizado {{ new Date().toLocaleTimeString() }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div :class="[
+            'flex items-center px-3 py-1.5 rounded-lg text-sm font-medium',
+            autoRefresh ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+          ]">
+            <div :class="[
+              'w-2 h-2 rounded-full mr-2',
+              autoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+            ]"></div>
+            {{ autoRefresh ? 'Tiempo real' : 'Manual' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Modals Premium -->
+    <div class="premium-modals">
+      <CreateCollectionModal
+        v-if="showCreateModal"
+        :editing-collection="editingCollection"
+        :form="form"
+        :schema-fields="schemaFields"
+        :relation-list="relationList"
+        :indexes-input="indexesInput"
+        :auth-create-input="authCreateInput"
+        :auth-read-input="authReadInput"
+        :auth-update-input="authUpdateInput"
+        :auth-delete-input="authDeleteInput"
+        :saving="saving"
+        @close="closeCreateModal"
+        @save="saveCollection"
+        @add-field="addSchemaField"
+        @remove-field="removeSchemaField"
+        @add-relation="addRelation"
+        @remove-relation="removeRelation"
+        @update:indexes-input="(val) => indexesInput = val"
+        @update:auth-create-input="(val) => authCreateInput = val"
+        @update:auth-read-input="(val) => authReadInput = val"
+        @update:auth-update-input="(val) => authUpdateInput = val"
+        @update:auth-delete-input="(val) => authDeleteInput = val"
+        @update-form="updateForm"
+        @update-form-metadata="updateFormMetadata"
+        @update-form-schema="updateFormSchema"
+        @update-schema-field="updateSchemaField"
+        @update-relation="updateRelation"
+        class="premium-modal"
+      />
+
+      <RecordModal
+        v-if="showInsertModal"
+        :collection="currentCollection"
+        :editing-record="editingRecord"
+        :record-form="recordForm"
+        :json-errors="jsonErrors"
+        :upload-progress="uploadProgress"
+        :saving-record="savingRecord"
+        @close="closeInsertModal"
+        @save="saveRecord"
+        @validate-json="validateJSON"
+        class="premium-modal"
+      />
+
+      <DeleteModal
+        v-if="showDeleteModal"
+        :deleting-collection="deletingCollection"
+        :collection-to-delete="collectionToDelete"
+        :record-to-delete="recordToDelete"
+        @close="closeDeleteModal"
+        @confirm="confirmDelete"
+        class="premium-modal"
+      />
+
+      <BulkDeleteModal
+        v-if="showBulkDeleteModal"
+        :selected-count="selectedRecords.length"
+        :bulk-deleting="bulkDeleting"
+        @close="closeBulkDeleteModal"
+        @confirm="confirmBulkDelete"
+        class="premium-modal"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// ✅ MANTENER TODO EL SCRIPT ORIGINAL EXACTAMENTE IGUAL
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../../stores/auth";
 import { adminCollections, recordsAPI } from "../../services/api";
 import { useNotifications } from '../../composables/useNotifications';
 
-// Components
+// Components (mantener todos los importes originales)
 import CollectionHeader from "./components/CollectionHeader.vue";
 import CollectionStats from "./components/CollectionStats.vue";
 import RecordStats from "./components/RecordStats.vue";
@@ -196,7 +395,7 @@ import BulkDeleteModal from "./components/BulkDeleteModal.vue";
 
 const { showSuccess, showError } = useNotifications();
 
-// Interfaces
+// Interfaces (mantener todas las interfaces originales)
 interface Collection {
   id: string;
   name: string;
@@ -224,7 +423,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-// State
+// ✅ MANTENER TODO EL STATE ORIGINAL EXACTAMENTE IGUAL
 const loading = ref(true);
 const saving = ref(false);
 const savingRecord = ref(false);
@@ -310,7 +509,7 @@ const recordForm = ref<any>({});
 const jsonErrors = ref<any>({});
 const uploadProgress = ref<any>({});
 
-// Computed properties
+// ✅ MANTENER TODOS LOS COMPUTED ORIGINALES EXACTAMENTE IGUAL
 const canInsertRecords = computed(() => {
   return currentCollection.value?.auth_rules?.insert !== "none";
 });
@@ -442,6 +641,9 @@ const paginatedRecords = computed(() => {
   return filteredRecords.value.slice(start, end);
 });
 
+// ✅ MANTENER TODAS LAS FUNCIONES ORIGINALES EXACTAMENTE IGUALES
+// [Copiar aquí todas las funciones del script original sin modificaciones]
+
 // Methods
 async function loadCollections() {
   try {
@@ -561,7 +763,6 @@ function sortBy(field: string) {
 
 // View and navigation functions
 function viewData(collection: Collection) {
-  //router.push(`/admin/collections/${collection.name}/data`);
   viewCollection(collection);
 }
 
@@ -1343,3 +1544,62 @@ watch(() => route.params.collectionName, (newCollectionName) => {
   }
 });
 </script>
+
+<style scoped>
+/* Premium Styles for Enhanced Components */
+.premium-header {
+  @apply transition-all duration-200;
+}
+
+.premium-stats {
+  @apply p-6;
+}
+
+.premium-filters {
+  @apply transition-all duration-200;
+}
+
+.premium-search-filters {
+  @apply transition-all duration-200;
+}
+
+.premium-table {
+  @apply transition-all duration-200;
+}
+
+.premium-pagination {
+  @apply transition-all duration-200;
+}
+
+.premium-modal {
+  @apply transition-all duration-200;
+}
+
+.premium-modals {
+  @apply relative z-50;
+}
+
+/* Enhanced loading animation */
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  } 
+  40% {
+    transform: scale(1);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+/* Enhanced hover effects */
+.premium-header:hover,
+.premium-stats:hover,
+.premium-filters:hover,
+.premium-search-filters:hover,
+.premium-table:hover,
+.premium-pagination:hover {
+  @apply transform translate-y-0;
+}
+</style>

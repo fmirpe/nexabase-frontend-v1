@@ -1,29 +1,63 @@
 <template>
   <div class="h-screen flex overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-    <!-- Enhanced Left Side - Compacto -->
+    <!-- FONDO DINÁMICO ESTILO COMET (DÍA/NOCHE) + TU CONTENIDO ORIGINAL -->
     <div
       class="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-8 text-white relative overflow-hidden"
+      :style="dynamicBackground"
     >
-      <!-- Background with overlay -->
-      <div 
-        class="absolute inset-0 bg-gradient-to-br from-indigo-600/90 via-purple-600/80 to-blue-700/90"
-        :style="{
-          backgroundImage: `url(${fondoUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }"
-      ></div>
-      <div class="absolute inset-0 bg-gradient-to-br from-slate-900/20 via-transparent to-slate-900/40"></div>
-      
-      <!-- Animated background elements -->
-      <div class="absolute inset-0 overflow-hidden">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full animate-pulse"></div>
-        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-white/3 rounded-full animate-pulse delay-1000"></div>
-        <div class="absolute top-1/3 left-1/4 w-32 h-32 bg-white/5 rounded-full animate-bounce delay-500"></div>
+      <!-- Efectos atmosféricos dinámicos -->
+      <div class="absolute inset-0 pointer-events-none">
+        <!-- Estrellas de noche -->
+        <div v-if="isNightTime" class="absolute inset-0">
+          <div v-for="star in stars" :key="star.id" 
+              class="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+              :style="{
+                left: star.x + '%',
+                top: star.y + '%',
+                opacity: star.opacity,
+                animationDelay: star.delay + 's'
+              }">
+          </div>
+        </div>
+        
+        <!-- Nubes suaves para día -->
+        <div v-if="!isNightTime" class="absolute inset-0">
+          <div class="absolute top-20 left-10 w-32 h-16 bg-white/5 rounded-full blur-xl animate-float"></div>
+          <div class="absolute top-32 right-16 w-24 h-12 bg-white/3 rounded-full blur-lg animate-float-delay"></div>
+        </div>
+        
+        <!-- Overlay de brillo según hora -->
+        <div class="absolute inset-0" :style="timeOverlay"></div>
       </div>
 
+      <!-- Icono clima dinámico arriba-derecha -->
+      <div class="absolute top-6 right-6 z-20">
+        <svg class="w-10 h-10 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <use :xlink:href="`#${weatherIcon}`" />
+        </svg>
+      </div>
+
+      <!-- Cabecera clima estilo Comet -->
+      <div class="absolute top-6 left-6 z-20 text-left">
+        <div class="text-3xl font-semibold tracking-tight text-white/95">
+          {{ weather.temp ?? '28' }}° C
+        </div>
+        <div class="mt-1 text-base leading-5 text-white/80">
+          <div>{{ weather.desc ?? 'Parcialmente' }}</div>
+          <div>{{ weather.desc2 ?? 'nublado' }}</div>
+        </div>
+      </div>
+
+      <!-- Ciudad abajo-izquierda -->
+      <div class="absolute bottom-6 left-6 z-20">
+        <div class="text-xl font-semibold text-white/95">
+          {{ weather.city ?? 'Barranquilla, Colombia' }}
+        </div>
+      </div>
+
+      <!-- Tu contenido original centrado (logo, textos, etc.) -->
       <div class="relative z-10 text-center max-w-md">
-        <!-- Enhanced Logo - Más compacto -->
+        <!-- Enhanced Logo -->
         <div class="mb-8 flex justify-center">
           <div class="relative">
             <div class="absolute inset-0 bg-white/20 rounded-2xl blur-xl transform scale-110"></div>
@@ -32,7 +66,7 @@
                 v-if="!showFallback"
                 :src="logoUrl"
                 alt="NexaBase Logo"
-                class="h-56 w-56 object-contain drop-shadow-2xl"
+                class="h-32 w-32 object-contain drop-shadow-2xl"
                 @error="showFallback = true"
               />
               <svg
@@ -47,7 +81,7 @@
           </div>
         </div>
 
-        <!-- Enhanced Brand Text - Más compacto -->
+        <!-- Enhanced Brand Text -->
         <div class="space-y-4">
           <div>
             <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
@@ -58,7 +92,7 @@
             </p>
           </div>
 
-          <!-- Feature highlights - Más compacto -->
+          <!-- Feature highlights -->
           <div class="space-y-2 mt-6">
             <div class="flex items-center justify-center space-x-3 text-white/70 text-sm">
               <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -75,7 +109,7 @@
           </div>
         </div>
 
-        <!-- Enhanced Footer - Más compacto -->
+        <!-- Enhanced Footer -->
         <div class="mt-8 pt-6 border-t border-white/10">
           <p class="text-xs text-white/60">
             © 2025 NexaBase v2.0 • 
@@ -89,9 +123,33 @@
           </p>
         </div>
       </div>
+
+      <!-- SVG icons para diferentes condiciones climáticas -->
+      <svg style="display:none;">
+        <symbol id="sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5" fill="currentColor"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2"/>
+        </symbol>
+        <symbol id="moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>
+        </symbol>
+        <symbol id="cloud-sun" viewBox="0 0 24 24">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+        </symbol>
+        <symbol id="cloud" viewBox="0 0 24 24">
+          <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z" fill="currentColor"/>
+        </symbol>
+        <symbol id="rain" viewBox="0 0 24 24">
+          <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z" fill="currentColor"/>
+          <polyline points="8,19 10,21" stroke="currentColor" stroke-width="2"/>
+          <polyline points="12,19 14,21" stroke="currentColor" stroke-width="2"/>
+          <polyline points="16,19 18,21" stroke="currentColor" stroke-width="2"/>
+        </symbol>
+      </svg>
     </div>
 
-    <!-- Enhanced Right Side - Optimizado para no hacer scroll -->
+
+    <!-- Enhanced Right Side - Login premium intacto -->
     <div class="w-full lg:w-1/2 flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
       <!-- Background pattern -->
       <div class="absolute inset-0 opacity-5">
@@ -99,7 +157,7 @@
       </div>
 
       <div class="w-full max-w-md px-4 relative z-10">
-        <!-- Enhanced Mobile Logo - Más compacto -->
+        <!-- Enhanced Mobile Logo -->
         <div class="lg:hidden text-center mb-4">
           <div class="mb-3 flex justify-center">
             <div class="relative">
@@ -126,7 +184,7 @@
           <h1 class="text-lg font-bold text-gray-900">NexaBase Dashboard</h1>
         </div>
 
-        <!-- Enhanced Welcome Section - Más compacto -->
+        <!-- Enhanced Welcome Section -->
         <div class="text-center mb-6">
           <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
             Welcome to <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">NexaBase</span>
@@ -136,7 +194,7 @@
           </p>
         </div>
 
-        <!-- Enhanced Login Form Container - Optimizado -->
+        <!-- Enhanced Login Form Container -->
         <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-gray-200/50 relative overflow-hidden">
           <!-- Decorative elements -->
           <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500"></div>
@@ -183,7 +241,7 @@
           </div>
 
           <form @submit.prevent="handleLogin" class="space-y-4">
-            <!-- Enhanced Register Fields - Compacto -->
+            <!-- Enhanced Register Fields -->
             <div v-if="!isLogin" class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">First Name</label>
@@ -207,7 +265,7 @@
               </div>
             </div>
 
-            <!-- Enhanced Email - Compacto -->
+            <!-- Enhanced Email -->
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
               <input
@@ -219,7 +277,7 @@
               />
             </div>
 
-            <!-- Enhanced Password - Compacto -->
+            <!-- Enhanced Password -->
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1">Password</label>
               <div class="relative">
@@ -297,7 +355,7 @@
             </button>
           </form>
 
-          <!-- Enhanced OAuth2 Buttons - Compacto -->
+          <!-- Enhanced OAuth2 Buttons -->
           <div class="mt-6">
             <div class="relative">
               <div class="absolute inset-0 flex items-center">
@@ -353,7 +411,7 @@
           </div>
         </div>
 
-        <!-- Enhanced Mobile Footer - Más compacto -->
+        <!-- Enhanced Mobile Footer -->
         <div class="lg:hidden mt-4 text-center">
           <p class="text-xs text-gray-500">
             © 2025 NexaBase v2.0 • 
@@ -372,7 +430,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 
@@ -382,6 +440,54 @@ const fondoUrl = "/fondo.png";
 
 const authStore = useAuthStore();
 const router = useRouter();
+
+// Estado dinámico para efectos día/noche
+const currentHour = ref(new Date().getHours());
+const isNightTime = computed(() => currentHour.value >= 19 || currentHour.value <= 6);
+
+
+// Fondo dinámico según hora
+const dynamicBackground = computed(() => {
+  if (isNightTime.value) {
+    // Noche: gradiente oscuro con tonos azul/púrpura
+    return {
+      background: 'radial-gradient(100% 100% at 50% 0%, #1a1d29 0%, #2d3142 45%, #4f5d75 100%)'
+    };
+  } else {
+    // Día: gradiente más claro con tonos cálidos
+    return {
+      background: 'radial-gradient(100% 100% at 50% 0%, #4a90e2 0%, #7cb9e8 45%, #b8d4f0 100%)'
+    };
+  }
+});
+
+// Overlay de brillo según hora del día
+const timeOverlay = computed(() => {
+  if (isNightTime.value) {
+    return {
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 60%)'
+    };
+  } else {
+    return {
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 40%, rgba(255,255,255,0) 80%)'
+    };
+  }
+});
+
+// Icono climático según hora y condición
+const weatherIcon = computed(() => {
+  if (isNightTime.value) {
+    // Noche: luna o nubes nocturnas
+    return weather.value.desc === 'Despejado' ? 'moon' : 'cloud';
+  } else {
+    // Día: sol o variaciones diurnas
+    if (weather.value.desc === 'Despejado') return 'sun';
+    if (weather.value.desc === 'Parcialmente') return 'cloud-sun';
+    if (weather.value.desc?.includes('lluvia')) return 'rain';
+    return 'cloud';
+  }
+});
+
 
 // State
 const isLogin = ref(true);
@@ -393,6 +499,70 @@ const form = reactive({
   password: "",
   first_name: "",
   last_name: "",
+});
+
+// Weather state para widget Comet
+const weather = ref<{temp:number|null, city:string|null, desc:string|null, desc2:string|null}>({
+  temp: null,
+  city: null,
+  desc: null,
+  desc2: null
+});
+
+// Generar estrellas aleatorias para la noche
+const stars = ref(Array.from({ length: 50 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  opacity: 0.3 + Math.random() * 0.7,
+  delay: Math.random() * 3
+})));
+
+function mapWeather(code:number){
+  // Mapea a 2 líneas como Comet
+  const map:any = {
+    0:['Despejado',''],
+    1:['Despejado',''],
+    2:['Parcialmente','nublado'],
+    3:['Nublado',''],
+    45:['Niebla',''],
+    51:['Llovizna','ligera'],
+    53:['Llovizna',''],
+    55:['Llovizna','intensa'],
+    61:['Lluvia','ligera'],
+    63:['Lluvia',''],
+    65:['Lluvia','intensa'],
+    80:['Chubascos',''],
+    95:['Tormenta',''],
+  };
+  return map[code] ?? ['Parcialmente','nublado'];
+}
+
+async function loadCometWidget() {
+  try {
+    const locRes = await fetch('https://ipapi.co/json/');
+    const loc = await locRes.json();
+    weather.value.city = `${loc.city}, ${loc.country_name}`;
+
+    const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current_weather=true`);
+    const wx = await wxRes.json();
+    weather.value.temp = Math.round(wx.current_weather.temperature);
+    const [l1,l2] = mapWeather(wx.current_weather.weathercode);
+    weather.value.desc = l1;
+    weather.value.desc2 = l2;
+  } catch {
+    weather.value.city = 'Barranquilla, Colombia';
+    weather.value.temp = 28;
+    [weather.value.desc, weather.value.desc2] = ['Parcialmente','nublado'];
+  }
+}
+
+onMounted(() => {
+  loadCometWidget();
+  // Actualizar hora cada minuto para cambios dinámicos
+  setInterval(() => {
+    currentHour.value = new Date().getHours();
+  }, 60000);
 });
 
 // Functions
@@ -464,5 +634,23 @@ button:active {
   .backdrop-blur-xl {
     backdrop-filter: blur(16px);
   }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-10px) translateX(5px); }
+}
+
+@keyframes float-delay {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-8px) translateX(-3px); }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-float-delay {
+  animation: float-delay 10s ease-in-out infinite 2s;
 }
 </style>

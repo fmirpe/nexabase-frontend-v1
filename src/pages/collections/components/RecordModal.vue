@@ -4,7 +4,7 @@
     @click="emit('close')"
   >
     <div
-      class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col"
+      class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full mx-4 h-[90vh] overflow-hidden flex flex-col"
       @click.stop
     >
       <!-- Header Mejorado -->
@@ -102,7 +102,7 @@
         </div>
       </div>
 
-      <div class="flex flex-1 min-h-0">
+      <div class="flex flex-1 overflow-hidden">
         <!-- Sidebar con Navegación de Campos - MEJORADO -->
         <div class="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
           <div class="p-4 border-b border-gray-200 flex-shrink-0">

@@ -4,7 +4,7 @@
     @click="emit('close')"
   >
     <div
-      class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full mx-4 h-[90vh] overflow-hidden flex flex-col"
+      class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full mx-4 max-h-[85vh] min-h-[60vh] overflow-hidden flex flex-col"
       @click.stop
     >
       <!-- Header Mejorado -->
@@ -307,7 +307,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 overflow-y-auto bg-gray-50 pb-6">
+        <div class="flex-1 overflow-y-auto bg-gray-50 pb-32">
           <div class="p-6">
             <div class="max-w-3xl mx-auto space-y-6">
               <!-- Dynamic Form Fields -->

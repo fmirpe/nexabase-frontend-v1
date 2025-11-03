@@ -160,12 +160,12 @@
               <button
                 v-for="(fieldDef, fieldName) in collection?.schema?.fields"
                 :key="fieldName"
-                @click="scrollToField(fieldName)"
+                @click="scrollToField(fieldName.toString())"
                 :class="[
                   'w-full flex items-center px-3 py-3 text-sm rounded-lg transition-all duration-200 text-left group hover:shadow-md',
-                  getFieldValidationStatus(fieldName) === 'valid'
+                  getFieldValidationStatus(fieldName.toString()) === 'valid'
                     ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
-                    : getFieldValidationStatus(fieldName) === 'error'
+                    : getFieldValidationStatus(fieldName.toString()) === 'error'
                     ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
                     : recordForm[fieldName] && recordForm[fieldName] !== ''
                     ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
@@ -207,7 +207,7 @@
                       único
                     </span>
                     <span
-                      v-if="isRelationField(fieldName)"
+                      v-if="isRelationField(fieldName.toString())"
                       class="inline-flex px-1.5 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-600 rounded"
                     >
                       rel
@@ -219,11 +219,14 @@
                 <div class="flex-shrink-0 ml-2">
                   <div
                     class="w-4 h-4 rounded-full flex items-center justify-center"
-                    :class="getFieldStatusIndicator(fieldName)"
+                    :class="getFieldStatusIndicator(fieldName.toString())"
                   >
                     <!-- Check icon para campos válidos -->
                     <svg
-                      v-if="getFieldValidationStatus(fieldName) === 'valid'"
+                      v-if="
+                        getFieldValidationStatus(fieldName.toString()) ===
+                        'valid'
+                      "
                       class="w-3 h-3 text-white"
                       fill="currentColor"
                       viewBox="0 0 20 20"
@@ -237,7 +240,8 @@
                     <!-- X icon para campos con error -->
                     <svg
                       v-else-if="
-                        getFieldValidationStatus(fieldName) === 'error'
+                        getFieldValidationStatus(fieldName.toString()) ===
+                        'error'
                       "
                       class="w-3 h-3 text-white"
                       fill="currentColor"
@@ -673,7 +677,7 @@
                   <!-- File Upload -->
                   <template v-else-if="fieldDef.type === 'file'">
                     <FileUploadField
-                      :field-name="fieldName"
+                      :field-name="fieldName.toString()"
                       :current-value="recordForm[fieldName]"
                       :upload-progress="uploadProgress[fieldName]"
                       :is-multiple="false"
@@ -688,7 +692,7 @@
                   <!-- Image Upload -->
                   <template v-else-if="fieldDef.type === 'image'">
                     <ImageUploadField
-                      :field-name="fieldName"
+                      :field-name="fieldName.toString()"
                       :current-value="recordForm[fieldName]"
                       :upload-progress="uploadProgress[fieldName]"
                       :is-multiple="false"
@@ -702,7 +706,7 @@
                   <!-- Multiple Files Upload -->
                   <template v-else-if="fieldDef.type === 'files'">
                     <FileUploadField
-                      :field-name="fieldName"
+                      :field-name="fieldName.toString()"
                       :current-value="recordForm[fieldName]"
                       :upload-progress="uploadProgress[fieldName]"
                       :is-multiple="true"
@@ -719,7 +723,7 @@
                   <!-- Multiple Images Upload -->
                   <template v-else-if="fieldDef.type === 'images'">
                     <ImageUploadField
-                      :field-name="fieldName"
+                      :field-name="fieldName.toString()"
                       :current-value="recordForm[fieldName]"
                       :upload-progress="uploadProgress[fieldName]"
                       :is-multiple="true"
@@ -1387,11 +1391,10 @@ async function handleFileUpload(
 
 async function uploadSingleFile(file: File): Promise<string | null> {
   try {
-    const response = await storageAPI.upload(
-      file,
-      `folder/${props.collection.name}`,
-      { collection: props.collection.name }
-    );
+    const response = await storageAPI.upload(file, {
+      folder: `folder/${props.collection.name}`,
+      collection: props.collection.name,
+    });
     const responseData = response.data as any;
     const fileId = responseData?.data?.id || responseData?.id;
     return fileId || null;

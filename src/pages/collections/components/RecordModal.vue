@@ -9,7 +9,7 @@
     >
       <!-- Header Mejorado -->
       <div
-        class="bg-gradient-to-r from-green-600 to-blue-600 px-6 py-4 sticky top-0 z-40"
+        class="bg-gradient-to-r from-green-600 to-blue-600 px-6 py-4 flex-shrink-0"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-4">
@@ -315,7 +315,14 @@
                 v-for="(fieldDef, fieldName) in collection?.schema?.fields"
                 :key="fieldName"
                 :id="`field-${fieldName}`"
-                class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200"
+                class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200 scroll-mt-4"
+                :class="{
+                  'mb-32':
+                    Object.keys(collection?.schema?.fields).indexOf(
+                      fieldName.toString()
+                    ) ===
+                    Object.keys(collection?.schema?.fields).length - 1,
+                }"
               >
                 <!-- Field Header -->
                 <div class="flex items-center justify-between mb-4">
@@ -344,20 +351,26 @@
                           {{ fieldDef.type }}
                         </span>
                         <span
-                          v-if="isRelationField(fieldName)"
+                          v-if="isRelationField(fieldName.toString())"
                           class="inline-flex px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full"
                         >
-                          → {{ getRelationConfig(fieldName)?.references }}
+                          →
+                          {{
+                            getRelationConfig(fieldName.toString())?.references
+                          }}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div
                     class="w-8 h-8 rounded-full flex items-center justify-center"
-                    :class="getFieldStatusIndicatorLarge(fieldName)"
+                    :class="getFieldStatusIndicatorLarge(fieldName.toString())"
                   >
                     <svg
-                      v-if="getFieldValidationStatus(fieldName) === 'valid'"
+                      v-if="
+                        getFieldValidationStatus(fieldName.toString()) ===
+                        'valid'
+                      "
                       class="w-5 h-5 text-white"
                       fill="currentColor"
                       viewBox="0 0 20 20"
@@ -370,7 +383,8 @@
                     </svg>
                     <svg
                       v-else-if="
-                        getFieldValidationStatus(fieldName) === 'error'
+                        getFieldValidationStatus(fieldName.toString()) ===
+                        'error'
                       "
                       class="w-5 h-5 text-white"
                       fill="currentColor"
@@ -388,13 +402,13 @@
                 <!-- Field Input Component -->
                 <div class="space-y-4">
                   <!-- Relation Select (belongsTo) -->
-                  <template v-if="isRelationField(fieldName)">
+                  <template v-if="isRelationField(fieldName.toString())">
                     <div class="relative">
                       <select
                         :value="recordForm[fieldName]"
                         @change="
                           updateField(
-                            fieldName,
+                            fieldName.toString(),
                             ($event.target as HTMLSelectElement).value
                           )
                         "
@@ -403,10 +417,15 @@
                       >
                         <option value="">
                           -- Seleccionar
-                          {{ getRelationConfig(fieldName)?.references }} --
+                          {{
+                            getRelationConfig(fieldName.toString())?.references
+                          }}
+                          --
                         </option>
                         <option
-                          v-for="option in getRelationOptions(fieldName)"
+                          v-for="option in getRelationOptions(
+                            fieldName.toString()
+                          )"
                           :key="option.id"
                           :value="option.id"
                         >
@@ -444,7 +463,7 @@
                         :value="recordForm[fieldName]"
                         @input="
                           updateField(
-                            fieldName,
+                            fieldName.toString(),
                             ($event.target as HTMLInputElement).value
                           )
                         "
@@ -480,7 +499,7 @@
                         :value="recordForm[fieldName]"
                         @input="
                           updateField(
-                            fieldName,
+                            fieldName.toString(),
                             Number(($event.target as HTMLInputElement).value)
                           )
                         "
@@ -520,7 +539,7 @@
                           type="radio"
                           :name="`${fieldName}_boolean`"
                           :checked="recordForm[fieldName] === true"
-                          @change="updateField(fieldName, true)"
+                          @change="updateField(fieldName.toString(), true)"
                           class="w-4 h-4 text-green-600 focus:ring-green-500"
                         />
                         <span class="ml-2 text-sm font-medium text-gray-700"
@@ -532,7 +551,7 @@
                           type="radio"
                           :name="`${fieldName}_boolean`"
                           :checked="recordForm[fieldName] === false"
-                          @change="updateField(fieldName, false)"
+                          @change="updateField(fieldName.toString(), false)"
                           class="w-4 h-4 text-green-600 focus:ring-green-500"
                         />
                         <span class="ml-2 text-sm font-medium text-gray-700"
@@ -548,7 +567,7 @@
                       :value="recordForm[fieldName]"
                       @input="
                         updateField(
-                          fieldName,
+                          fieldName.toString(),
                           ($event.target as HTMLInputElement).value
                         )
                       "
@@ -565,7 +584,7 @@
                         :value="recordForm[fieldName]"
                         @input="
                           updateField(
-                            fieldName,
+                            fieldName.toString(),
                             ($event.target as HTMLTextAreaElement).value
                           )
                         "
@@ -596,7 +615,7 @@
                           :value="recordForm[`${fieldName}_jsonstring`]"
                           @input="
                             updateJsonField(
-                              fieldName,
+                              fieldName.toString(),
                               ($event.target as HTMLTextAreaElement).value
                             )
                           "
@@ -659,8 +678,10 @@
                       :upload-progress="uploadProgress[fieldName]"
                       :is-multiple="false"
                       :accept-types="'*/*'"
-                      @file-upload="handleFileUpload($event, fieldName, false)"
-                      @file-remove="removeFile(fieldName)"
+                      @file-upload="
+                        handleFileUpload($event, fieldName.toString(), false)
+                      "
+                      @file-remove="removeFile(fieldName.toString())"
                     />
                   </template>
 
@@ -671,8 +692,10 @@
                       :current-value="recordForm[fieldName]"
                       :upload-progress="uploadProgress[fieldName]"
                       :is-multiple="false"
-                      @file-upload="handleFileUpload($event, fieldName, false)"
-                      @file-remove="removeFile(fieldName)"
+                      @file-upload="
+                        handleFileUpload($event, fieldName.toString(), false)
+                      "
+                      @file-remove="removeFile(fieldName.toString())"
                     />
                   </template>
 
@@ -684,8 +707,12 @@
                       :upload-progress="uploadProgress[fieldName]"
                       :is-multiple="true"
                       :accept-types="'*/*'"
-                      @file-upload="handleFileUpload($event, fieldName, true)"
-                      @file-remove="removeFileFromArray(fieldName, $event)"
+                      @file-upload="
+                        handleFileUpload($event, fieldName.toString(), true)
+                      "
+                      @file-remove="
+                        removeFileFromArray(fieldName.toString(), $event)
+                      "
                     />
                   </template>
 
@@ -696,8 +723,12 @@
                       :current-value="recordForm[fieldName]"
                       :upload-progress="uploadProgress[fieldName]"
                       :is-multiple="true"
-                      @file-upload="handleFileUpload($event, fieldName, true)"
-                      @file-remove="removeFileFromArray(fieldName, $event)"
+                      @file-upload="
+                        handleFileUpload($event, fieldName.toString(), true)
+                      "
+                      @file-remove="
+                        removeFileFromArray(fieldName.toString(), $event)
+                      "
                     />
                   </template>
 
@@ -707,7 +738,7 @@
                       :value="recordForm[fieldName]"
                       @input="
                         updateField(
-                          fieldName,
+                          fieldName.toString(),
                           ($event.target as HTMLInputElement).value
                         )
                       "

@@ -1914,7 +1914,7 @@ watch(
 }
 
 .premium-modals {
-  position: relative;
+  /* position: relative; */
   z-index: 50;
 }
 

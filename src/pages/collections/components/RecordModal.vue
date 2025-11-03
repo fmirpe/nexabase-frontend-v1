@@ -734,7 +734,7 @@
 
       <!-- Footer con Acciones -->
       <div
-        class="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between sticky bottom-0 shadow-lg z-50"
+        class="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between flex-shrink-0 shadow-lg"
       >
         <div class="flex items-center space-x-4">
           <button

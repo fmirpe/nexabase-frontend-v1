@@ -14,7 +14,7 @@
       >
         <div class="flex items-center gap-4">
           <div
-            class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25 backdrop-blur-sm border border-white/10 group-hover:scale-105 transition-transform duration-200"
+            class="w-12 h-12 bg-gradient-to-br rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25 backdrop-blur-sm border border-white/10 group-hover:scale-105 transition-transform duration-200"
           >
             <img
               v-if="logoUrl"

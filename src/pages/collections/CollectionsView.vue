@@ -15,7 +15,9 @@
     </div>
 
     <!-- Enhanced Stats Cards Premium -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div
+      class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+    >
       <CollectionStats
         v-if="!currentCollection && collectionsStats"
         :stats="collectionsStats"
@@ -26,32 +28,63 @@
         :stats="recordsStats"
         :filtered-count="filteredRecordsCount"
         :selected-count="selectedRecords.length"
-        :fields-count="Object.keys(currentCollection?.schema?.fields || {}).length"
+        :fields-count="
+          Object.keys(currentCollection?.schema?.fields || {}).length
+        "
         class="premium-stats"
       />
     </div>
 
     <!-- Enhanced Advanced Filters Premium -->
     <div v-if="showAdvancedFilters" class="space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+      >
+        <div
+          class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white"
+        >
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center"
+              >
+                <svg
+                  class="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"
+                  />
                 </svg>
               </div>
               <div>
-                <h3 class="text-xl font-bold text-gray-900">Filtros Avanzados</h3>
+                <h3 class="text-xl font-bold text-gray-900">
+                  Filtros Avanzados
+                </h3>
                 <p class="text-gray-600 mt-1 text-sm">
-                  {{ currentCollection ? `Búsqueda avanzada en ${currentCollection.name}` : 'Búsqueda avanzada de collections' }}
+                  {{
+                    currentCollection
+                      ? `Búsqueda avanzada en ${currentCollection.name}`
+                      : "Búsqueda avanzada de collections"
+                  }}
                 </p>
               </div>
             </div>
             <div class="flex items-center space-x-2">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                {{ (currentCollection ? activeRecordFilters.length : activeCollectionFilters.length) }} filtros activos
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+              >
+                {{
+                  currentCollection
+                    ? activeRecordFilters.length
+                    : activeCollectionFilters.length
+                }}
+                filtros activos
               </span>
             </div>
           </div>
@@ -82,34 +115,67 @@
     </div>
 
     <!-- Enhanced Search and Basic Filters Premium -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+    <div
+      class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+    >
+      <div
+        class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white"
+      >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <div
+              class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center"
+            >
+              <svg
+                class="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </div>
             <div>
               <h3 class="text-xl font-bold text-gray-900">
-                {{ currentCollection ? `Búsqueda en ${currentCollection.name}` : 'Búsqueda y Filtros' }}
+                {{
+                  currentCollection
+                    ? `Búsqueda en ${currentCollection.name}`
+                    : "Búsqueda y Filtros"
+                }}
               </h3>
               <p class="text-gray-600 mt-1 text-sm">
-                {{ currentCollection 
-                  ? `${filteredRecordsCount} registros encontrados de ${recordsStats?.total || 0} totales`
-                  : `${filteredCollectionsCount} collections encontradas de ${collections.length} totales`
+                {{
+                  currentCollection
+                    ? `${filteredRecordsCount} registros encontrados de ${
+                        recordsStats?.total || 0
+                      } totales`
+                    : `${filteredCollectionsCount} collections encontradas de ${collections.length} totales`
                 }}
               </p>
             </div>
           </div>
           <div class="flex items-center space-x-4">
-            <div v-if="autoRefresh" class="flex items-center text-green-600 bg-green-50 px-3 py-1.5 rounded-lg">
-              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
+            <div
+              v-if="autoRefresh"
+              class="flex items-center text-green-600 bg-green-50 px-3 py-1.5 rounded-lg"
+            >
+              <div
+                class="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"
+              ></div>
               <span class="text-sm font-medium">Auto-refresh activo</span>
             </div>
-            <div v-if="selectedRecords.length > 0" class="flex items-center text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
-              <span class="text-sm font-medium">{{ selectedRecords.length }} seleccionados</span>
+            <div
+              v-if="selectedRecords.length > 0"
+              class="flex items-center text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg"
+            >
+              <span class="text-sm font-medium"
+                >{{ selectedRecords.length }} seleccionados</span
+              >
             </div>
           </div>
         </div>
@@ -141,65 +207,142 @@
     </div>
 
     <!-- Enhanced Loading State Premium -->
-    <div v-if="loading" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12">
+    <div
+      v-if="loading"
+      class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12"
+    >
       <div class="text-center">
-        <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl mb-6">
-          <svg class="w-10 h-10 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <div
+          class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl mb-6"
+        >
+          <svg
+            class="w-10 h-10 text-indigo-600 animate-spin"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
         </div>
         <h3 class="text-2xl font-bold text-gray-900 mb-3">
-          {{ currentCollection ? 'Cargando Registros' : 'Cargando Collections' }}
+          {{
+            currentCollection ? "Cargando Registros" : "Cargando Collections"
+          }}
         </h3>
         <p class="text-gray-600 text-lg max-w-md mx-auto">
-          {{ currentCollection 
-            ? `Obteniendo datos de la collection "${currentCollection.name}"...`
-            : 'Obteniendo información de todas las collections...'
+          {{
+            currentCollection
+              ? `Obteniendo datos de la collection "${currentCollection.name}"...`
+              : "Obteniendo información de todas las collections..."
           }}
         </p>
         <div class="mt-6 flex items-center justify-center space-x-2">
           <div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
-          <div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-          <div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+          <div
+            class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"
+            style="animation-delay: 0.1s"
+          ></div>
+          <div
+            class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"
+            style="animation-delay: 0.2s"
+          ></div>
         </div>
       </div>
     </div>
 
     <!-- Enhanced Data Tables Premium -->
-    <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+    <div
+      v-else
+      class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+    >
+      <div
+        class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white"
+      >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <div :class="[
-              'w-10 h-10 rounded-xl flex items-center justify-center',
-              currentCollection 
-                ? 'bg-gradient-to-br from-blue-500 to-indigo-600' 
-                : 'bg-gradient-to-br from-purple-500 to-pink-600'
-            ]">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path v-if="currentCollection" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <div
+              :class="[
+                'w-10 h-10 rounded-xl flex items-center justify-center',
+                currentCollection
+                  ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                  : 'bg-gradient-to-br from-purple-500 to-pink-600',
+              ]"
+            >
+              <svg
+                class="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  v-if="currentCollection"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+                <path
+                  v-else
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
               </svg>
             </div>
             <div>
               <h3 class="text-xl font-bold text-gray-900">
-                {{ currentCollection ? `Registros de ${currentCollection.name}` : 'Collections del Sistema' }}
+                {{
+                  currentCollection
+                    ? `Registros de ${currentCollection.name}`
+                    : "Collections del Sistema"
+                }}
               </h3>
               <p class="text-gray-600 mt-1 text-sm">
-                {{ currentCollection 
-                  ? `${filteredRecordsCount} registros ${hasActiveRecordFilters ? 'filtrados' : 'totales'}`
-                  : `${filteredCollectionsCount} collections ${hasActiveCollectionFilters ? 'filtradas' : 'totales'}`
+                {{
+                  currentCollection
+                    ? `${filteredRecordsCount} registros ${
+                        hasActiveRecordFilters ? "filtrados" : "totales"
+                      }`
+                    : `${filteredCollectionsCount} collections ${
+                        hasActiveCollectionFilters ? "filtradas" : "totales"
+                      }`
                 }}
               </p>
             </div>
           </div>
           <div class="flex items-center space-x-4">
-            <div v-if="currentCollection && selectedRecords.length > 0" class="flex items-center text-blue-600 bg-blue-50 px-4 py-2 rounded-xl">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div
+              v-if="currentCollection && selectedRecords.length > 0"
+              class="flex items-center text-blue-600 bg-blue-50 px-4 py-2 rounded-xl"
+            >
+              <svg
+                class="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-              <span class="font-semibold">{{ selectedRecords.length }} seleccionados</span>
+              <span class="font-semibold"
+                >{{ selectedRecords.length }} seleccionados</span
+              >
             </div>
           </div>
         </div>
@@ -241,7 +384,10 @@
     </div>
 
     <!-- Enhanced Pagination Premium -->
-    <div v-if="!loading && totalPages > 1" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+    <div
+      v-if="!loading && totalPages > 1"
+      class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6"
+    >
       <PaginationControls
         :pagination="pagination"
         :total-items="totalItems"
@@ -253,32 +399,84 @@
     </div>
 
     <!-- System Info Panel -->
-    <div v-if="!loading" class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200 p-6">
+    <div
+      v-if="!loading"
+      class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200 p-6"
+    >
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
-          <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center"
+          >
+            <svg
+              class="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
             </svg>
           </div>
           <div>
-            <h4 class="text-lg font-bold text-indigo-900">Información del Sistema</h4>
-            <div class="flex items-center space-x-6 mt-2 text-sm text-indigo-700">
+            <h4 class="text-lg font-bold text-indigo-900">
+              Información del Sistema
+            </h4>
+            <div
+              class="flex items-center space-x-6 mt-2 text-sm text-indigo-700"
+            >
               <span class="flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                <svg
+                  class="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
+                  />
                 </svg>
                 {{ collections.length }} Collections
               </span>
               <span v-if="currentCollection" class="flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  class="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
-                {{ Object.keys(currentCollection.schema?.fields || {}).length }} Campos
+                {{
+                  Object.keys(currentCollection.schema?.fields || {}).length
+                }}
+                Campos
               </span>
               <span class="flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  class="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 Actualizado {{ new Date().toLocaleTimeString() }}
               </span>
@@ -286,15 +484,21 @@
           </div>
         </div>
         <div class="flex items-center space-x-3">
-          <div :class="[
-            'flex items-center px-3 py-1.5 rounded-lg text-sm font-medium',
-            autoRefresh ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-          ]">
-            <div :class="[
-              'w-2 h-2 rounded-full mr-2',
-              autoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
-            ]"></div>
-            {{ autoRefresh ? 'Tiempo real' : 'Manual' }}
+          <div
+            :class="[
+              'flex items-center px-3 py-1.5 rounded-lg text-sm font-medium',
+              autoRefresh
+                ? 'bg-green-100 text-green-800'
+                : 'bg-gray-100 text-gray-600',
+            ]"
+          >
+            <div
+              :class="[
+                'w-2 h-2 rounded-full mr-2',
+                autoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400',
+              ]"
+            ></div>
+            {{ autoRefresh ? "Tiempo real" : "Manual" }}
           </div>
         </div>
       </div>
@@ -320,11 +524,11 @@
         @remove-field="removeSchemaField"
         @add-relation="addRelation"
         @remove-relation="removeRelation"
-        @update:indexes-input="(val) => indexesInput = val"
-        @update:auth-create-input="(val) => authCreateInput = val"
-        @update:auth-read-input="(val) => authReadInput = val"
-        @update:auth-update-input="(val) => authUpdateInput = val"
-        @update:auth-delete-input="(val) => authDeleteInput = val"
+        @update:indexes-input="(val) => (indexesInput = val)"
+        @update:auth-create-input="(val) => (authCreateInput = val)"
+        @update:auth-read-input="(val) => (authReadInput = val)"
+        @update:auth-update-input="(val) => (authUpdateInput = val)"
+        @update:auth-delete-input="(val) => (authDeleteInput = val)"
         @update-form="updateForm"
         @update-form-metadata="updateFormMetadata"
         @update-form-schema="updateFormSchema"
@@ -375,7 +579,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../../stores/auth";
 import { adminCollections, recordsAPI } from "../../services/api";
-import { useNotifications } from '../../composables/useNotifications';
+import { useNotifications } from "../../composables/useNotifications";
 
 // Components (mantener todos los importes originales)
 import CollectionHeader from "./components/CollectionHeader.vue";
@@ -446,8 +650,8 @@ const selectedRecords = ref<string[]>([]);
 const showAdvancedFilters = ref(false);
 const activeCollectionFilters = ref<Filter[]>([]);
 const activeRecordFilters = ref<Filter[]>([]);
-const newCollectionFilter = ref<Filter>({ field: '', operator: '', value: '' });
-const newRecordFilter = ref<Filter>({ field: '', operator: '', value: '' });
+const newCollectionFilter = ref<Filter>({ field: "", operator: "", value: "" });
+const newRecordFilter = ref<Filter>({ field: "", operator: "", value: "" });
 const searchQuery = ref("");
 const collectionFilters = ref({
   is_active: "",
@@ -456,7 +660,7 @@ const collectionFilters = ref({
 // Pagination
 const pagination = ref<Pagination>({
   page: 1,
-  limit: 25
+  limit: 25,
 });
 
 // Sorting
@@ -485,16 +689,16 @@ const form = ref({
   metadata: { description: "" },
   auth_rules: {
     select: "authenticated",
-    insert: "authenticated", 
+    insert: "authenticated",
     update: "owner",
-    delete: "owner"
+    delete: "owner",
   },
   schema: {
     fields: {},
     relations: {},
     timestamps: true,
-    indexes: []
-  }
+    indexes: [],
+  },
 });
 
 const schemaFields = ref<any[]>([]);
@@ -523,106 +727,149 @@ const canDeleteRecords = computed(() => {
 });
 
 const hasActiveCollectionFilters = computed(() => {
-  return activeCollectionFilters.value.length > 0 || 
-         searchQuery.value.length > 0 ||
-         collectionFilters.value.is_active !== "";
+  return (
+    activeCollectionFilters.value.length > 0 ||
+    searchQuery.value.length > 0 ||
+    collectionFilters.value.is_active !== ""
+  );
 });
 
 const hasActiveRecordFilters = computed(() => {
-  return activeRecordFilters.value.length > 0 || 
-         searchQuery.value.length > 0;
+  return activeRecordFilters.value.length > 0 || searchQuery.value.length > 0;
 });
 
 const hasActiveFilters = computed(() => {
-  return currentCollection.value ? hasActiveRecordFilters.value : hasActiveCollectionFilters.value;
+  return currentCollection.value
+    ? hasActiveRecordFilters.value
+    : hasActiveCollectionFilters.value;
 });
 
 const filteredCollections = computed(() => {
   let filtered = [...collections.value];
-  
+
   // Apply search
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(c => 
-      c.name.toLowerCase().includes(query) ||
-      c.metadata?.description?.toLowerCase().includes(query)
+    filtered = filtered.filter(
+      (c) =>
+        c.name.toLowerCase().includes(query) ||
+        c.metadata?.description?.toLowerCase().includes(query)
     );
   }
-  
+
   // Apply basic filters
   if (collectionFilters.value.is_active !== "") {
     const isActive = collectionFilters.value.is_active === "true";
-    filtered = filtered.filter(c => c.is_active === isActive);
+    filtered = filtered.filter((c) => c.is_active === isActive);
   }
-  
+
   // Apply advanced filters
-  activeCollectionFilters.value.forEach(filter => {
-    filtered = filtered.filter(item => {
+  activeCollectionFilters.value.forEach((filter) => {
+    filtered = filtered.filter((item) => {
       const value = item[filter.field as keyof Collection];
       switch (filter.operator) {
-        case 'eq': return value === filter.value;
-        case 'ne': return value !== filter.value;
-        case 'gt': return Number(value) > Number(filter.value);
-        case 'gte': return Number(value) >= Number(filter.value);
-        case 'lt': return Number(value) < Number(filter.value);
-        case 'lte': return Number(value) <= Number(filter.value);
-        case 'like': return String(value).toLowerCase().includes(String(filter.value).toLowerCase());
-        case 'starts_with': return String(value).toLowerCase().startsWith(String(filter.value).toLowerCase());
-        case 'ends_with': return String(value).toLowerCase().endsWith(String(filter.value).toLowerCase());
-        default: return true;
+        case "eq":
+          return value === filter.value;
+        case "ne":
+          return value !== filter.value;
+        case "gt":
+          return Number(value) > Number(filter.value);
+        case "gte":
+          return Number(value) >= Number(filter.value);
+        case "lt":
+          return Number(value) < Number(filter.value);
+        case "lte":
+          return Number(value) <= Number(filter.value);
+        case "like":
+          return String(value)
+            .toLowerCase()
+            .includes(String(filter.value).toLowerCase());
+        case "starts_with":
+          return String(value)
+            .toLowerCase()
+            .startsWith(String(filter.value).toLowerCase());
+        case "ends_with":
+          return String(value)
+            .toLowerCase()
+            .endsWith(String(filter.value).toLowerCase());
+        default:
+          return true;
       }
     });
   });
-  
+
   return filtered;
 });
 
 const filteredRecords = computed(() => {
   let filtered = [...records.value];
-  
+
   // Apply search
   if (searchQuery.value && currentCollection.value) {
     const query = searchQuery.value.toLowerCase();
-    const searchableFields = Object.keys(currentCollection.value.schema?.fields || {})
-      .filter(field => {
-        const fieldType = currentCollection.value!.schema.fields[field].type;
-        return ['string', 'text', 'email', 'url'].includes(fieldType);
-      });
-    
-    filtered = filtered.filter(record => 
-      searchableFields.some(field => 
-        String(record[field] || '').toLowerCase().includes(query)
+    const searchableFields = Object.keys(
+      currentCollection.value.schema?.fields || {}
+    ).filter((field) => {
+      const fieldType = currentCollection.value!.schema.fields[field].type;
+      return ["string", "text", "email", "url"].includes(fieldType);
+    });
+
+    filtered = filtered.filter((record) =>
+      searchableFields.some((field) =>
+        String(record[field] || "")
+          .toLowerCase()
+          .includes(query)
       )
     );
   }
-  
+
   // Apply advanced filters
-  activeRecordFilters.value.forEach(filter => {
-    filtered = filtered.filter(item => {
+  activeRecordFilters.value.forEach((filter) => {
+    filtered = filtered.filter((item) => {
       const value = item[filter.field];
       switch (filter.operator) {
-        case 'eq': return value === filter.value;
-        case 'ne': return value !== filter.value;
-        case 'gt': return Number(value) > Number(filter.value);
-        case 'gte': return Number(value) >= Number(filter.value);
-        case 'lt': return Number(value) < Number(filter.value);
-        case 'lte': return Number(value) <= Number(filter.value);
-        case 'like': return String(value).toLowerCase().includes(String(filter.value).toLowerCase());
-        case 'starts_with': return String(value).toLowerCase().startsWith(String(filter.value).toLowerCase());
-        case 'ends_with': return String(value).toLowerCase().endsWith(String(filter.value).toLowerCase());
-        default: return true;
+        case "eq":
+          return value === filter.value;
+        case "ne":
+          return value !== filter.value;
+        case "gt":
+          return Number(value) > Number(filter.value);
+        case "gte":
+          return Number(value) >= Number(filter.value);
+        case "lt":
+          return Number(value) < Number(filter.value);
+        case "lte":
+          return Number(value) <= Number(filter.value);
+        case "like":
+          return String(value)
+            .toLowerCase()
+            .includes(String(filter.value).toLowerCase());
+        case "starts_with":
+          return String(value)
+            .toLowerCase()
+            .startsWith(String(filter.value).toLowerCase());
+        case "ends_with":
+          return String(value)
+            .toLowerCase()
+            .endsWith(String(filter.value).toLowerCase());
+        default:
+          return true;
       }
     });
   });
-  
+
   return filtered;
 });
 
-const filteredCollectionsCount = computed(() => filteredCollections.value.length);
+const filteredCollectionsCount = computed(
+  () => filteredCollections.value.length
+);
 const filteredRecordsCount = computed(() => filteredRecords.value.length);
 
 const totalItems = computed(() => {
-  return currentCollection.value ? filteredRecordsCount.value : filteredCollectionsCount.value;
+  return currentCollection.value
+    ? filteredRecordsCount.value
+    : filteredCollectionsCount.value;
 });
 
 const totalPages = computed(() => {
@@ -648,17 +895,16 @@ const paginatedRecords = computed(() => {
 async function loadCollections() {
   try {
     loading.value = true;
-    
+
     const response = await adminCollections.list({
       page: 1,
-      limit: 1000
+      limit: 1000,
     });
-    
+
     const responseData = response.data as any;
     collections.value = responseData.data || [];
-    
+
     await loadCollectionsStats();
-    
   } catch (error: any) {
     console.error("Error loading collections:", error);
   } finally {
@@ -670,57 +916,63 @@ async function loadCollectionsStats() {
   try {
     const statsResponse = await adminCollections.getStats();
     const responseData = statsResponse.data as any;
-    
+
     if (responseData?.success === true && responseData?.data) {
       collectionsStats.value = responseData.data;
     } else {
-      throw new Error('Invalid stats response format');
+      throw new Error("Invalid stats response format");
     }
   } catch (error: any) {
     console.warn("Stats endpoint failed, calculating locally:", error.message);
-    
+
     // Fallback calculation
     const total = collections.value.length;
-    const active = collections.value.filter(c => c.is_active).length;
-    const totalRecords = collections.value.reduce((sum, c) => sum + (c.record_count || 0), 0);
-    
+    const active = collections.value.filter((c) => c.is_active).length;
+    const totalRecords = collections.value.reduce(
+      (sum, c) => sum + (c.record_count || 0),
+      0
+    );
+
     collectionsStats.value = {
       total,
       active,
       totalRecords,
       averageRecords: total > 0 ? Math.round(totalRecords / total) : 0,
       topCollectionsByRecords: [],
-      recentlyCreated: []
+      recentlyCreated: [],
     };
   }
 }
 
 async function loadRecords() {
   if (!currentCollection.value) return;
-  
+
   try {
     loading.value = true;
-    
+
     const response = await recordsAPI.getAll(currentCollection.value.name, {
       page: pagination.value.page,
       limit: pagination.value.limit,
       search: searchQuery.value,
       filters: JSON.stringify(activeRecordFilters.value),
-      sort: sortField.value ? JSON.stringify([{
-        field: sortField.value,
-        direction: sortDirection.value.toUpperCase()
-      }]) : undefined
+      sort: sortField.value
+        ? JSON.stringify([
+            {
+              field: sortField.value,
+              direction: sortDirection.value.toUpperCase(),
+            },
+          ])
+        : undefined,
     });
-    
+
     const responseData = response.data as any;
     records.value = responseData.data || [];
-    
+
     // Load record stats
     recordsStats.value = {
       total: responseData.meta?.total || records.value.length,
-      filtered: filteredRecordsCount.value
+      filtered: filteredRecordsCount.value,
     };
-    
   } catch (error: any) {
     console.error("Error loading records:", error);
   } finally {
@@ -731,7 +983,7 @@ async function loadRecords() {
 function handleSearchInput(event: Event) {
   const target = event.target as HTMLInputElement;
   searchQuery.value = target.value;
-  
+
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     pagination.value.page = 1;
@@ -755,7 +1007,7 @@ function sortBy(field: string) {
     sortField.value = field;
     sortDirection.value = "asc";
   }
-  
+
   if (currentCollection.value) {
     loadRecords();
   }
@@ -782,7 +1034,7 @@ function goBack() {
   pagination.value.page = 1;
   searchQuery.value = "";
   activeRecordFilters.value = [];
-  router.push({path: '/collections'});
+  router.push({ path: "/collections" });
 }
 
 // Modal functions
@@ -879,16 +1131,16 @@ function resetForm() {
     metadata: { description: "" },
     auth_rules: {
       select: "authenticated",
-      insert: "authenticated", 
+      insert: "authenticated",
       update: "owner",
-      delete: "owner"
+      delete: "owner",
     },
     schema: {
       fields: {},
       relations: {},
       timestamps: true,
-      indexes: []
-    }
+      indexes: [],
+    },
   };
   schemaFields.value = [];
   relationList.value = [];
@@ -907,13 +1159,13 @@ function populateForm(collection: Collection) {
     select: "authenticated",
     insert: "authenticated",
     update: "owner",
-    delete: "owner"
+    delete: "owner",
   };
   form.value.schema = collection.schema || {
     fields: {},
     relations: {},
     timestamps: true,
-    indexes: []
+    indexes: [],
   };
 
   // Populate schema fields
@@ -924,13 +1176,13 @@ function populateForm(collection: Collection) {
     schemaFields.value.push({
       id: cryptoRandomId(),
       name: fieldName,
-      type: config.type || 'string',
+      type: config.type || "string",
       required: config.required || false,
       unique: config.unique || false,
-      default: config.default || '',
+      default: config.default || "",
       maxLength: config.maxLength || undefined,
       min: config.min || undefined,
-      max: config.max || undefined
+      max: config.max || undefined,
     });
   }
 
@@ -942,33 +1194,41 @@ function populateForm(collection: Collection) {
     relationList.value.push({
       _id: cryptoRandomId(),
       field: fieldName,
-      type: config.type || 'belongs_to',
-      references: config.references || '',
-      extra: config.through || config.display_field || 'name'
+      type: config.type || "belongs_to",
+      references: config.references || "",
+      extra: config.through || config.display_field || "name",
     });
   }
 
   // Populate auth inputs
   const ar = collection.auth_rules as any;
-  authCreateInput.value = Array.isArray(ar?.create) ? ar.create.join(", ") : "authenticated";
+  authCreateInput.value = Array.isArray(ar?.create)
+    ? ar.create.join(", ")
+    : "authenticated";
   authReadInput.value = Array.isArray(ar?.read) ? ar.read.join(", ") : "public";
-  authUpdateInput.value = Array.isArray(ar?.update) ? ar.update.join(", ") : "owner, admin";
-  authDeleteInput.value = Array.isArray(ar?.delete) ? ar.delete.join(", ") : "admin";
+  authUpdateInput.value = Array.isArray(ar?.update)
+    ? ar.update.join(", ")
+    : "owner, admin";
+  authDeleteInput.value = Array.isArray(ar?.delete)
+    ? ar.delete.join(", ")
+    : "admin";
 
   // Populate indexes
-  indexesInput.value = Array.isArray(collection.schema?.indexes) ? collection.schema.indexes.join(", ") : "";
+  indexesInput.value = Array.isArray(collection.schema?.indexes)
+    ? collection.schema.indexes.join(", ")
+    : "";
 }
 
 function resetRecordForm() {
   recordForm.value = {};
   jsonErrors.value = {};
   uploadProgress.value = {};
-  
+
   if (currentCollection.value?.schema?.fields) {
-    Object.keys(currentCollection.value.schema.fields).forEach(fieldName => {
+    Object.keys(currentCollection.value.schema.fields).forEach((fieldName) => {
       const fieldDef = currentCollection.value!.schema.fields[fieldName];
-      if (fieldDef.type === 'json') {
-        recordForm.value[fieldName + '_json_string'] = '';
+      if (fieldDef.type === "json") {
+        recordForm.value[fieldName + "_json_string"] = "";
       }
     });
   }
@@ -977,27 +1237,37 @@ function resetRecordForm() {
 function populateRecordForm(record: any) {
   recordForm.value = { ...record };
   jsonErrors.value = {};
-  
+
   if (currentCollection.value?.schema?.fields) {
-    Object.keys(currentCollection.value.schema.fields).forEach(fieldName => {
+    Object.keys(currentCollection.value.schema.fields).forEach((fieldName) => {
       const fieldDef = currentCollection.value!.schema.fields[fieldName];
-      
+
       // Manejar campos JSON
-      if (fieldDef.type === 'json' && record[fieldName]) {
-        recordForm.value[fieldName + '_json_string'] = JSON.stringify(record[fieldName], null, 2);
+      if (fieldDef.type === "json" && record[fieldName]) {
+        recordForm.value[fieldName + "_json_string"] = JSON.stringify(
+          record[fieldName],
+          null,
+          2
+        );
       }
-      
+
       // Manejar relaciones belongs_to
-      if (currentCollection.value!.schema?.relations?.[fieldName]?.type === 'belongs_to') {
-        if (typeof record[fieldName] === 'object' && record[fieldName]?.id) {
+      if (
+        currentCollection.value!.schema?.relations?.[fieldName]?.type ===
+        "belongs_to"
+      ) {
+        if (typeof record[fieldName] === "object" && record[fieldName]?.id) {
           // Si viene como objeto con relación expandida
           recordForm.value[fieldName] = record[fieldName].id;
-        } else if (typeof record[fieldName] === 'string' || typeof record[fieldName] === 'number') {
+        } else if (
+          typeof record[fieldName] === "string" ||
+          typeof record[fieldName] === "number"
+        ) {
           // Si viene como ID directo
           recordForm.value[fieldName] = record[fieldName].toString();
         } else {
           // Si es null o undefined
-          recordForm.value[fieldName] = '';
+          recordForm.value[fieldName] = "";
         }
       }
     });
@@ -1015,7 +1285,7 @@ function addSchemaField() {
     default: "",
     maxLength: undefined,
     min: undefined,
-    max: undefined
+    max: undefined,
   });
 }
 
@@ -1030,7 +1300,7 @@ function addRelation() {
     field: "",
     type: "belongs_to",
     references: "",
-    extra: "name"
+    extra: "name",
   });
 }
 
@@ -1048,9 +1318,13 @@ function toggleAdvancedFilters() {
 }
 
 function addCollectionFilter() {
-  if (newCollectionFilter.value.field && newCollectionFilter.value.operator && newCollectionFilter.value.value) {
+  if (
+    newCollectionFilter.value.field &&
+    newCollectionFilter.value.operator &&
+    newCollectionFilter.value.value
+  ) {
     activeCollectionFilters.value.push({ ...newCollectionFilter.value });
-    newCollectionFilter.value = { field: '', operator: '', value: '' };
+    newCollectionFilter.value = { field: "", operator: "", value: "" };
     pagination.value.page = 1;
   }
 }
@@ -1061,9 +1335,13 @@ function removeCollectionFilter(index: number) {
 }
 
 function addRecordFilter() {
-  if (newRecordFilter.value.field && newRecordFilter.value.operator && newRecordFilter.value.value) {
+  if (
+    newRecordFilter.value.field &&
+    newRecordFilter.value.operator &&
+    newRecordFilter.value.value
+  ) {
     activeRecordFilters.value.push({ ...newRecordFilter.value });
-    newRecordFilter.value = { field: '', operator: '', value: '' };
+    newRecordFilter.value = { field: "", operator: "", value: "" };
     pagination.value.page = 1;
     if (currentCollection.value) {
       loadRecords();
@@ -1102,7 +1380,7 @@ function clearAllFilters() {
   activeCollectionFilters.value = [];
   activeRecordFilters.value = [];
   pagination.value.page = 1;
-  
+
   if (currentCollection.value) {
     loadRecords();
   }
@@ -1119,15 +1397,19 @@ function toggleSelectRecord(recordId: string) {
 }
 
 function toggleSelectAllVisibleRecords() {
-  const visibleRecordIds = paginatedRecords.value.map(r => r.id);
-  const allSelected = visibleRecordIds.every(id => selectedRecords.value.includes(id));
-  
+  const visibleRecordIds = paginatedRecords.value.map((r) => r.id);
+  const allSelected = visibleRecordIds.every((id) =>
+    selectedRecords.value.includes(id)
+  );
+
   if (allSelected) {
     // Deselect all visible
-    selectedRecords.value = selectedRecords.value.filter(id => !visibleRecordIds.includes(id));
+    selectedRecords.value = selectedRecords.value.filter(
+      (id) => !visibleRecordIds.includes(id)
+    );
   } else {
     // Select all visible
-    visibleRecordIds.forEach(id => {
+    visibleRecordIds.forEach((id) => {
       if (!selectedRecords.value.includes(id)) {
         selectedRecords.value.push(id);
       }
@@ -1138,7 +1420,7 @@ function toggleSelectAllVisibleRecords() {
 // Auto refresh
 function toggleAutoRefresh() {
   autoRefresh.value = !autoRefresh.value;
-  
+
   if (autoRefresh.value) {
     refreshInterval = setInterval(() => {
       if (currentCollection.value) {
@@ -1159,16 +1441,16 @@ function toggleAutoRefresh() {
 async function exportCollections() {
   exportingCollections.value = true;
   try {
-    const collectionsData = filteredCollections.value.map(c => ({
+    const collectionsData = filteredCollections.value.map((c) => ({
       name: c.name,
       is_active: c.is_active,
       record_count: c.record_count,
       description: c.metadata?.description,
-      created_at: c.created_at
+      created_at: c.created_at,
     }));
-    
+
     const csvContent = generateCSV(collectionsData);
-    downloadCSV(csvContent, 'collections.csv');
+    downloadCSV(csvContent, "collections.csv");
   } catch (error: any) {
     console.error("Error exporting collections:", error);
   } finally {
@@ -1178,19 +1460,19 @@ async function exportCollections() {
 
 async function exportRecords() {
   if (!currentCollection.value) return;
-  
+
   exportingRecords.value = true;
   try {
-    const recordsData = filteredRecords.value.map(record => {
+    const recordsData = filteredRecords.value.map((record) => {
       const exportRecord: any = {};
-      Object.keys(currentCollection.value!.schema.fields).forEach(field => {
+      Object.keys(currentCollection.value!.schema.fields).forEach((field) => {
         exportRecord[field] = record[field];
       });
       exportRecord.created_at = record.created_at;
       exportRecord.updated_at = record.updated_at;
       return exportRecord;
     });
-    
+
     const csvContent = generateCSV(recordsData);
     downloadCSV(csvContent, `${currentCollection.value.name}_records.csv`);
   } catch (error: any) {
@@ -1201,26 +1483,28 @@ async function exportRecords() {
 }
 
 function generateCSV(data: any[]): string {
-  if (data.length === 0) return '';
-  
+  if (data.length === 0) return "";
+
   const headers = Object.keys(data[0]);
-  const csvRows = [headers.join(',')];
-  
+  const csvRows = [headers.join(",")];
+
   for (const row of data) {
-    const values = headers.map(header => {
+    const values = headers.map((header) => {
       const value = row[header];
-      return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
+      return typeof value === "string"
+        ? `"${value.replace(/"/g, '""')}"`
+        : value;
     });
-    csvRows.push(values.join(','));
+    csvRows.push(values.join(","));
   }
-  
-  return csvRows.join('\n');
+
+  return csvRows.join("\n");
 }
 
 function downloadCSV(content: string, filename: string) {
-  const blob = new Blob([content], { type: 'text/csv' });
+  const blob = new Blob([content], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);
@@ -1233,60 +1517,92 @@ function downloadCSV(content: string, filename: string) {
 async function saveCollection() {
   try {
     saving.value = true;
-    
+
     // Build schema from fields
     const fields: any = {};
-    schemaFields.value.forEach(field => {
+    schemaFields.value.forEach((field) => {
       if (field.name) {
         const fieldConfig: any = {
           type: field.type,
         };
-        
+
         if (field.required) fieldConfig.required = field.required;
         if (field.unique) fieldConfig.unique = field.unique;
-        if (field.default !== '' && field.default !== undefined && field.default !== null) {
+        if (
+          field.default !== "" &&
+          field.default !== undefined &&
+          field.default !== null
+        ) {
           fieldConfig.default = field.default;
         }
-        if (field.maxLength && field.maxLength > 0) fieldConfig.maxLength = field.maxLength;
-        if (field.min !== undefined && field.min !== null && field.min !== '') fieldConfig.min = field.min;
-        if (field.max !== undefined && field.max !== null && field.max !== '') fieldConfig.max = field.max;
-        
+        if (field.maxLength && field.maxLength > 0)
+          fieldConfig.maxLength = field.maxLength;
+        if (field.min !== undefined && field.min !== null && field.min !== "")
+          fieldConfig.min = field.min;
+        if (field.max !== undefined && field.max !== null && field.max !== "")
+          fieldConfig.max = field.max;
+
         fields[field.name] = fieldConfig;
       }
     });
-    
+
     // Build relations
     const relations: any = {};
-    relationList.value.forEach(rel => {
+    relationList.value.forEach((rel) => {
       if (rel.field && rel.references) {
         const relationConfig: any = {
           type: rel.type,
-          references: rel.references
+          references: rel.references,
         };
-        
-        if (rel.type === 'many_to_many' && rel.extra) {
+
+        if (rel.type === "many_to_many" && rel.extra) {
           relationConfig.through = rel.extra;
-        } else if (rel.extra && rel.extra !== 'name' && rel.extra !== '') {
+        } else if (rel.extra && rel.extra !== "name" && rel.extra !== "") {
           relationConfig.display_field = rel.extra;
         }
-        
+
         relations[rel.field] = relationConfig;
       }
     });
-    
+
     // Build auth rules
     const authRules = {
-      create: authCreateInput.value ? authCreateInput.value.split(',').map(s => s.trim()).filter(Boolean) : [],
-      read: authReadInput.value ? authReadInput.value.split(',').map(s => s.trim()).filter(Boolean) : [],
-      update: authUpdateInput.value ? authUpdateInput.value.split(',').map(s => s.trim()).filter(Boolean) : [],
-      delete: authDeleteInput.value ? authDeleteInput.value.split(',').map(s => s.trim()).filter(Boolean) : []
+      create: authCreateInput.value
+        ? authCreateInput.value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+      read: authReadInput.value
+        ? authReadInput.value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+      update: authUpdateInput.value
+        ? authUpdateInput.value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+      delete: authDeleteInput.value
+        ? authDeleteInput.value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
     };
-    
+
     // Build indexes
-    const indexes = indexesInput.value ? indexesInput.value.split(',').map(s => s.trim()).filter(Boolean) : [];
-    
+    const indexes = indexesInput.value
+      ? indexesInput.value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
     let collectionData: any;
-    
+
     if (editingCollection.value) {
       // PAYLOAD PARA EDITAR - Solo campos permitidos por UpdateCollectionDto
       collectionData = {
@@ -1294,22 +1610,21 @@ async function saveCollection() {
           fields,
           relations: Object.keys(relations).length > 0 ? relations : undefined,
           timestamps: form.value.schema.timestamps,
-          indexes: indexes.length > 0 ? indexes : undefined
+          indexes: indexes.length > 0 ? indexes : undefined,
         },
         auth_rules: authRules,
         metadata: {
-          description: form.value.metadata?.description || ''
+          description: form.value.metadata?.description || "",
         },
-        is_active: form.value.is_active
+        is_active: form.value.is_active,
       };
-      
+
       // Limpiar campos undefined del schema
-      Object.keys(collectionData.schema).forEach(key => {
+      Object.keys(collectionData.schema).forEach((key) => {
         if (collectionData.schema[key] === undefined) {
           delete collectionData.schema[key];
         }
       });
-      
     } else {
       // PAYLOAD PARA CREAR - Incluye todos los campos necesarios
       collectionData = {
@@ -1318,55 +1633,65 @@ async function saveCollection() {
           fields,
           relations: Object.keys(relations).length > 0 ? relations : undefined,
           timestamps: form.value.schema.timestamps,
-          indexes: indexes.length > 0 ? indexes : undefined
+          indexes: indexes.length > 0 ? indexes : undefined,
         },
         auth_rules: authRules,
         metadata: {
-          description: form.value.metadata?.description || ''
+          description: form.value.metadata?.description || "",
         },
-        is_active: form.value.is_active
+        is_active: form.value.is_active,
       };
-      
+
       // Limpiar undefined del schema
-      Object.keys(collectionData.schema).forEach(key => {
+      Object.keys(collectionData.schema).forEach((key) => {
         if (collectionData.schema[key] === undefined) {
           delete collectionData.schema[key];
         }
       });
     }
-    
-    console.log('=== PAYLOAD DEBUG ===');
-    console.log('Editing:', !!editingCollection.value);
-    console.log('Collection name:', editingCollection.value?.name || form.value.name);
-    console.log('Payload:', JSON.stringify(collectionData, null, 2));
-    
+
+    console.log("=== PAYLOAD DEBUG ===");
+    console.log("Editing:", !!editingCollection.value);
+    console.log(
+      "Collection name:",
+      editingCollection.value?.name || form.value.name
+    );
+    console.log("Payload:", JSON.stringify(collectionData, null, 2));
+
     if (editingCollection.value) {
-      await adminCollections.update(editingCollection.value.name, collectionData);
+      await adminCollections.update(
+        editingCollection.value.name,
+        collectionData
+      );
       showSuccess(
-        'Collection actualizada', 
+        "Collection actualizada",
         `La collection "${editingCollection.value.name}" se actualizó correctamente.`
       );
     } else {
       await adminCollections.create(collectionData);
       showSuccess(
-        'Collection creada', 
+        "Collection creada",
         `La collection "${form.value.name}" se creó correctamente.`
       );
     }
-    
+
     await loadCollections();
     closeCreateModal();
-    
   } catch (error: any) {
     console.error("Error saving collection:", error);
     console.error("Response data:", error.response?.data);
-    
-    let errorMessage = 'Error desconocido al guardar la collection.';
-    
+
+    let errorMessage = "Error desconocido al guardar la collection.";
+
     // Mostrar mensaje específico del backend
-    if (error.response?.data?.message && Array.isArray(error.response.data.message)) {
+    if (
+      error.response?.data?.message &&
+      Array.isArray(error.response.data.message)
+    ) {
       console.error("Backend validation errors:", error.response.data.message);
-      errorMessage = `Errores de validación:\n${error.response.data.message.join('\n')}`;
+      errorMessage = `Errores de validación:\n${error.response.data.message.join(
+        "\n"
+      )}`;
     } else if (error.response?.data?.message) {
       console.error("Backend error message:", error.response.data.message);
       errorMessage = error.response.data.message;
@@ -1375,11 +1700,8 @@ async function saveCollection() {
     } else if (error.message) {
       errorMessage = error.message;
     }
-    
-    showError(
-      'Error al guardar collection',
-      errorMessage
-    );
+
+    showError("Error al guardar collection", errorMessage);
   } finally {
     saving.value = false;
   }
@@ -1387,42 +1709,48 @@ async function saveCollection() {
 
 async function saveRecord() {
   if (!currentCollection.value) return;
-  
+
   try {
     savingRecord.value = true;
-    
+
     const recordData = { ...recordForm.value };
-    
+
     // ✅ ELIMINAR campos del sistema que el backend maneja automáticamente
     delete recordData.id;
     delete recordData.created_at;
     delete recordData.updated_at;
-    
+
     // Process JSON fields
     if (currentCollection.value.schema?.fields) {
-      Object.keys(currentCollection.value.schema.fields).forEach(fieldName => {
-        const fieldDef = currentCollection.value!.schema.fields[fieldName];
-        if (fieldDef.type === 'json') {
-          const jsonString = recordData[fieldName + '_json_string'];
-          if (jsonString) {
-            try {
-              recordData[fieldName] = JSON.parse(jsonString);
-            } catch (error) {
-              jsonErrors.value[fieldName] = 'JSON inválido';
-              throw new Error(`Invalid JSON in field ${fieldName}`);
+      Object.keys(currentCollection.value.schema.fields).forEach(
+        (fieldName) => {
+          const fieldDef = currentCollection.value!.schema.fields[fieldName];
+          if (fieldDef.type === "json") {
+            const jsonString = recordData[fieldName + "_json_string"];
+            if (jsonString) {
+              try {
+                recordData[fieldName] = JSON.parse(jsonString);
+              } catch (error) {
+                jsonErrors.value[fieldName] = "JSON inválido";
+                throw new Error(`Invalid JSON in field ${fieldName}`);
+              }
             }
+            delete recordData[fieldName + "_json_string"];
           }
-          delete recordData[fieldName + '_json_string'];
         }
-      });
+      );
     }
-    
+
     if (editingRecord.value) {
-      await recordsAPI.update(currentCollection.value.name, editingRecord.value.id, recordData);
+      await recordsAPI.update(
+        currentCollection.value.name,
+        editingRecord.value.id,
+        recordData
+      );
     } else {
       await recordsAPI.create(currentCollection.value.name, recordData);
     }
-    
+
     await loadRecords();
     closeInsertModal();
   } catch (error: any) {
@@ -1436,30 +1764,33 @@ async function saveRecord() {
 async function confirmDelete() {
   try {
     deletingCollection.value = true;
-    
+
     if (collectionToDelete.value) {
-      console.log('=== DELETING COLLECTION ===');
-      console.log('Collection:', collectionToDelete.value.name);
+      console.log("=== DELETING COLLECTION ===");
+      console.log("Collection:", collectionToDelete.value.name);
       await adminCollections.delete(collectionToDelete.value.name);
       await loadCollections();
     } else if (recordToDelete.value && currentCollection.value) {
-      console.log('=== DELETING RECORD ===');
-      console.log('Collection:', currentCollection.value.name);
-      console.log('Record ID:', recordToDelete.value.id);
-      console.log('Record data:', recordToDelete.value);
-      
-      await recordsAPI.delete(currentCollection.value.name, recordToDelete.value.id);
+      console.log("=== DELETING RECORD ===");
+      console.log("Collection:", currentCollection.value.name);
+      console.log("Record ID:", recordToDelete.value.id);
+      console.log("Record data:", recordToDelete.value);
+
+      await recordsAPI.delete(
+        currentCollection.value.name,
+        recordToDelete.value.id
+      );
       await loadRecords();
     }
-    
+
     closeDeleteModal();
   } catch (error: any) {
     console.error("Error deleting:", error);
     console.error("Response:", error.response?.data);
-    
+
     showError(
-      'Error al eliminar',
-      error.response?.data?.message || error.message || 'Error desconocido'
+      "Error al eliminar",
+      error.response?.data?.message || error.message || "Error desconocido"
     );
   } finally {
     deletingCollection.value = false;
@@ -1468,16 +1799,16 @@ async function confirmDelete() {
 
 async function confirmBulkDelete() {
   if (!currentCollection.value || selectedRecords.value.length === 0) return;
-  
+
   try {
     bulkDeleting.value = true;
-    
+
     await Promise.all(
-      selectedRecords.value.map(recordId =>
+      selectedRecords.value.map((recordId) =>
         recordsAPI.delete(currentCollection.value!.name, recordId)
       )
     );
-    
+
     selectedRecords.value = [];
     await loadRecords();
     closeBulkDeleteModal();
@@ -1490,13 +1821,13 @@ async function confirmBulkDelete() {
 
 // JSON validation
 function validateJSON(fieldName: string) {
-  const jsonString = recordForm.value[fieldName + '_json_string'];
+  const jsonString = recordForm.value[fieldName + "_json_string"];
   if (jsonString) {
     try {
       JSON.parse(jsonString);
       delete jsonErrors.value[fieldName];
     } catch (error) {
-      jsonErrors.value[fieldName] = 'JSON inválido';
+      jsonErrors.value[fieldName] = "JSON inválido";
     }
   } else {
     delete jsonErrors.value[fieldName];
@@ -1508,12 +1839,15 @@ onMounted(() => {
   const collectionName = route.params.collectionName as string;
   if (collectionName) {
     // Load specific collection
-    adminCollections.getByName(collectionName).then(response => {
-      currentCollection.value = response.data;
-      loadRecords();
-    }).catch(() => {
-      router.push('/admin/collections');
-    });
+    adminCollections
+      .getByName(collectionName)
+      .then((response) => {
+        currentCollection.value = response.data;
+        loadRecords();
+      })
+      .catch(() => {
+        router.push("/admin/collections");
+      });
   } else {
     loadCollections();
   }
@@ -1527,63 +1861,72 @@ onUnmounted(() => {
 });
 
 // Watch for route changes
-watch(() => route.params.collectionName, (newCollectionName) => {
-  if (newCollectionName) {
-    adminCollections.getByName(newCollectionName as string).then(response => {
-      currentCollection.value = response.data;
-      selectedRecords.value = [];
-      pagination.value.page = 1;
-      searchQuery.value = "";
-      activeRecordFilters.value = [];
-      loadRecords();
-    }).catch(() => {
-      router.push('/admin/collections');
-    });
-  } else {
-    goBack();
+watch(
+  () => route.params.collectionName,
+  (newCollectionName) => {
+    if (newCollectionName) {
+      adminCollections
+        .getByName(newCollectionName as string)
+        .then((response) => {
+          currentCollection.value = response.data;
+          selectedRecords.value = [];
+          pagination.value.page = 1;
+          searchQuery.value = "";
+          activeRecordFilters.value = [];
+          loadRecords();
+        })
+        .catch(() => {
+          router.push("/admin/collections");
+        });
+    } else {
+      goBack();
+    }
   }
-});
+);
 </script>
 
 <style scoped>
 /* Premium Styles for Enhanced Components */
 .premium-header {
-  @apply transition-all duration-200;
+  transition: all 0.2s;
 }
 
 .premium-stats {
-  @apply p-6;
+  padding: 1.5rem; /* equivalente a p-6 */
 }
 
 .premium-filters {
-  @apply transition-all duration-200;
+  transition: all 0.2s;
 }
 
 .premium-search-filters {
-  @apply transition-all duration-200;
+  transition: all 0.2s;
 }
 
 .premium-table {
-  @apply transition-all duration-200;
+  transition: all 0.2s;
 }
 
 .premium-pagination {
-  @apply transition-all duration-200;
+  transition: all 0.2s;
 }
 
 .premium-modal {
-  @apply transition-all duration-200;
+  transition: all 0.2s;
 }
 
 .premium-modals {
-  @apply relative z-50;
+  position: relative;
+  z-index: 50;
 }
 
 /* Enhanced loading animation */
 @keyframes bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0);
-  } 
+  }
   40% {
     transform: scale(1);
   }

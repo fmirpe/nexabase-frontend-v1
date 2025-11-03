@@ -307,8 +307,8 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 overflow-y-auto bg-gray-50">
-          <div class="p-6 pb-32">
+        <div class="flex-1 overflow-y-auto bg-gray-50 pb-6">
+          <div class="p-6">
             <div class="max-w-3xl mx-auto space-y-6">
               <!-- Dynamic Form Fields -->
               <div

@@ -4,7 +4,7 @@
     @click="emit('close')"
   >
     <div
-      class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full mx-4 max-h-[85vh] min-h-[60vh] overflow-hidden flex flex-col"
+      class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full mx-4 h-[85vh] overflow-hidden flex flex-col"
       @click.stop
     >
       <!-- Header Mejorado -->

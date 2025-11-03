@@ -1,79 +1,28 @@
 <template>
   <div class="space-y-6 min-h-screen bg-gray-50 p-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-      <div>
+    <!-- Header con Estadísticas -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div class="lg:col-span-3">
         <h1 class="text-2xl font-bold text-gray-900">Backup & Restore</h1>
         <p class="mt-2 text-sm text-gray-600">
-          Gestiona copias de seguridad de tu base de datos
+          Gestiona copias de seguridad y programación automática
         </p>
       </div>
-      <div class="mt-4 sm:mt-0 flex items-center gap-2">
-        <button
-          @click="createBackup"
-          :disabled="creatingBackup"
-          class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium rounded-lg transition-colors"
-        >
-          <svg
-            v-if="creatingBackup"
-            class="w-5 h-5 mr-2 animate-spin"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          <svg
-            v-else
-            class="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          {{ creatingBackup ? "Creando..." : "Crear Backup" }}
-        </button>
-        <button
-          @click="loadBackups"
-          :disabled="loading"
-          class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-        >
-          <svg
-            :class="['w-5 h-5 text-gray-600', loading ? 'animate-spin' : '']"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-        </button>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-blue-600">
+            {{ stats.total_backups || 0 }}
+          </div>
+          <div class="text-sm text-gray-500">Total Backups</div>
+          <div class="text-xs text-gray-400 mt-1">
+            {{ stats.total_size_formatted || "0 B" }}
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Quick Actions -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900">Backup Manual</h3>
@@ -94,7 +43,7 @@
           </div>
         </div>
         <p class="text-sm text-gray-600 mb-4">
-          Crea una copia de seguridad completa de la base de datos
+          Crea una copia de seguridad completa
         </p>
         <button
           @click="createBackup"
@@ -107,10 +56,40 @@
 
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Restaurar</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Programado</h3>
           <div class="p-2 bg-green-50 rounded-lg">
             <svg
               class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 mb-4">
+          {{ schedules.filter((s) => s.enabled).length }} activos
+        </p>
+        <button
+          @click="showScheduleModal = true"
+          class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+        >
+          Gestionar
+        </button>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Restaurar</h3>
+          <div class="p-2 bg-purple-50 rounded-lg">
+            <svg
+              class="w-6 h-6 text-purple-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -124,13 +103,11 @@
             </svg>
           </div>
         </div>
-        <p class="text-sm text-gray-600 mb-4">
-          Restaura la base de datos desde un backup
-        </p>
+        <p class="text-sm text-gray-600 mb-4">Desde backup existente</p>
         <button
           @click="showRestoreModal = true"
           :disabled="backups.length === 0"
-          class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
+          class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
         >
           Restaurar
         </button>
@@ -138,7 +115,7 @@
 
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Limpieza</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Estadísticas</h3>
           <div class="p-2 bg-orange-50 rounded-lg">
             <svg
               class="w-6 h-6 text-orange-600"
@@ -150,25 +127,254 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
               />
             </svg>
           </div>
         </div>
-        <p class="text-sm text-gray-600 mb-4">
-          Elimina backups antiguos automáticamente
-        </p>
+        <p class="text-sm text-gray-600 mb-4">Ver métricas detalladas</p>
         <button
-          @click="cleanupBackups"
-          :disabled="cleaning"
+          @click="loadStats"
+          :disabled="loadingStats"
           class="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-300 text-white rounded-lg transition-colors"
         >
-          {{ cleaning ? "Limpiando..." : "Limpiar Antiguos" }}
+          {{ loadingStats ? "Cargando..." : "Ver Stats" }}
         </button>
       </div>
     </div>
 
-    <!-- Error/Success Messages -->
+    <!-- Tabs -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div class="border-b border-gray-200">
+        <nav class="flex space-x-8 px-6">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            :class="[
+              'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
+              activeTab === tab.id
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            ]"
+          >
+            {{ tab.label }}
+            <span
+              v-if="tab.count !== undefined"
+              class="ml-2 bg-gray-100 text-gray-600 py-1 px-2 rounded-full text-xs"
+            >
+              {{ tab.count }}
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Backups List Tab -->
+      <div v-if="activeTab === 'backups'" class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-semibold text-gray-900">
+            Backups Disponibles
+          </h2>
+          <div class="flex items-center gap-3">
+            <select
+              v-model="backupFilter"
+              class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Todos los tipos</option>
+              <option value="manual">Manual</option>
+              <option value="scheduled">Programado</option>
+            </select>
+            <button
+              @click="loadBackups"
+              :disabled="loading"
+              class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <svg
+                :class="[
+                  'w-5 h-5 text-gray-600',
+                  loading ? 'animate-spin' : '',
+                ]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="loading" class="text-center py-8">
+          <div
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"
+          ></div>
+          <p class="text-gray-600">Cargando backups...</p>
+        </div>
+
+        <div v-else-if="filteredBackups.length === 0" class="text-center py-8">
+          <svg
+            class="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7"
+            />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No hay backups</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Crea tu primer backup para comenzar.
+          </p>
+        </div>
+
+        <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div
+            v-for="backup in filteredBackups"
+            :key="backup.filename"
+            class="bg-gray-50 rounded-lg p-4 border hover:border-gray-300 transition-colors"
+          >
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h3 class="font-medium text-gray-900 text-sm">
+                  {{ backup.filename }}
+                </h3>
+                <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                  <span>{{
+                    backup.size_formatted || formatFileSize(backup.size)
+                  }}</span>
+                  <span>•</span>
+                  <span>{{
+                    backup.age || formatDateTime(backup.created_at)
+                  }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  v-if="backup.status"
+                  :class="getStatusColor(backup.status)"
+                  class="px-2 py-1 rounded-full text-xs font-medium"
+                >
+                  {{ backup.status }}
+                </span>
+                <span
+                  v-if="backup.type"
+                  class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
+                >
+                  {{ backup.type }}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="text-xs text-gray-500">
+                <div v-if="backup.estimated_restore_time">
+                  Restore: {{ backup.estimated_restore_time }}
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="restoreBackup(backup.filename)"
+                  :disabled="restoring"
+                  class="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-xs rounded transition-colors"
+                >
+                  Restaurar
+                </button>
+                <button
+                  @click="confirmDeleteBackup(backup)"
+                  class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded transition-colors"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedules Tab -->
+      <div v-if="activeTab === 'schedules'" class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-semibold text-gray-900">
+            Programación Automática
+          </h2>
+          <button
+            @click="showCreateScheduleModal = true"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
+          >
+            Nueva Programación
+          </button>
+        </div>
+
+        <div v-if="loadingSchedules" class="text-center py-8">
+          <div
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"
+          ></div>
+          <p class="text-gray-600">Cargando programaciones...</p>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div
+            v-for="schedule in schedules"
+            :key="schedule.id"
+            class="bg-gray-50 rounded-lg p-4 border"
+          >
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-medium text-gray-900">
+                  {{ schedule.schedule_name }}
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">
+                  {{ schedule.cron_description }}
+                </p>
+                <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                  <span>Próximo: {{ schedule.next_run_formatted }}</span>
+                  <span v-if="schedule.last_run_formatted">•</span>
+                  <span v-if="schedule.last_run_formatted"
+                    >Último: {{ schedule.last_run_formatted }}</span
+                  >
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  :class="
+                    schedule.enabled
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                  "
+                  class="px-2 py-1 rounded-full text-xs"
+                >
+                  {{ schedule.enabled ? "Activo" : "Inactivo" }}
+                </span>
+                <button
+                  @click="runScheduleNow(schedule.id)"
+                  :disabled="runningSchedule"
+                  class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs rounded"
+                >
+                  Ejecutar
+                </button>
+                <button
+                  @click="confirmDeleteSchedule(schedule)"
+                  class="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
     <div
       v-if="error"
       class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4"
@@ -209,283 +415,136 @@
       </div>
     </div>
 
-    <!-- Backups List -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold text-gray-900">
-            Backups Disponibles
-          </h2>
-          <span class="text-sm text-gray-500"
-            >{{ backups.length }} backups</span
-          >
-        </div>
-      </div>
-
-      <div v-if="loading" class="p-8 text-center">
-        <div
-          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"
-        ></div>
-        <p class="text-gray-600">Cargando backups...</p>
-      </div>
-
-      <div v-else-if="backups.length === 0" class="p-8 text-center">
-        <svg
-          class="mx-auto h-12 w-12 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7"
-          />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay backups</h3>
-        <p class="mt-1 text-sm text-gray-500">
-          Crea tu primer backup para comenzar.
-        </p>
-      </div>
-
-      <div v-else class="divide-y divide-gray-200">
-        <div
-          v-for="backup in backups"
-          :key="backup.filename"
-          class="p-6 hover:bg-gray-50"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-              <div class="flex-shrink-0">
-                <div
-                  class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center"
-                >
-                  <svg
-                    class="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h3 class="text-sm font-medium text-gray-900">
-                  {{ backup.filename }}
-                </h3>
-                <div class="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>{{ formatFileSize(backup.size) }}</span>
-                  <span>•</span>
-                  <span>{{ formatDateTime(backup.created_at) }}</span>
-                  <span
-                    v-if="backup.type"
-                    class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs"
-                  >
-                    {{ backup.type }}
-                  </span>
-                  <span
-                    v-if="backup.method"
-                    class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
-                  >
-                    {{ backup.method }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center space-x-2">
-              <button
-                @click="restoreBackup(backup.filename)"
-                :disabled="restoring"
-                class="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm rounded-lg transition-colors"
-              >
-                {{ restoring ? "Restaurando..." : "Restaurar" }}
-              </button>
-              <button
-                @click="confirmDeleteBackup(backup)"
-                class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-sm rounded-lg transition-colors"
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <!-- Modals -->
     <!-- Restore Modal -->
-    <div
+    <RestoreModal
       v-if="showRestoreModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-      @click="showRestoreModal = false"
-    >
-      <div
-        class="relative top-6 mx-auto p-5 w-full max-w-md shadow-lg rounded-md bg-white border"
-        @click.stop
-      >
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-          Restaurar Base de Datos
-        </h3>
+      :backups="backups"
+      :restoring="restoring"
+      @close="showRestoreModal = false"
+      @restore="handleRestore"
+    />
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Seleccionar backup:</label
-          >
-          <select
-            v-model="selectedBackupFile"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Seleccionar backup --</option>
-            <option
-              v-for="backup in backups"
-              :key="backup.filename"
-              :value="backup.filename"
-            >
-              {{ backup.filename }} ({{ formatFileSize(backup.size) }})
-            </option>
-          </select>
-        </div>
-
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-          <div class="flex">
-            <svg
-              class="w-5 h-5 text-yellow-400 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <div class="text-sm text-yellow-800">
-              <strong>Advertencia:</strong> Esta acción reemplazará todos los
-              datos actuales de la base de datos.
-            </div>
-          </div>
-        </div>
-
-        <div class="flex gap-3">
-          <button
-            @click="showRestoreModal = false"
-            class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            @click="confirmRestore"
-            :disabled="!selectedBackupFile || restoring"
-            class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-medium rounded-lg transition-colors"
-          >
-            {{ restoring ? "Restaurando..." : "Restaurar" }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- Create Schedule Modal -->
+    <CreateScheduleModal
+      v-if="showCreateScheduleModal"
+      @close="showCreateScheduleModal = false"
+      @created="handleScheduleCreated"
+    />
 
     <!-- Delete Confirmation Modal -->
-    <div
+    <ConfirmModal
       v-if="showDeleteModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center"
-      @click="showDeleteModal = false"
-    >
-      <div
-        class="bg-white border rounded-lg p-6 w-full max-w-md mx-4"
-        @click.stop
-      >
-        <h4 class="text-lg font-semibold text-gray-900">Eliminar Backup</h4>
-        <p class="text-sm text-gray-600 mt-2">
-          ¿Estás seguro de que deseas eliminar el backup
-          <strong>{{ backupToDelete?.filename }}</strong
-          >? Esta acción no se puede deshacer.
-        </p>
-        <div class="flex gap-3 mt-6">
-          <button
-            @click="showDeleteModal = false"
-            class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
-          >
-            Cancelar
-          </button>
-          <button
-            @click="deleteBackup"
-            :disabled="deleting"
-            class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white rounded"
-          >
-            {{ deleting ? "Eliminando..." : "Eliminar" }}
-          </button>
-        </div>
-      </div>
-    </div>
+      :title="deleteModalTitle"
+      :message="deleteModalMessage"
+      :confirming="deleting"
+      @close="showDeleteModal = false"
+      @confirm="executeDelete"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { backupAPI } from "../../services/api";
+
+// Components
+import RestoreModal from "../../components/backup/RestoreModal.vue";
+import CreateScheduleModal from "../../components/backup/CreateScheduleModal.vue";
+import ConfirmModal from "../../components/ConfirmModal.vue";
 
 // State
 const loading = ref(true);
+const loadingSchedules = ref(false);
+const loadingStats = ref(false);
 const creatingBackup = ref(false);
 const restoring = ref(false);
-const cleaning = ref(false);
 const deleting = ref(false);
+const runningSchedule = ref(false);
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
 
 // Data
 const backups = ref<any[]>([]);
+const schedules = ref<any[]>([]);
+const stats = ref<any>({});
 
-// Modals
+// UI State
+const activeTab = ref("backups");
+const backupFilter = ref("");
 const showRestoreModal = ref(false);
+const showCreateScheduleModal = ref(false);
 const showDeleteModal = ref(false);
-const selectedBackupFile = ref("");
-const backupToDelete = ref<any>(null);
+const deleteModalTitle = ref("");
+const deleteModalMessage = ref("");
+const itemToDelete = ref<any>(null);
+const deleteType = ref<"backup" | "schedule">("backup");
 
-// ✅ FUNCTIONS CORREGIDAS
+// Computed
+const filteredBackups = computed(() => {
+  if (!backupFilter.value) return backups.value;
+  return backups.value.filter((backup) => backup.type === backupFilter.value);
+});
 
+const tabs = computed(() => [
+  { id: "backups", label: "Backups", count: backups.value.length },
+  { id: "schedules", label: "Programación", count: schedules.value.length },
+]);
+
+// Functions
 async function loadBackups() {
   try {
     loading.value = true;
     error.value = null;
 
-    console.log('🔍 Frontend: Calling backup list API...');
     const response = await backupAPI.list();
-    
-    console.log('🔍 Frontend: Full response:', response);
-    console.log('🔍 Frontend: response.data:', response.data);
-    console.log('🔍 Frontend: response.data.data:', response.data?.data);
-
-    // ✅ CORRECCIÓN: Acceso correcto a la estructura de respuesta
     const responseData = response.data;
-    
+
     if (responseData?.data?.backups) {
-      // Estructura: { success: true, data: { backups: [...] } }
       backups.value = responseData.data.backups;
     } else if (responseData?.backups) {
-      // Estructura: { backups: [...] }
       backups.value = responseData.backups;
     } else if (Array.isArray(responseData)) {
-      // Estructura: [...]
       backups.value = responseData;
     } else {
       backups.value = [];
     }
-    
-    console.log(`✅ Frontend: Loaded ${backups.value.length} backups`);
-    console.log('🔍 Frontend: Final backups array:', backups.value);
   } catch (e: any) {
     console.error("Error loading backups:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error cargando backups";
+    error.value =
+      e?.response?.data?.message || e?.message || "Error cargando backups";
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadSchedules() {
+  try {
+    loadingSchedules.value = true;
+    const response = await backupAPI.getSchedules();
+    schedules.value = response.data?.data?.schedules || [];
+  } catch (e: any) {
+    console.error("Error loading schedules:", e);
+    error.value =
+      e?.response?.data?.message ||
+      e?.message ||
+      "Error cargando programaciones";
+  } finally {
+    loadingSchedules.value = false;
+  }
+}
+
+async function loadStats() {
+  try {
+    loadingStats.value = true;
+    const response = await backupAPI.getStats();
+    stats.value = response.data?.data || {};
+  } catch (e: any) {
+    console.error("Error loading stats:", e);
+    error.value =
+      e?.response?.data?.message || e?.message || "Error cargando estadísticas";
+  } finally {
+    loadingStats.value = false;
   }
 }
 
@@ -495,24 +554,18 @@ async function createBackup() {
     error.value = null;
     successMessage.value = null;
 
-    console.log('🔍 Frontend: Creating backup...');
-    const response = await backupAPI.create("manual");
-    
-    console.log('🔍 Frontend: Create backup response:', response);
-    console.log('🔍 Frontend: Create backup response.data:', response.data);
+    const response = await backupAPI.create();
+    const backup = response.data?.data || response.data;
 
-    // ✅ CORRECCIÓN: El backend devuelve data directamente
-    const backup = response.data;
-
-    // ✅ CORRECCIÓN: Acceso correcto al filename
-    successMessage.value = `Backup creado exitosamente: ${backup.filename}`;
+    successMessage.value = `Backup creado: ${backup.filename}`;
     setTimeout(() => (successMessage.value = null), 5000);
 
-    // ✅ RECARGAR LISTA
     await loadBackups();
+    await loadStats();
   } catch (e: any) {
     console.error("Error creating backup:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error creando backup";
+    error.value =
+      e?.response?.data?.message || e?.message || "Error creando backup";
     setTimeout(() => (error.value = null), 5000);
   } finally {
     creatingBackup.value = false;
@@ -520,90 +573,93 @@ async function createBackup() {
 }
 
 async function restoreBackup(filename: string) {
-  if (
-    !confirm(
-      "¿Estás seguro de que deseas restaurar este backup? Se perderán todos los datos actuales."
-    )
-  ) {
-    return;
-  }
-
   try {
     restoring.value = true;
     error.value = null;
     successMessage.value = null;
 
-    await backupAPI.restoreByFilename(filename);
+    await backupAPI.restore(filename, { confirm: true });
 
     successMessage.value = "Base de datos restaurada exitosamente";
     setTimeout(() => (successMessage.value = null), 5000);
-
     showRestoreModal.value = false;
-    selectedBackupFile.value = "";
   } catch (e: any) {
     console.error("Error restoring backup:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error restaurando backup";
+    error.value =
+      e?.response?.data?.message || e?.message || "Error restaurando backup";
     setTimeout(() => (error.value = null), 5000);
   } finally {
     restoring.value = false;
   }
 }
 
-function confirmRestore() {
-  if (selectedBackupFile.value) {
-    restoreBackup(selectedBackupFile.value);
+function handleRestore(filename: string) {
+  restoreBackup(filename);
+}
+
+async function runScheduleNow(scheduleId: string) {
+  try {
+    runningSchedule.value = true;
+    await backupAPI.runSchedule(scheduleId);
+    successMessage.value = "Programación ejecutada en segundo plano";
+    setTimeout(() => (successMessage.value = null), 3000);
+  } catch (e: any) {
+    error.value =
+      e?.response?.data?.message ||
+      e?.message ||
+      "Error ejecutando programación";
+    setTimeout(() => (error.value = null), 5000);
+  } finally {
+    runningSchedule.value = false;
   }
 }
 
 function confirmDeleteBackup(backup: any) {
-  backupToDelete.value = backup;
+  itemToDelete.value = backup;
+  deleteType.value = "backup";
+  deleteModalTitle.value = "Eliminar Backup";
+  deleteModalMessage.value = `¿Eliminar el backup ${backup.filename}? Esta acción no se puede deshacer.`;
   showDeleteModal.value = true;
 }
 
-async function deleteBackup() {
-  if (!backupToDelete.value) return;
+function confirmDeleteSchedule(schedule: any) {
+  itemToDelete.value = schedule;
+  deleteType.value = "schedule";
+  deleteModalTitle.value = "Eliminar Programación";
+  deleteModalMessage.value = `¿Eliminar la programación "${schedule.schedule_name}"?`;
+  showDeleteModal.value = true;
+}
 
+async function executeDelete() {
   try {
     deleting.value = true;
-    await backupAPI.delete(backupToDelete.value.filename);
 
-    successMessage.value = `Backup ${backupToDelete.value.filename} eliminado`;
-    setTimeout(() => (successMessage.value = null), 5000);
+    if (deleteType.value === "backup") {
+      await backupAPI.delete(itemToDelete.value.filename);
+      successMessage.value = `Backup ${itemToDelete.value.filename} eliminado`;
+      await loadBackups();
+    } else {
+      await backupAPI.deleteSchedule(itemToDelete.value.id);
+      successMessage.value = `Programación "${itemToDelete.value.schedule_name}" eliminada`;
+      await loadSchedules();
+    }
 
+    setTimeout(() => (successMessage.value = null), 3000);
     showDeleteModal.value = false;
-    backupToDelete.value = null;
-    await loadBackups();
   } catch (e: any) {
-    console.error("Error deleting backup:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error eliminando backup";
+    error.value =
+      e?.response?.data?.message || e?.message || "Error eliminando";
     setTimeout(() => (error.value = null), 5000);
   } finally {
     deleting.value = false;
   }
 }
 
-async function cleanupBackups() {
-  if (!confirm("¿Limpiar backups antiguos (más de 30 días)?")) return;
-
-  try {
-    cleaning.value = true;
-    error.value = null;
-    successMessage.value = null;
-
-    const response = await backupAPI.cleanup(30);
-    const data = response.data;
-
-    successMessage.value = data.message || `Limpieza completada`;
-    setTimeout(() => (successMessage.value = null), 5000);
-
-    await loadBackups();
-  } catch (e: any) {
-    console.error("Error cleaning backups:", e);
-    error.value = e?.response?.data?.message || e?.message || "Error limpiando backups";
-    setTimeout(() => (error.value = null), 5000);
-  } finally {
-    cleaning.value = false;
-  }
+async function handleScheduleCreated() {
+  showCreateScheduleModal.value = false;
+  await loadSchedules();
+  successMessage.value = "Programación creada exitosamente";
+  setTimeout(() => (successMessage.value = null), 3000);
 }
 
 // Utility functions
@@ -625,5 +681,17 @@ function formatDateTime(dateString: string): string {
   });
 }
 
-onMounted(loadBackups);
+function getStatusColor(status: string) {
+  const colors = {
+    fresh: "bg-green-100 text-green-800",
+    aging: "bg-yellow-100 text-yellow-800",
+    old: "bg-orange-100 text-orange-800",
+    corrupted: "bg-red-100 text-red-800",
+  };
+  return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
+}
+
+onMounted(async () => {
+  await Promise.all([loadBackups(), loadSchedules(), loadStats()]);
+});
 </script>

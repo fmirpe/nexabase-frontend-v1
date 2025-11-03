@@ -28,6 +28,7 @@ import LoginView from "./pages/LoginPage.vue";
 import OAuthCallbackView from "./pages/OAuthCallback.vue";
 import CreateOrganizationView from "./pages/tenants/CreateOrganization.vue"; // ✅ AGREGAR
 import OrganizationSettingsView from "./pages/tenants/OrganizationSettingsView.vue";
+import ApiView from "./pages/ApiView.vue";
 
 // Router actualizado
 const routes = [
@@ -134,6 +135,15 @@ const routes = [
           requiresAuth: true,
           requiresAdmin: false, // Cualquier usuario con organización puede acceder
           title: "Organization Settings",
+        },
+      },
+      {
+        path: "/api",
+        name: "API",
+        component: ApiView,
+        meta: {
+          requiresAuth: true,
+          title: "API & Integración",
         },
       },
     ],

@@ -594,6 +594,37 @@ export const backupAPI = {
     apiClient.delete(`/api/admin/backup/${filename}`),
   cleanup: (retentionDays: number = 30) =>
     apiClient.post("/api/admin/backup/cleanup", { retentionDays }),
+
+  // Schedules
+  async getSchedules() {
+    return apiClient.get("/api/admin/backup/schedules");
+  },
+
+  async createSchedule(data: any) {
+    return apiClient.post("/api/admin/backup/schedules", data);
+  },
+
+  async updateSchedule(id: string, data: any) {
+    return apiClient.put(`/api/admin/backup/schedules/${id}`, data);
+  },
+
+  async deleteSchedule(id: string) {
+    return apiClient.delete(`/api/admin/backup/schedules/${id}`);
+  },
+
+  async runSchedule(id: string) {
+    return apiClient.post(`/api/admin/backup/schedules/${id}/run`);
+  },
+
+  // Stats
+  async getStats() {
+    return apiClient.get("/api/admin/backup/stats");
+  },
+
+  // Restore with options
+  // async restore(filename: string, options: any) {
+  //   return apiClient.post(`/api/admin/backup/${filename}/restore`, options)
+  // }
 };
 
 // API Keys API

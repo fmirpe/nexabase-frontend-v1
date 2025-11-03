@@ -102,7 +102,7 @@
         </div>
       </div>
 
-      <div class="flex min-h-[calc(95vh-100px)] max-h-[calc(95vh-100px)]">
+      <div class="flex flex-1 min-h-0">
         <!-- Sidebar con Navegación de Campos - MEJORADO -->
         <div class="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
           <div class="p-4 border-b border-gray-200 flex-shrink-0">
@@ -308,7 +308,7 @@
 
         <!-- Main Content -->
         <div class="flex-1 overflow-y-auto bg-gray-50">
-          <div class="p-6 pb-40 min-h-full">
+          <div class="p-6 pb-6">
             <div class="max-w-3xl mx-auto space-y-6">
               <!-- Dynamic Form Fields -->
               <div

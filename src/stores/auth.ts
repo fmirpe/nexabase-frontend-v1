@@ -23,6 +23,13 @@ interface User {
   created_at: string;
   avatar_url?: string;
   last_login_at?: string;
+  organization?: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    subdomain?: string;
+  };
 }
 
 // ✅ INTERFACES PARA RESPUESTAS API
@@ -42,6 +49,13 @@ interface LoginResponse {
     status: string;
     is_active: boolean;
     created_at: string;
+    organization?: {
+      id: string;
+      name: string;
+      slug: string;
+      description?: string;
+      subdomain?: string;
+    };
   };
 }
 
@@ -57,6 +71,13 @@ interface UserResponse {
   created_at: string;
   avatar_url?: string;
   last_login_at?: string;
+  organization?: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    subdomain?: string;
+  };
 }
 
 interface CreateOrganizationResponse {
@@ -65,6 +86,7 @@ interface CreateOrganizationResponse {
     name: string;
     slug: string;
     description?: string;
+    subdomain?: string;
   };
   user: {
     id: string;
@@ -222,6 +244,7 @@ export const useAuthStore = defineStore("auth", () => {
         status: loginData.user.status,
         is_active: loginData.user.is_active,
         created_at: loginData.user.created_at,
+        organization: loginData.user?.organization,
       };
 
       tokens.value = t;

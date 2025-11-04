@@ -14,7 +14,7 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-4">
             <div
-              class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center"
+              class="w-12 h-12 bg-opacity-20 rounded-xl flex items-center justify-center"
             >
               <svg
                 class="w-7 h-7 text-white"
@@ -47,7 +47,7 @@
             <div
               class="hidden sm:flex items-center space-x-2 text-white text-sm"
             >
-              <div class="w-16 bg-white bg-opacity-20 rounded-full h-2">
+              <div class="w-16 bg-gray-500 bg-opacity-20 rounded-full h-2">
                 <div
                   class="bg-white h-2 rounded-full transition-all duration-300"
                   :style="{ width: `${completionPercentage}%` }"
@@ -62,7 +62,7 @@
             <button
               v-if="canSave && !savingRecord"
               @click="emit('save')"
-              class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30 rounded-lg transition-all duration-200 flex items-center text-sm font-medium"
+              class="px-4 py-2 bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30 rounded-lg transition-all duration-200 flex items-center text-sm font-medium"
             >
               <svg
                 class="w-4 h-4 mr-2"

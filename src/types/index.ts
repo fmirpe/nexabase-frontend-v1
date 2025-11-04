@@ -14,6 +14,7 @@ export interface User {
     last_login_at?: Date;
     login_count?: number;
   };
+  organization: any | null;
   created_at: Date | string;
   updated_at: Date | string;
 }

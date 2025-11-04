@@ -1,4 +1,4 @@
-<!-- components/backup/RestoreModal.vue -->
+<!-- components/backup/RestoreModal.vue - VERSIÓN CORREGIDA -->
 <template>
   <div
     class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center"
@@ -52,23 +52,94 @@
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Seleccionar backup:
           </label>
-          <select
-            v-model="selectedBackup"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          >
-            <option value="">-- Seleccionar backup --</option>
-            <option
-              v-for="backup in backups"
-              :key="backup.filename"
-              :value="backup.filename"
+
+          <!-- ✅ SOLUCIÓN: Usar un custom dropdown en lugar de select nativo -->
+          <div class="relative">
+            <button
+              @click="showDropdown = !showDropdown"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-left bg-white flex items-center justify-between"
             >
-              {{ backup.filename }}
-              <span class="text-gray-500">
-                ({{ backup.size_formatted || formatFileSize(backup.size) }} -
-                {{ backup.age || formatDateTime(backup.created_at) }})
+              <span v-if="selectedBackup" class="text-gray-900">
+                {{ selectedBackup }}
               </span>
-            </option>
-          </select>
+              <span v-else class="text-gray-500">
+                -- Seleccionar backup --
+              </span>
+              <svg
+                class="w-5 h-5 text-gray-400 transform transition-transform"
+                :class="{ 'rotate-180': showDropdown }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            <!-- Custom Dropdown -->
+            <div
+              v-if="showDropdown"
+              class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+            >
+              <div
+                v-for="backup in backups"
+                :key="backup.filename"
+                @click="selectBackup(backup)"
+                class="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+              >
+                <div class="font-medium text-gray-900">
+                  {{ backup.filename }}
+                </div>
+                <div class="text-sm text-gray-500 mt-1">
+                  {{ backup.size_formatted || formatFileSize(backup.size) }} •
+                  {{ backup.age || formatDateTime(backup.created_at) }}
+                </div>
+              </div>
+
+              <div
+                v-if="backups.length === 0"
+                class="px-3 py-4 text-center text-gray-500 text-sm"
+              >
+                No hay backups disponibles
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Backup Info -->
+        <div
+          v-if="selectedBackupInfo"
+          class="bg-purple-50 border border-purple-200 rounded-lg p-3"
+        >
+          <div class="text-sm">
+            <div class="font-medium text-purple-800">
+              {{ selectedBackupInfo.filename }}
+            </div>
+            <div class="text-purple-600 mt-1">
+              Tamaño:
+              {{
+                selectedBackupInfo.size_formatted ||
+                formatFileSize(selectedBackupInfo.size)
+              }}
+              • Fecha:
+              {{
+                selectedBackupInfo.age ||
+                formatDateTime(selectedBackupInfo.created_at)
+              }}
+            </div>
+            <div
+              v-if="selectedBackupInfo.estimated_restore_time"
+              class="text-purple-600 mt-1"
+            >
+              Tiempo estimado de restauración:
+              {{ selectedBackupInfo.estimated_restore_time }}
+            </div>
+          </div>
         </div>
 
         <!-- Options -->
@@ -79,9 +150,9 @@
               type="checkbox"
               class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
             />
-            <span class="ml-2 text-sm text-gray-700"
-              >Simulación (dry run) - Solo validar el backup</span
-            >
+            <span class="ml-2 text-sm text-gray-700">
+              Simulación (dry run) - Solo validar el backup
+            </span>
           </label>
 
           <label class="flex items-center">
@@ -90,9 +161,9 @@
               type="checkbox"
               class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
             />
-            <span class="ml-2 text-sm text-gray-700"
-              >Crear backup automático antes de restaurar</span
-            >
+            <span class="ml-2 text-sm text-gray-700">
+              Crear backup automático antes de restaurar
+            </span>
           </label>
         </div>
 
@@ -186,7 +257,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 
 interface Props {
   backups: any[];
@@ -201,9 +272,17 @@ const emit = defineEmits<{
 
 const selectedBackup = ref("");
 const confirmationText = ref("");
+const showDropdown = ref(false);
+
 const options = ref({
   dryRun: false,
   createBackupBefore: true,
+});
+
+const selectedBackupInfo = computed(() => {
+  return props.backups.find(
+    (backup) => backup.filename === selectedBackup.value
+  );
 });
 
 const canRestore = computed(() => {
@@ -211,6 +290,11 @@ const canRestore = computed(() => {
   if (options.value.dryRun) return true;
   return confirmationText.value.toUpperCase() === "RESTAURAR";
 });
+
+function selectBackup(backup: any) {
+  selectedBackup.value = backup.filename;
+  showDropdown.value = false;
+}
 
 function handleRestore() {
   if (!canRestore.value) return;
@@ -221,6 +305,22 @@ function handleRestore() {
     create_backup_before: options.value.createBackupBefore,
   });
 }
+
+// Close dropdown when clicking outside
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest(".relative")) {
+    showDropdown.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 
 // Utility functions
 function formatFileSize(bytes: number): string {

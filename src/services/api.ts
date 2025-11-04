@@ -887,31 +887,57 @@ export const plansAPI = {
 };
 
 export const tenantsAPI = {
+  // ✅ OBTENER ORGANIZACIONES DEL USUARIO
   getUserOrganizations: () =>
     apiClient.get("/api/organizations/user-organizations"),
+
+  // ✅ CAMBIAR ORGANIZACIÓN ACTIVA
   switchOrganization: (tenantId: string) =>
     apiClient.post(`/api/organizations/switch/${tenantId}`),
+
+  // ✅ OBTENER ORGANIZACIÓN ACTUAL - ESTE ES EL CORRECTO
   getCurrentOrganization: () => apiClient.get("/api/organizations/current"),
+
+  // ✅ CREAR PRIMERA ORGANIZACIÓN
   createFirst: (data: any) =>
     apiClient.post("/api/organizations/create-first", data),
 
-  getMembers: (params?: any) =>
+  // ✅ CREAR ORGANIZACIÓN ADICIONAL
+  createAdditional: (data: any) =>
+    apiClient.post("/api/organizations/create-additional", data),
+
+  // ✅ OBTENER MIEMBROS (SIN ID - USA EL TENANT DEL USUARIO)
+  getMembers: (params?: { page?: number; limit?: number; search?: string }) =>
     apiClient.get("/api/organizations/members", { params }),
+
+  // ✅ INVITAR USUARIO
   inviteUser: (data: {
     email: string;
     role: "admin" | "member";
     message?: string;
   }) => apiClient.post("/api/organizations/invite", data),
+
+  // ✅ ACTUALIZAR ORGANIZACIÓN (USAR ENDPOINT CORRECTO)
   updateOrganization: (data: {
     name?: string;
     description?: string;
     settings?: any;
   }) => apiClient.put("/api/organizations/settings", data),
+
+  // ✅ REMOVER MIEMBRO
   removeMember: (userId: string) =>
     apiClient.delete(`/api/organizations/members/${userId}`),
 
-  createAdditional: (data: any) =>
-    apiClient.post("/api/organizations/create-additional", data),
+  // ✅ SUBDOMINIOS
+  assignSubdomain: (tenantId: string, subdomain?: string) =>
+    apiClient.post(`/api/organizations/tenants/${tenantId}/subdomain`, {
+      subdomain,
+    }),
+
+  checkSubdomain: (subdomain: string) =>
+    apiClient.get("/api/organizations/tenants/check-subdomain", {
+      params: { subdomain },
+    }),
 };
 
 // ✅ NUEVOS: Helper types para filtros avanzados

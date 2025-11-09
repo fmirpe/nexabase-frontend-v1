@@ -989,14 +989,8 @@ export const functionsAPI = {
   ) => apiClient.post(`/api/functions/${id}/invoke`, payload),
 
   // Obtener historial de ejecuciones
-  getExecutions: (
-    id: string,
-    params?: {
-      limit?: number;
-      page?: number;
-      status?: string;
-    }
-  ) => apiClient.get(`/api/functions/${id}/executions`, { params }),
+  getExecutions: (functionId: string, limit: number = 50) =>
+    apiClient.get(`/api/functions/${functionId}/executions?limit=${limit}`),
 
   // Toggle status (activar/desactivar)
   toggleStatus: (id: string, status: "active" | "inactive") =>

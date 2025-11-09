@@ -39,16 +39,40 @@
         <PlayIcon class="icon" />
         Test
       </button>
-      <button @click="$emit('edit', func)" class="btn-icon">
+
+      <!-- ✅ BOTÓN DEL RELOJ AQUÍ -->
+      <button
+        @click="$emit('view-executions', func)"
+        class="btn-icon"
+        title="View execution history"
+      >
+        <ClockIcon class="icon" />
+      </button>
+
+      <button
+        @click="$emit('edit', func)"
+        class="btn-icon"
+        title="Edit function"
+      >
         <PencilIcon class="icon" />
       </button>
-      <button @click="$emit('toggle-status', func)" class="btn-icon">
+
+      <button
+        @click="$emit('toggle-status', func)"
+        class="btn-icon"
+        :title="func.status === 'active' ? 'Pause' : 'Activate'"
+      >
         <component
           :is="func.status === 'active' ? PauseIcon : PlayIcon"
           class="icon"
         />
       </button>
-      <button @click="$emit('delete', func)" class="btn-icon btn-danger">
+
+      <button
+        @click="$emit('delete', func)"
+        class="btn-icon btn-danger"
+        title="Delete function"
+      >
         <TrashIcon class="icon" />
       </button>
     </div>
@@ -67,10 +91,10 @@ import {
   PencilIcon,
   TrashIcon,
   PauseIcon,
-  BoltIcon, // Nota: LightningBoltIcon se llama BoltIcon en v2
-  ClockIcon,
+  BoltIcon,
+  ClockIcon, // ✅ IMPORTADO
   CalendarIcon,
-  CircleStackIcon, // DatabaseIcon se llama CircleStackIcon en v2
+  CircleStackIcon,
 } from "@heroicons/vue/24/outline";
 
 defineProps<{
@@ -82,17 +106,18 @@ defineEmits<{
   (e: "delete", func: EdgeFunction): void;
   (e: "invoke", func: EdgeFunction): void;
   (e: "toggle-status", func: EdgeFunction): void;
+  (e: "view-executions", func: EdgeFunction): void; // ✅ EVENTO AGREGADO
 }>();
 
 function getTriggerIcon(trigger: string) {
-  const icons = {
-    http: BoltIcon, // Cambio: LightningBoltIcon -> BoltIcon
+  const icons: Record<string, any> = {
+    http: BoltIcon,
     schedule: CalendarIcon,
-    database: CircleStackIcon, // Cambio: DatabaseIcon -> CircleStackIcon
+    database: CircleStackIcon,
     webhook: ClockIcon,
     manual: ClockIcon,
   };
-  return (icons as Record<string, any>)[trigger] || ClockIcon;
+  return icons[trigger] || ClockIcon;
 }
 
 function formatExecutionTime(ms?: number): string {
@@ -101,7 +126,7 @@ function formatExecutionTime(ms?: number): string {
   return `${(ms / 1000).toFixed(2)}s`;
 }
 
-function formatDate(date: string): string {
+function formatDate(date: string | Date): string {
   return new Date(date).toLocaleString();
 }
 </script>
@@ -256,10 +281,13 @@ function formatDate(date: string): string {
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
+  color: #374151;
 }
 
 .btn-icon:hover {
   background: #f9fafb;
+  border-color: #3b82f6;
+  color: #3b82f6;
 }
 
 .btn-danger {
@@ -269,6 +297,7 @@ function formatDate(date: string): string {
 
 .btn-danger:hover {
   background: #fef2f2;
+  border-color: #ef4444;
 }
 
 .icon {
@@ -280,5 +309,6 @@ function formatDate(date: string): string {
   margin-top: 1rem;
   font-size: 0.75rem;
   color: #9ca3af;
+  text-align: center;
 }
 </style>

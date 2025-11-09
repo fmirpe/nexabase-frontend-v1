@@ -94,6 +94,7 @@
         @delete="handleDelete"
         @invoke="handleInvoke"
         @toggle-status="handleToggleStatus"
+        @view-executions="handleViewExecutions"
       />
     </div>
 
@@ -133,6 +134,13 @@
       :func="invokingFunction"
       @close="invokingFunction = null"
     />
+
+    <!-- ✅ Execution History Modal -->
+    <ExecutionHistory
+      v-if="viewingExecutions"
+      :function-id="viewingExecutions.id"
+      @close="viewingExecutions = null"
+    />
   </div>
 </template>
 
@@ -143,6 +151,7 @@ import type { EdgeFunction } from "@/types/functions";
 import FunctionCard from "./components/FunctionCard.vue";
 import FunctionModal from "./components/FunctionModal.vue";
 import InvokeFunctionModal from "./components/InvokeFunctionModal.vue";
+import ExecutionHistory from "./components/ExecutionHistory.vue"; // ✅ AGREGAR
 import { PlusIcon } from "@heroicons/vue/24/outline";
 
 const {
@@ -158,6 +167,7 @@ const currentFilter = ref("all");
 const showCreateModal = ref(false);
 const editingFunction = ref<EdgeFunction | null>(null);
 const invokingFunction = ref<EdgeFunction | null>(null);
+const viewingExecutions = ref<EdgeFunction | null>(null); // ✅ AGREGAR
 
 const filters = ["all", "active", "http", "schedule", "database", "error"];
 
@@ -182,6 +192,11 @@ async function handleDelete(func: EdgeFunction) {
 
 function handleInvoke(func: EdgeFunction) {
   invokingFunction.value = func;
+}
+
+// ✅ AGREGAR: Handler para ver executions
+function handleViewExecutions(func: EdgeFunction) {
+  viewingExecutions.value = func;
 }
 
 async function handleToggleStatus(func: EdgeFunction) {

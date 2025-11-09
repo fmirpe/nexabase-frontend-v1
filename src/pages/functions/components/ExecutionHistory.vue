@@ -2,8 +2,8 @@
   <div class="execution-history">
     <div class="header">
       <h3>Execution History</h3>
-      <button @click="loadExecutions" class="btn-refresh">
-        <RefreshIcon class="icon" />
+      <button @click="loadExecutions" class="btn-refresh" :disabled="loading">
+        <ArrowPathIcon class="icon" :class="{ 'animate-spin': loading }" />
       </button>
     </div>
 
@@ -42,7 +42,7 @@
           <div class="modal-header">
             <h3>Execution Details</h3>
             <button @click="selectedExecution = null" class="close-btn">
-              <XIcon class="icon" />
+              <XMarkIcon class="icon" />
             </button>
           </div>
           <div class="modal-body">
@@ -98,11 +98,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { functionsAPI } from "@/services/api";
 import type { FunctionExecution } from "@/types/functions";
-// @ts-ignore
-import { RefreshIcon, XIcon } from "@heroicons/vue/outline";
+import { ArrowPathIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps<{
   functionId: string;
@@ -112,12 +111,43 @@ const executions = ref<FunctionExecution[]>([]);
 const loading = ref(false);
 const selectedExecution = ref<FunctionExecution | null>(null);
 
+watch(
+  () => props.functionId,
+  () => {
+    loadExecutions();
+  },
+  { immediate: true }
+);
+
 async function loadExecutions() {
+  if (loading.value) return;
+
   loading.value = true;
   try {
-    executions.value = await functionsAPI.getExecutions(props.functionId);
+    console.log("Loading executions for function:", props.functionId);
+
+    const response = await functionsAPI.getExecutions(props.functionId, 50);
+
+    console.log("Executions response:", response);
+
+    if (Array.isArray(response)) {
+      executions.value = response;
+    } else if (response.data && Array.isArray(response.data)) {
+      executions.value = response.data;
+    } else if (
+      (response as any).data?.data &&
+      Array.isArray((response as any).data.data)
+    ) {
+      executions.value = (response as any).data.data;
+    } else {
+      console.error("Unexpected response format:", response);
+      executions.value = [];
+    }
+
+    console.log("Loaded executions:", executions.value.length);
   } catch (error) {
     console.error("Failed to load executions:", error);
+    executions.value = [];
   } finally {
     loading.value = false;
   }
@@ -134,10 +164,6 @@ function formatJSON(obj: any): string {
     return String(obj);
   }
 }
-
-onMounted(() => {
-  loadExecutions();
-});
 </script>
 
 <style scoped>
@@ -174,9 +200,18 @@ onMounted(() => {
   background: #f9fafb;
 }
 
+.btn-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .icon {
   width: 1.25rem;
   height: 1.25rem;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 .loading,

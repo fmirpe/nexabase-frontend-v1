@@ -77,7 +77,7 @@
           {{ schedules.filter((s) => s.enabled).length }} activos
         </p>
         <button
-          @click="showScheduleModal = true"
+          @click="activeTab = 'schedules'"
           class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
         >
           Gestionar
@@ -500,10 +500,25 @@ async function loadBackups() {
     const response = await backupAPI.list();
     const responseData = response.data;
 
-    if (responseData?.data?.backups) {
-      backups.value = responseData.data.backups;
-    } else if (responseData?.backups) {
-      backups.value = responseData.backups;
+    if (
+      responseData &&
+      typeof responseData === "object" &&
+      responseData !== null &&
+      "data" in responseData &&
+      responseData.data &&
+      typeof responseData.data === "object" &&
+      responseData.data !== null &&
+      "backups" in responseData.data &&
+      responseData.data.backups
+    ) {
+      backups.value = responseData.data.backups as any[];
+    } else if (
+      responseData &&
+      typeof responseData === "object" &&
+      "backups" in responseData &&
+      responseData.backups
+    ) {
+      backups.value = responseData.backups as any[];
     } else if (Array.isArray(responseData)) {
       backups.value = responseData;
     } else {
@@ -522,7 +537,7 @@ async function loadSchedules() {
   try {
     loadingSchedules.value = true;
     const response = await backupAPI.getSchedules();
-    schedules.value = response.data?.data?.schedules || [];
+    schedules.value = (response as any).data?.data?.schedules || [];
   } catch (e: any) {
     console.error("Error loading schedules:", e);
     error.value =
@@ -538,7 +553,7 @@ async function loadStats() {
   try {
     loadingStats.value = true;
     const response = await backupAPI.getStats();
-    stats.value = response.data?.data || {};
+    stats.value = (response as any).data?.data || {};
   } catch (e: any) {
     console.error("Error loading stats:", e);
     error.value =
@@ -555,7 +570,7 @@ async function createBackup() {
     successMessage.value = null;
 
     const response = await backupAPI.create();
-    const backup = response.data?.data || response.data;
+    const backup = (response as any).data?.data || (response as any).data;
 
     successMessage.value = `Backup creado: ${backup.filename}`;
     setTimeout(() => (successMessage.value = null), 5000);
@@ -578,7 +593,7 @@ async function restoreBackup(filename: string) {
     error.value = null;
     successMessage.value = null;
 
-    await backupAPI.restore(filename, { confirm: true });
+    await backupAPI.restore(filename);
 
     successMessage.value = "Base de datos restaurada exitosamente";
     setTimeout(() => (successMessage.value = null), 5000);

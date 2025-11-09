@@ -29,6 +29,8 @@ import OAuthCallbackView from "./pages/OAuthCallback.vue";
 import CreateOrganizationView from "./pages/tenants/CreateOrganization.vue"; // ✅ AGREGAR
 import OrganizationSettingsView from "./pages/tenants/OrganizationSettingsView.vue";
 import ApiView from "./pages/ApiView.vue";
+import FunctionsView from "./pages/functions/FunctionsView.vue";
+import HooksView from "./pages/hooks/HooksView.vue";
 
 // Router actualizado
 const routes = [
@@ -144,6 +146,26 @@ const routes = [
         meta: {
           requiresAuth: true,
           title: "API & Integración",
+        },
+      },
+
+      {
+        path: "/functions",
+        name: "Functions",
+        component: FunctionsView,
+        meta: {
+          requiresAuth: true,
+          title: "Functions",
+        },
+      },
+
+      {
+        path: "/hooks",
+        name: "Hooks",
+        component: HooksView,
+        meta: {
+          requiresAuth: true,
+          title: "Hooks",
         },
       },
     ],

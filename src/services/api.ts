@@ -940,6 +940,87 @@ export const tenantsAPI = {
     }),
 };
 
+// ✅ NUEVO: Functions API
+export const functionsAPI = {
+  // Obtener todas las funciones
+  getAll: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    trigger?: string;
+    status?: string;
+  }) => apiClient.get("/api/functions", { params }),
+
+  // Obtener función por ID
+  getById: (id: string) => apiClient.get(`/api/functions/${id}`),
+
+  // Crear función
+  create: (data: {
+    name: string;
+    description?: string;
+    code: string;
+    runtime?: string;
+    trigger?: string;
+    environment?: Record<string, string>;
+    config?: {
+      memoryLimit?: number;
+      timeout?: number;
+      schedule?: string;
+      httpMethod?: string[];
+      path?: string;
+    };
+  }) => apiClient.post("/api/functions", data),
+
+  // Actualizar función
+  update: (id: string, data: any) =>
+    apiClient.put(`/api/functions/${id}`, data),
+
+  // Eliminar función
+  delete: (id: string) => apiClient.delete(`/api/functions/${id}`),
+
+  // Invocar función
+  invoke: (
+    id: string,
+    payload: {
+      body?: any;
+      headers?: Record<string, string>;
+      query?: any;
+    }
+  ) => apiClient.post(`/api/functions/${id}/invoke`, payload),
+
+  // Obtener historial de ejecuciones
+  getExecutions: (
+    id: string,
+    params?: {
+      limit?: number;
+      page?: number;
+      status?: string;
+    }
+  ) => apiClient.get(`/api/functions/${id}/executions`, { params }),
+
+  // Toggle status (activar/desactivar)
+  toggleStatus: (id: string, status: "active" | "inactive") =>
+    apiClient.put(`/api/functions/${id}`, { status }),
+
+  // Estadísticas de funciones
+  getStats: () => apiClient.get("/api/functions/stats"),
+
+  // Validar código
+  validate: (code: string) =>
+    apiClient.post("/api/functions/validate", { code }),
+};
+
+// ✅ NUEVO: Hooks API
+export const hooksAPI = {
+  getAll: () => apiClient.get("/api/hooks"),
+  getStats: () => apiClient.get("/api/hooks/stats"),
+  register: (data: any) => apiClient.post("/api/hooks/register", data),
+  update: (id: string, data: any) => apiClient.put(`/api/hooks/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/api/hooks/${id}`),
+  trigger: (id: string, context: any) =>
+    apiClient.post(`/api/hooks/trigger/${id}`, context),
+};
+
 // ✅ NUEVOS: Helper types para filtros avanzados
 export interface AdvancedFilter {
   field: string;

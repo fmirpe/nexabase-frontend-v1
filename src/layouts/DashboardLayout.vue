@@ -793,6 +793,22 @@ const adminNavigationItems = computed(() => [
     badgeLoading: false,
   },
   {
+    name: "Functions",
+    path: "/functions",
+    label: "Functions",
+    iconPath: "M13 10V3L4 14h7v7l9-11h-7z",
+    badge: null,
+    badgeLoading: false,
+  },
+  {
+    name: "Hooks",
+    path: "/hooks",
+    label: "Hooks",
+    iconPath: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
+    badge: null,
+    badgeLoading: false,
+  },
+  {
     name: "configuration",
     path: "/configuration",
     label: "Configuración",

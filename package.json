@@ -9,8 +9,10 @@
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.16",
-    "@heroicons/vue": "^2.0.18",
+    "@heroicons/vue": "^2.2.0",
     "axios": "^1.12.0",
+    "monaco-editor": "^0.54.0",
+    "monaco-editor-vue3": "^1.0.4",
     "pinia": "^2.1.6",
     "socket.io-client": "^4.8.1",
     "vue": "^3.3.4",
@@ -26,6 +28,7 @@
     "autoprefixer": "^10.4.21",
     "typescript": "^5.4.5",
     "vite": "^7.1.5",
+    "vite-plugin-monaco-editor": "^1.1.0",
     "vue-tsc": "^2.1.6"
   }
 }

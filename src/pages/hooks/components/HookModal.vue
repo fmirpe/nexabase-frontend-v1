@@ -182,10 +182,11 @@
                       <h4>📦 Context Object</h4>
                       <ul>
                         <li>
-                          <code>context.data</code> - The record being modified
+                          <code>context.record</code> - The record being
+                          modified
                         </li>
                         <li>
-                          <code>context.oldData</code> - Previous values
+                          <code>context.oldRecord</code> - Previous values
                           (update/delete)
                         </li>
                         <li>
@@ -197,17 +198,20 @@
                         <li>
                           <code>context.user</code> - User performing action
                         </li>
+                        <li><code>context.db</code> - Database helper</li>
                       </ul>
                     </div>
+
                     <div class="help-column">
-                      <h4>💡 Tips</h4>
+                      <h4>🗄️ Database Helper (context.db)</h4>
                       <ul>
-                        <li>Throw an error to prevent the operation</li>
-                        <li>
-                          Modify <code>context.data</code> to transform values
-                        </li>
-                        <li>Use <code>async/await</code> for external calls</li>
-                        <li>Always return the <code>context</code> object</li>
+                        <li><code>db.findById(table, id)</code></li>
+                        <li><code>db.findOne(table, where)</code></li>
+                        <li><code>db.find(table, options)</code></li>
+                        <li><code>db.create(table, data)</code></li>
+                        <li><code>db.update(table, id, data)</code></li>
+                        <li><code>db.delete(table, id)</code></li>
+                        <li><code>db.count(table, where)</code></li>
                       </ul>
                     </div>
                   </div>
@@ -324,15 +328,15 @@ const codeExamples = [
     id: "validation",
     title: "Validation",
     code: `async function execute(context) {
-  const { data } = context;
+  const { record } = context;
   
   // Validate email format
-  if (data.email && !data.email.includes('@')) {
+  if (record.email && !record.email.includes('@')) {
     throw new Error('Invalid email format');
   }
   
   // Validate required fields
-  if (!data.name) {
+  if (!record.name) {
     throw new Error('Name is required');
   }
   
@@ -343,19 +347,51 @@ const codeExamples = [
     id: "transform",
     title: "Transform Data",
     code: `async function execute(context) {
-  const { data } = context;
+  const { record } = context;
   
   // Auto-generate slug from title
-  if (data.title && !data.slug) {
-    data.slug = data.title
+  if (record.title && !record.slug) {
+    record.slug = record.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
   }
   
   // Add timestamps
-  data.processed_at = new Date().toISOString();
+  record.processed_at = new Date().toISOString();
   
+  return context;
+}`,
+  },
+  {
+    id: "inventory",
+    title: "Update Inventory (with DB)",
+    code: `async function execute(context) {
+  const { db, record } = context;
+  
+  // Get movement type
+  const tipoMovimiento = await db.findById('tipomovimiento', record.tipomovimiento_id);
+  const ajuste = record.cantidad * tipoMovimiento.factor;
+  
+  // Find or create balance
+  const saldo = await db.findOne('saldos', {
+    producto_id: record.producto_id,
+    bodega_id: record.bodega_id
+  });
+  
+  if (saldo) {
+    await db.update('saldos', saldo.id, {
+      cantidad: saldo.cantidad + ajuste
+    });
+  } else {
+    await db.create('saldos', {
+      producto_id: record.producto_id,
+      bodega_id: record.bodega_id,
+      cantidad: ajuste
+    });
+  }
+  
+  console.log(\`✅ Balance updated: \${ajuste}\`);
   return context;
 }`,
   },
@@ -363,7 +399,7 @@ const codeExamples = [
     id: "notification",
     title: "Send Notification",
     code: `async function execute(context) {
-  const { data, collection, user } = context;
+  const { record, collection, user } = context;
   
   // Log the action
   console.log(\`New \${collection} created by \${user?.email}\`);
@@ -371,7 +407,9 @@ const codeExamples = [
   // Send webhook notification (example)
   // await fetch('https://hooks.slack.com/...', {
   //   method: 'POST',
-  //   body: JSON.stringify({ text: \`New record created\` })
+  //   body: JSON.stringify({ 
+  //     text: \`New \${collection} created\` 
+  //   })
   // });
   
   return context;
@@ -394,16 +432,19 @@ const formData = reactive({
   async: false,
   description: "",
   code: `async function execute(context) {
-  const { data, collection, tenantId } = context;
+  const { db, record, collection, tenantId } = context;
   
-  // Your validation/transformation logic here
+  // Your business logic here
   console.log('Hook triggered for:', collection);
   
-  // Modify data if needed
-  // context.data.modified_at = new Date().toISOString();
+  // Access database
+  // const relatedData = await db.findById('other_table', record.related_id);
+  
+  // Modify record if needed
+  // record.modified_at = new Date().toISOString();
   
   // Throw error to prevent operation
-  // if (!data.email) throw new Error('Email is required');
+  // if (!record.email) throw new Error('Email is required');
   
   return context;
 }`,

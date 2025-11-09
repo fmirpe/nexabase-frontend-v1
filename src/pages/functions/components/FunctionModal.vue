@@ -220,21 +220,102 @@
                         <li><code>context.headers</code> - Request headers</li>
                         <li><code>context.user</code> - Authenticated user</li>
                         <li><code>context.tenantId</code> - Current tenant</li>
+                        <li><code>context.db</code> - Database helper</li>
                         <li>
                           <code>context.env</code> - Environment variables
                         </li>
                       </ul>
                     </div>
+
                     <div class="help-column">
-                      <h4>💡 Best Practices</h4>
+                      <h4>🗄️ Database Helper (context.db)</h4>
                       <ul>
-                        <li>Always return a response object</li>
-                        <li>Use <code>try/catch</code> for error handling</li>
-                        <li>Keep functions small and focused</li>
-                        <li>Use environment variables for secrets</li>
-                        <li>Test with different inputs</li>
+                        <li>
+                          <code>db.findById(table, id)</code> - Get record by ID
+                        </li>
+                        <li>
+                          <code>db.findOne(table, where)</code> - Find single
+                          record
+                        </li>
+                        <li>
+                          <code>db.find(table, options)</code> - Find multiple
+                          records
+                        </li>
+                        <li>
+                          <code>db.create(table, data)</code> - Insert new
+                          record
+                        </li>
+                        <li>
+                          <code>db.update(table, id, data)</code> - Update
+                          record
+                        </li>
+                        <li>
+                          <code>db.delete(table, id)</code> - Delete record
+                        </li>
+                        <li>
+                          <code>db.count(table, where)</code> - Count records
+                        </li>
+                        <li>
+                          <code>db.query(sql, params)</code> - Raw SQL query
+                        </li>
                       </ul>
                     </div>
+                  </div>
+
+                  <!-- Expandable Examples Section -->
+                  <div class="examples-section" style="margin-top: 1.5rem">
+                    <details>
+                      <summary
+                        style="
+                          cursor: pointer;
+                          font-weight: 600;
+                          color: #374151;
+                          margin-bottom: 0.5rem;
+                        "
+                      >
+                        💡 Database Helper Examples
+                      </summary>
+                      <div
+                        style="
+                          background: white;
+                          padding: 1rem;
+                          border-radius: 0.5rem;
+                          margin-top: 0.5rem;
+                        "
+                      >
+                        <pre
+                          style="
+                            margin: 0;
+                            font-size: 0.75rem;
+                            line-height: 1.6;
+                            color: #1f2937;
+                          "
+                        ><code>// Find by ID
+const product = await context.db.findById('products', productId);
+
+// Find with filters
+const activeUsers = await context.db.find('users', {
+  where: { status: 'active' },
+  limit: 10,
+  order: { created_at: 'DESC' }
+});
+
+// Create record
+const newOrder = await context.db.create('orders', {
+  user_id: context.user.id,
+  total: 99.99,
+  status: 'pending'
+});
+
+// Update record
+await context.db.update('products', productId, {
+  stock: product.stock - quantity
+});
+
+// Count records
+const totalActive = await context.db.count('users', { status: 'active' });</code></pre>
+                      </div>
+                    </details>
                   </div>
                 </div>
 
@@ -493,74 +574,81 @@ const editorOptions = {
 
 const codeTemplates: Record<string, string> = {
   http: `export default async function handler(context) {
-  const { body, query, headers, user, tenantId } = context;
+  const { body, query, headers, user, tenantId, db } = context;
   
   // Access request data
   console.log('HTTP function invoked by:', user?.email);
   
-  // Your business logic here
-  const result = {
-    message: 'Hello from HTTP function',
-    receivedData: body,
-    timestamp: new Date().toISOString()
-  };
+  // Example: Query database
+  const users = await db.find('users', { 
+    where: { active: true }, 
+    limit: 10 
+  });
   
-  // Return response
   return {
     success: true,
-    data: result
+    data: users,
+    timestamp: new Date().toISOString()
   };
 }`,
+
   schedule: `export default async function handler(context) {
-  const { tenantId, env } = context;
+  const { tenantId, env, db } = context;
   
   console.log('⏰ Scheduled task running');
-  console.log('Tenant ID:', tenantId);
-  
-  // Your scheduled logic here
-  // Example: Send reports, clean up data, sync external APIs
   
   try {
-    // Perform your task
-    const processedItems = 0; // Your logic here
+    // Example: Clean up old records
+    const oldRecords = await db.find('logs', {
+      where: { created_at: '< 30 days ago' }
+    });
+    
+    for (const record of oldRecords) {
+      await db.delete('logs', record.id);
+    }
     
     return {
       success: true,
       executedAt: new Date().toISOString(),
-      itemsProcessed: processedItems
+      itemsDeleted: oldRecords.length
     };
   } catch (error) {
     console.error('Scheduled task failed:', error);
     throw error;
   }
 }`,
+
   database: `export default async function handler(context) {
-  const { body, result, previousData, collection, operation } = context;
+  const { db, record, oldRecord, collection } = context;
   
-  console.log(\`Database hook triggered on: \${collection}\`);
-  console.log(\`Operation: \${operation}\`);
+  console.log(\`Hook triggered on: \${collection}\`);
   
-  // Validate data before insert/update
-  if (operation === 'insert' || operation === 'update') {
-    if (!body.email || !body.email.includes('@')) {
-      throw new Error('Invalid email format');
+  // Example: Automatic inventory update
+  if (collection === 'movimientoinventario') {
+    const tipoMovimiento = await db.findById('tipomovimiento', record.tipomovimiento_id);
+    const ajuste = record.cantidad * tipoMovimiento.factor;
+    
+    const saldo = await db.findOne('saldos', {
+      producto_id: record.producto_id,
+      bodega_id: record.bodega_id
+    });
+    
+    if (saldo) {
+      await db.update('saldos', saldo.id, {
+        cantidad: saldo.cantidad + ajuste
+      });
+    } else {
+      await db.create('saldos', {
+        producto_id: record.producto_id,
+        bodega_id: record.bodega_id,
+        cantidad: ajuste
+      });
     }
     
-    // Transform data
-    body.email = body.email.toLowerCase().trim();
-    body.updatedAt = new Date().toISOString();
+    console.log(\`✅ Saldo actualizado: ajuste = \${ajuste}\`);
   }
   
-  // Log changes
-  if (operation === 'update' && previousData) {
-    console.log('Previous value:', previousData);
-    console.log('New value:', body);
-  }
-  
-  return {
-    success: true,
-    data: body
-  };
+  return { success: true };
 }`,
 };
 

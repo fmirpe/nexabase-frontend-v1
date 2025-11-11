@@ -165,9 +165,9 @@ onMounted(() => {
         v-for="hook in hooks"
         :key="hook.name"
         :hook="hook"
-        @edit="handleEdit"
-        @delete="handleDelete"
-        @toggle="handleToggle"
+        @edit="handleEdit(hook)"
+        @delete="handleDelete(hook)"
+        @toggle="handleToggle(hook)"
       />
     </div>
 

@@ -921,6 +921,7 @@ export const tenantsAPI = {
   updateOrganization: (data: {
     name?: string;
     description?: string;
+    subdomain?: string; // ✅ AGREGAR
     settings?: any;
   }) => apiClient.put("/api/organizations/settings", data),
 

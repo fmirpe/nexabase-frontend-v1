@@ -56,6 +56,31 @@
                 />
               </div>
 
+              <!-- ✅ AGREGAR ESTE NUEVO CAMPO -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Subdomain
+                </label>
+                <div class="flex items-center">
+                  <input
+                    v-model="organizationForm.subdomain"
+                    type="text"
+                    required
+                    pattern="[a-z0-9-]+"
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="my-organization"
+                  />
+                  <span
+                    class="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-600 text-sm"
+                  >
+                    .nexabase.app
+                  </span>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">
+                  Only lowercase letters, numbers, and hyphens allowed
+                </p>
+              </div>
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Description
@@ -293,6 +318,7 @@ interface OrganizationTenant {
   id: string;
   name: string;
   slug: string;
+  subdomain: string; // ✅ AGREGAR
   description?: string;
   settings?: any;
   is_active: boolean;
@@ -381,6 +407,7 @@ const tabs: Tab[] = [
 const organizationForm = ref({
   name: "",
   description: "",
+  subdomain: "", // ✅ AGREGAR
 });
 const updatingOrg = ref(false);
 
@@ -418,12 +445,18 @@ const loadCurrentOrganization = async (): Promise<void> => {
     const response = await tenantsAPI.getCurrentOrganization();
     const data = response.data;
 
-    console.log("✅ Organization data:", data); // Para debugging
+    console.log("✅ Organization data:", data);
 
-    if (data.tenant) {
-      organizationForm.value.name = data.tenant.name;
+    if ((data as GetCurrentOrganizationResponse).tenant) {
+      const tenant = (data as GetCurrentOrganizationResponse).tenant;
+      organizationForm.value.name = tenant.name;
+      organizationForm.value.subdomain = (
+        data as GetCurrentOrganizationResponse
+      ).tenant.subdomain; // ✅ AGREGAR
       organizationForm.value.description =
-        data.tenant.metadata?.description || data.tenant.description || "";
+        (data as GetCurrentOrganizationResponse).tenant.metadata?.description ||
+        (data as GetCurrentOrganizationResponse).tenant.description ||
+        "";
     } else {
       showError("Organization", "No active organization found");
     }
@@ -440,13 +473,14 @@ const updateOrganization = async (): Promise<void> => {
   try {
     const response = await tenantsAPI.updateOrganization({
       name: organizationForm.value.name,
+      subdomain: organizationForm.value.subdomain, // ✅ AGREGAR
       description: organizationForm.value.description,
     });
 
-    console.log("✅ Update response:", response.data); // Para debugging
+    console.log("✅ Update response:", response.data);
 
     showSuccess("Organization", "Organization updated successfully");
-    await loadCurrentOrganization(); // Recargar datos actualizados
+    await loadCurrentOrganization();
   } catch (error: any) {
     console.error("Failed to update organization:", error);
     const message =
@@ -467,7 +501,7 @@ const loadMembers = async (): Promise<void> => {
 
     // Solo agregar search si no está vacío
     if (searchQuery.value && searchQuery.value.trim()) {
-      params.search = searchQuery.value.trim();
+      (params as any).search = searchQuery.value.trim();
     }
 
     console.log("🔍 Loading members with params:", params); // Para debugging
@@ -478,8 +512,8 @@ const loadMembers = async (): Promise<void> => {
     console.log("✅ Members response:", data); // Para debugging
 
     // Ajustar según la estructura real de respuesta
-    if (data.members) {
-      membersData.value = data;
+    if ((data as MembersResponse).members) {
+      membersData.value = data as MembersResponse;
     } else if (Array.isArray(data)) {
       // Si la respuesta es directamente un array
       membersData.value = {

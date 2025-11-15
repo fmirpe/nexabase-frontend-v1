@@ -430,8 +430,7 @@ async function previewImage(image: any) {
   if (image instanceof File) {
     previewImageUrl.value = URL.createObjectURL(image);
   } else if (image?.id) {
-    const url =
-      imageUrlsCache.value[image.id] || (await loadSignedUrl(image.id));
+    const url = imageUrlsCache[image.id] || (await loadSignedUrl(image.id));
     previewImageUrl.value = url;
   }
 }

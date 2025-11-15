@@ -335,7 +335,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from "../../../stores/auth";
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick, reactive } from "vue";
 
 const authStore = useAuthStore();
 
@@ -357,7 +357,7 @@ const fileInput = ref<HTMLInputElement>();
 const isDragging = ref(false);
 const previewImageUrl = ref<string | null>(null);
 const circumference = 2 * Math.PI * 28;
-const imageUrlsCache = ref<Record<string, string>>({});
+const imageUrlsCache = reactive<Record<string, string>>({});
 const loadingImages = ref<Set<string>>(new Set());
 
 const currentImages = computed(() => {
@@ -380,13 +380,13 @@ watch(
     for (const image of images) {
       if (
         image?.id &&
-        !imageUrlsCache.value[image.id] &&
+        !imageUrlsCache[image.id] &&
         !loadingImages.value.has(image.id)
       ) {
         loadingImages.value.add(image.id);
         const url = await loadSignedUrl(image.id);
         if (url) {
-          imageUrlsCache.value = { ...imageUrlsCache.value, [image.id]: url };
+          imageUrlsCache[image.id] = url; // Sin .value, asignación directa
         }
         loadingImages.value.delete(image.id);
       }

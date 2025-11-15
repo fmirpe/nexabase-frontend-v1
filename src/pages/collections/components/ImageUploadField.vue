@@ -363,37 +363,32 @@ const loadingImages = ref<Set<string>>(new Set());
 const currentImages = computed(() => {
   if (!props.currentValue) return [];
 
-  if (props.isMultiple) {
-    return Array.isArray(props.currentValue) ? props.currentValue : [];
-  } else {
-    return props.currentValue ? [props.currentValue] : [];
-  }
-});
+  const images = props.isMultiple
+    ? Array.isArray(props.currentValue)
+      ? props.currentValue
+      : []
+    : props.currentValue
+    ? [props.currentValue]
+    : [];
 
-watch(
-  () => props.currentValue,
-  async (newValue) => {
-    if (!newValue) return;
-
-    const images = Array.isArray(newValue) ? newValue : [newValue];
-
-    for (const image of images) {
-      if (
-        image?.id &&
-        !imageUrlsCache[image.id] &&
-        !loadingImages.value.has(image.id)
-      ) {
-        loadingImages.value.add(image.id);
-        const url = await loadSignedUrl(image.id);
-        if (url) {
-          imageUrlsCache[image.id] = url; // Sin .value, asignación directa
-        }
-        loadingImages.value.delete(image.id);
+  // Cargar URLs cuando computed se ejecuta
+  images.forEach(async (image) => {
+    if (
+      image?.id &&
+      !imageUrlsCache[image.id] &&
+      !loadingImages.value.has(image.id)
+    ) {
+      loadingImages.value.add(image.id);
+      const url = await loadSignedUrl(image.id);
+      if (url) {
+        imageUrlsCache[image.id] = url;
       }
+      loadingImages.value.delete(image.id);
     }
-  },
-  { immediate: true, deep: true }
-);
+  });
+
+  return images;
+});
 
 async function loadSignedUrl(fileId: string): Promise<string> {
   try {

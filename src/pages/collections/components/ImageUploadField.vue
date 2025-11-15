@@ -322,7 +322,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from "../../../stores/auth";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 
 const authStore = useAuthStore();
 
@@ -407,6 +407,7 @@ async function loadSignedUrl(fileId: string) {
       url: data.url,
       expires: Date.now() + 3600 * 1000,
     });
+    await nextTick(); // AGREGAR ESTA LÍNEA
 
     const images = document.querySelectorAll(`img[data-file-id="${fileId}"]`);
     images.forEach((img: any) => {

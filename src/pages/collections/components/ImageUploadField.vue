@@ -351,7 +351,7 @@ const fileInput = ref<HTMLInputElement>();
 const isDragging = ref(false);
 const previewImageUrl = ref<string | null>(null);
 const circumference = 2 * Math.PI * 28;
-const imageUrlsCache = ref<Map<string, string>>(new Map());
+const imageUrlsCache = ref<Record<string, string>>({});
 
 const currentImages = computed(() => {
   if (!props.currentValue) return [];
@@ -371,12 +371,10 @@ watch(
     const images = Array.isArray(newValue) ? newValue : [newValue];
 
     for (const image of images) {
-      if (image?.id && !imageUrlsCache.value.has(image.id)) {
+      if (image?.id && !imageUrlsCache.value[image.id]) {
         const url = await loadSignedUrl(image.id);
         if (url) {
-          imageUrlsCache.value.set(image.id, url);
-          // Forzar re-render
-          imageUrlsCache.value = new Map(imageUrlsCache.value);
+          imageUrlsCache.value[image.id] = url;
         }
       }
     }
@@ -415,19 +413,15 @@ function getImageUrl(imageData: any): string {
   }
 
   if (imageData.id) {
-    const cached = imageUrlsCache.value.get(imageData.id);
-
-    // Si está en caché, retornar
+    const cached = imageUrlsCache.value[imageData.id];
     if (cached) return cached;
 
-    // Si no está en caché, disparar carga y retornar placeholder VISIBLE
     loadSignedUrl(imageData.id).then((url) => {
       if (url) {
-        imageUrlsCache.value.set(imageData.id, url);
+        imageUrlsCache.value[imageData.id] = url;
       }
     });
 
-    // Retornar imagen de "cargando..." en lugar del placeholder gris
     return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' dy='55' dx='15'%3ECargando...%3C/text%3E%3C/svg%3E";
   }
 
@@ -443,7 +437,7 @@ async function previewImage(image: any) {
     previewImageUrl.value = URL.createObjectURL(image);
   } else if (image?.id) {
     const url =
-      imageUrlsCache.value.get(image.id) || (await loadSignedUrl(image.id));
+      imageUrlsCache.value[image.id] || (await loadSignedUrl(image.id));
     previewImageUrl.value = url;
   }
 }

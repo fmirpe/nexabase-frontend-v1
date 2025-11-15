@@ -130,7 +130,7 @@
               @error="handleImageError"
             />
             <div
-              class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center"
+              class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center"
             >
               <div
                 class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2"
@@ -204,7 +204,7 @@
                 @error="handleImageError"
               />
               <div
-                class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center"
+                class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center"
               >
                 <div
                   class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-1"

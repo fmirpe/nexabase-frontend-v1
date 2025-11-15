@@ -130,7 +130,7 @@
               @error="handleImageError"
             />
             <div
-              class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center"
+              class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-5 transition-all duration-200 flex items-center justify-center"
             >
               <div
                 class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2"
@@ -138,7 +138,7 @@
                 <button
                   type="button"
                   @click="previewImage(currentImages[0])"
-                  class="p-2 bg-white bg-opacity-90 rounded-lg hover:bg-opacity-100 transition-colors"
+                  class="p-2 bg-white bg-opacity-90 rounded-lg hover:bg-opacity-5 transition-colors"
                 >
                   <svg
                     class="w-4 h-4 text-gray-700"
@@ -157,7 +157,7 @@
                 <button
                   type="button"
                   @click="removeFile(0)"
-                  class="p-2 bg-red-500 bg-opacity-90 rounded-lg hover:bg-opacity-100 transition-colors"
+                  class="p-2 bg-red-500 bg-opacity-10 rounded-lg hover:bg-opacity-5 transition-colors"
                 >
                   <svg
                     class="w-4 h-4 text-white"
@@ -204,15 +204,15 @@
                 @error="handleImageError"
               />
               <div
-                class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center"
+                class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-5 transition-all duration-200 flex items-center justify-center"
               >
                 <div
-                  class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-1"
+                  class="opacity-0 group-hover:opacity-5 transition-opacity duration-200 flex space-x-1"
                 >
                   <button
                     type="button"
                     @click="previewImage(image)"
-                    class="p-1.5 bg-white bg-opacity-90 rounded-md hover:bg-opacity-100 transition-colors"
+                    class="p-1.5 bg-white bg-opacity-10 rounded-md hover:bg-opacity-5 transition-colors"
                   >
                     <svg
                       class="w-3 h-3 text-gray-700"
@@ -231,7 +231,7 @@
                   <button
                     type="button"
                     @click="removeFile(index)"
-                    class="p-1.5 bg-red-500 bg-opacity-90 rounded-md hover:bg-opacity-100 transition-colors"
+                    class="p-1.5 bg-red-500 bg-opacity-10 rounded-md hover:bg-opacity-5 transition-colors"
                   >
                     <svg
                       class="w-3 h-3 text-white"
@@ -295,7 +295,7 @@
         />
         <button
           @click="closePreview"
-          class="absolute top-4 right-4 text-white hover:text-gray-300 p-2 bg-black bg-opacity-10 rounded-full"
+          class="absolute top-4 right-4 text-white hover:text-gray-300 p-2 bg-black bg-opacity-5 rounded-full"
         >
           <svg
             class="w-6 h-6"

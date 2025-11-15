@@ -130,10 +130,10 @@
             class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden"
           >
             <img
-              :key="`img-${currentImages[0]?.id}-${
-                imageUrlsCache[currentImages[0]?.id] || 'loading'
-              }`"
-              :src="getImageUrl(currentImages[0])"
+              :src="
+                imageUrlsCache[currentImages[0]?.id] ||
+                'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
+              "
               :alt="getImageName(currentImages[0])"
               class="w-full h-full object-cover"
               @error="handleImageError"
@@ -209,10 +209,10 @@
               class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden"
             >
               <img
-                :key="`img-${image?.id}-${
-                  imageUrlsCache[image?.id] || 'loading'
-                }`"
-                :src="getImageUrl(image)"
+                :src="
+                  imageUrlsCache[image?.id] ||
+                  'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
+                "
                 :alt="getImageName(image)"
                 class="w-full h-full object-cover"
                 @error="handleImageError"
@@ -417,23 +417,6 @@ async function loadSignedUrl(fileId: string): Promise<string> {
     return "";
   }
 }
-
-const getImageUrl = computed(() => (imageData: any): string => {
-  if (!imageData) return "";
-
-  if (imageData instanceof File) {
-    return URL.createObjectURL(imageData);
-  }
-
-  if (imageData.id) {
-    return (
-      imageUrlsCache.value[imageData.id] ||
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' dy='55' dx='15'%3ECargando...%3C/text%3E%3C/svg%3E"
-    );
-  }
-
-  return "";
-});
 
 function getPlaceholderImage(): string {
   return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5QzEwLjg5IDkgMTAgOS44OSAxMCAxMUMxMCAxMi4xMSAxMC44OSAxMyAxMiAxM0MxMy4xMSAxMyAxNCAxMi4xMSAxNCAxMUMxNCAxMC42OSAxMy44NyAxMC40MSAxMy42NyAxMC4xN0wxNS42NiA4LjE4QzE2LjU0IDkuMjIgMTcgMTAuNTQgMTcgMTJIMTlDMTkgOS43OSAxNy4yMSA4IDE1IDhWMTBDMTQuMzMgMTAgMTMuNjkgMTAuMjYgMTMuMTcgMTAuNjdMMTIgOVoiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+";

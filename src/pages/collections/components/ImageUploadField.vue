@@ -359,36 +359,45 @@ const previewImageUrl = ref<string | null>(null);
 const circumference = 2 * Math.PI * 28;
 const imageUrlsCache = reactive<Record<string, string>>({});
 const loadingImages = ref<Set<string>>(new Set());
+const cacheVersion = ref(0); // Agregar esto
 
 const currentImages = computed(() => {
+  cacheVersion.value; // Forzar dependencia
+
   if (!props.currentValue) return [];
 
-  const images = props.isMultiple
-    ? Array.isArray(props.currentValue)
-      ? props.currentValue
-      : []
-    : props.currentValue
-    ? [props.currentValue]
-    : [];
-
-  // Cargar URLs cuando computed se ejecuta
-  images.forEach(async (image) => {
-    if (
-      image?.id &&
-      !imageUrlsCache[image.id] &&
-      !loadingImages.value.has(image.id)
-    ) {
-      loadingImages.value.add(image.id);
-      const url = await loadSignedUrl(image.id);
-      if (url) {
-        imageUrlsCache[image.id] = url;
-      }
-      loadingImages.value.delete(image.id);
-    }
-  });
-
-  return images;
+  if (props.isMultiple) {
+    return Array.isArray(props.currentValue) ? props.currentValue : [];
+  } else {
+    return props.currentValue ? [props.currentValue] : [];
+  }
 });
+
+watch(
+  () => props.currentValue,
+  async (newValue) => {
+    if (!newValue) return;
+
+    const images = Array.isArray(newValue) ? newValue : [newValue];
+
+    for (const image of images) {
+      if (
+        image?.id &&
+        !imageUrlsCache[image.id] &&
+        !loadingImages.value.has(image.id)
+      ) {
+        loadingImages.value.add(image.id);
+        const url = await loadSignedUrl(image.id);
+        if (url) {
+          imageUrlsCache[image.id] = url;
+          cacheVersion.value++; // Incrementar para forzar re-render
+        }
+        loadingImages.value.delete(image.id);
+      }
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 async function loadSignedUrl(fileId: string): Promise<string> {
   try {

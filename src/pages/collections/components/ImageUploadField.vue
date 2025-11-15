@@ -124,11 +124,17 @@
           <div
             class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden"
           >
+            <div
+              v-if="!imageUrls.find((u) => u.id === currentImages[0]?.id)"
+              class="flex items-center justify-center h-full"
+            >
+              <div
+                class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"
+              ></div>
+            </div>
             <img
-              :src="
-                imageUrls.find((u) => u.id === currentImages[0]?.id)?.url ||
-                'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
-              "
+              v-else
+              :src="imageUrls.find((u) => u.id === currentImages[0]?.id)?.url"
               :alt="getImageName(currentImages[0])"
               class="w-full h-full object-cover"
               @error="handleImageError"
@@ -202,11 +208,17 @@
             <div
               class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden"
             >
+              <div
+                v-if="!imageUrls.find((u) => u.id === image?.id)"
+                class="flex items-center justify-center h-full"
+              >
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"
+                ></div>
+              </div>
               <img
-                :src="
-                  imageUrls.find((u) => u.id === image?.id)?.url ||
-                  'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
-                "
+                v-else
+                :src="imageUrls.find((u) => u.id === image?.id)?.url"
                 :alt="getImageName(image)"
                 class="w-full h-full object-cover"
                 @error="handleImageError"

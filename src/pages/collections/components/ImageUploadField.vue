@@ -124,17 +124,9 @@
           <div
             class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden"
           >
-            <div
-              v-if="!imageUrls.find((u) => u.id === currentImages[0]?.id)"
-              class="flex items-center justify-center h-full"
-            >
-              <div
-                class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"
-              ></div>
-            </div>
             <img
-              v-else
-              :src="imageUrls.find((u) => u.id === currentImages[0]?.id)?.url"
+              :data-file-id="currentImages[0]?.id"
+              :src="getSignedImageUrl(currentImages[0])"
               :alt="getImageName(currentImages[0])"
               class="w-full h-full object-cover"
               @error="handleImageError"
@@ -208,17 +200,9 @@
             <div
               class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden"
             >
-              <div
-                v-if="!imageUrls.find((u) => u.id === image?.id)"
-                class="flex items-center justify-center h-full"
-              >
-                <div
-                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"
-                ></div>
-              </div>
               <img
-                v-else
-                :src="imageUrls.find((u) => u.id === image?.id)?.url"
+                :data-file-id="image?.id"
+                :src="getSignedImageUrl(image)"
                 :alt="getImageName(image)"
                 class="w-full h-full object-cover"
                 @error="handleImageError"
@@ -360,8 +344,9 @@ const fileInput = ref<HTMLInputElement>();
 const isDragging = ref(false);
 const previewImageUrl = ref<string | null>(null);
 const circumference = 2 * Math.PI * 28;
-const imageUrls = ref<Array<{ id: string; url: string }>>([]);
-const loadingImages = ref<Set<string>>(new Set());
+const signedUrlsCache = ref<Map<string, { url: string; expires: number }>>(
+  new Map()
+);
 
 const currentImages = computed(() => {
   if (!props.currentValue) return [];
@@ -381,24 +366,27 @@ watch(
     const images = Array.isArray(newValue) ? newValue : [newValue];
 
     for (const image of images) {
-      if (
-        image?.id &&
-        !imageUrls.value.find((u) => u.id === image.id) &&
-        !loadingImages.value.has(image.id)
-      ) {
-        loadingImages.value.add(image.id);
-        const url = await loadSignedUrl(image.id);
-        if (url) {
-          imageUrls.value.push({ id: image.id, url });
-        }
-        loadingImages.value.delete(image.id);
+      if (image?.id) {
+        loadSignedUrl(image.id);
       }
     }
   },
   { immediate: true, deep: true }
 );
 
-async function loadSignedUrl(fileId: string): Promise<string> {
+function getSignedImageUrl(imageData: any): string {
+  if (!imageData?.id) return getFallbackImageUrl();
+
+  const cached = signedUrlsCache.value.get(imageData.id);
+  if (cached && cached.expires > Date.now()) {
+    return cached.url;
+  }
+
+  loadSignedUrl(imageData.id);
+  return getFallbackImageUrl();
+}
+
+async function loadSignedUrl(fileId: string) {
   try {
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
     const response = await fetch(
@@ -411,28 +399,39 @@ async function loadSignedUrl(fileId: string): Promise<string> {
       }
     );
 
-    if (!response.ok) throw new Error("Failed to get signed URL");
+    if (!response.ok) throw new Error("Failed to fetch signed URL");
 
     const data = await response.json();
-    return data.url;
+
+    signedUrlsCache.value.set(fileId, {
+      url: data.url,
+      expires: Date.now() + 3600 * 1000,
+    });
+
+    const images = document.querySelectorAll(`img[data-file-id="${fileId}"]`);
+    images.forEach((img: any) => {
+      img.src = data.url;
+    });
   } catch (error) {
-    console.error("Error getting signed URL:", error);
-    return "";
+    console.error("Error loading signed URL:", error);
   }
 }
 
-function getPlaceholderImage(): string {
-  return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5QzEwLjg5IDkgMTAgOS44OSAxMCAxMUMxMCAxMi4xMSAxMC44OSAxMyAxMiAxM0MxMy4xMSAxMyAxNCAxMi4xMSAxNCAxMUMxNCAxMC42OSAxMy44NyAxMC40MSAxMy42NyAxMC4xN0wxNS42NiA4LjE4QzE2LjU0IDkuMjIgMTcgMTAuNTQgMTcgMTJIMTlDMTkgOS43OSAxNy4yMSA4IDE1IDhWMTBDMTQuMzMgMTAgMTMuNjkgMTAuMjYgMTMuMTcgMTAuNjdMMTIgOVoiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+";
+function getFallbackImageUrl(): string {
+  return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwYXRoIGQ9Im0yMSAxNS0zLjA4Ni0zLjA4NmE0Ljg4OCA0Ljg4OCAwIDAwLTYuODI4IDBsMTAgMTMiLz48L3N2Zz4=";
 }
 
 async function previewImage(image: any) {
   if (image instanceof File) {
     previewImageUrl.value = URL.createObjectURL(image);
   } else if (image?.id) {
-    const url =
-      imageUrls.value.find((u) => u.id === image.id)?.url ||
-      (await loadSignedUrl(image.id));
-    previewImageUrl.value = url;
+    const cached = signedUrlsCache.value.get(image.id);
+    if (cached) {
+      previewImageUrl.value = cached.url;
+    } else {
+      const url = await loadSignedUrl(image.id);
+      previewImageUrl.value = signedUrlsCache.value.get(image.id)?.url || "";
+    }
   }
 }
 
@@ -532,7 +531,7 @@ function closePreview() {
 
 function handleImageError(event: Event) {
   const img = event.target as HTMLImageElement;
-  img.src = getPlaceholderImage();
+  img.src = getFallbackImageUrl();
 }
 
 function getImageName(image: any): string {

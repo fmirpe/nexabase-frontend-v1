@@ -130,15 +130,7 @@
             class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden"
           >
             <img
-              :src="
-                (() => {
-                  cacheVersion; // Forzar dependencia
-                  return (
-                    imageUrlsCache[currentImages[0]?.id] ||
-                    'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
-                  );
-                })()
-              "
+              :src="imageUrl"
               :alt="getImageName(currentImages[0])"
               class="w-full h-full object-cover"
               @error="handleImageError"
@@ -214,15 +206,7 @@
               class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden"
             >
               <img
-                :src="
-                  (() => {
-                    cacheVersion; // Forzar dependencia
-                    return (
-                      imageUrlsCache[image?.id] ||
-                      'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
-                    );
-                  })()
-                "
+                :src="getMultipleImageUrl(image?.id)"
                 :alt="getImageName(image)"
                 class="w-full h-full object-cover"
                 @error="handleImageError"
@@ -382,6 +366,28 @@ const currentImages = computed(() => {
     return props.currentValue ? [props.currentValue] : [];
   }
 });
+
+const imageUrl = computed(() => {
+  if (!currentImages.value.length) return "";
+
+  // Forzar dependencia de cacheVersion
+  cacheVersion.value;
+
+  const image = currentImages.value[0];
+  return (
+    imageUrlsCache[image?.id] ||
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' dy='55' dx='15'%3ECargando...%3C/text%3E%3C/svg%3E"
+  );
+});
+
+const getMultipleImageUrl = (imageId: string) => {
+  // Leer cacheVersion para forzar tracking
+  cacheVersion.value;
+  return (
+    imageUrlsCache[imageId] ||
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' dy='55' dx='15'%3ECargando...%3C/text%3E%3C/svg%3E"
+  );
+};
 
 watch(
   () => props.currentValue,

@@ -364,18 +364,24 @@ const currentImages = computed(() => {
 });
 
 watch(
-  currentImages,
-  async (newImages) => {
-    for (const image of newImages) {
+  () => props.currentValue,
+  async (newValue) => {
+    if (!newValue) return;
+
+    const images = Array.isArray(newValue) ? newValue : [newValue];
+
+    for (const image of images) {
       if (image?.id && !imageUrlsCache.value.has(image.id)) {
         const url = await loadSignedUrl(image.id);
         if (url) {
           imageUrlsCache.value.set(image.id, url);
+          // Forzar re-render
+          imageUrlsCache.value = new Map(imageUrlsCache.value);
         }
       }
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 
 async function loadSignedUrl(fileId: string): Promise<string> {

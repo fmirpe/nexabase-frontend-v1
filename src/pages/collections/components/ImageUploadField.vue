@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-4">
-    <!-- Drop Zone -->
     <div
       :class="[
         'relative border-2 border-dashed rounded-xl p-6 transition-colors duration-200',
@@ -14,7 +13,6 @@
       @dragenter.prevent="handleDragEnter"
       @dragleave.prevent="handleDragLeave"
     >
-      <!-- Upload Progress -->
       <div
         v-if="uploadProgress !== undefined"
         class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-xl"
@@ -56,7 +54,6 @@
         </div>
       </div>
 
-      <!-- Drop Zone Content - No Images -->
       <div v-if="!currentImages.length" class="text-center">
         <svg
           class="w-12 h-12 mx-auto text-gray-400 mb-4"
@@ -104,7 +101,6 @@
         </p>
       </div>
 
-      <!-- Images Display -->
       <div v-else class="space-y-4">
         <div class="flex items-center justify-between">
           <h4 class="text-sm font-medium text-gray-900">
@@ -121,7 +117,6 @@
           </button>
         </div>
 
-        <!-- Single Image -->
         <div
           v-if="!isMultiple && currentImages.length === 1"
           class="relative group"
@@ -130,7 +125,10 @@
             class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden"
           >
             <img
-              :src="imageUrl"
+              :src="
+                imageUrls.find((u) => u.id === currentImages[0]?.id)?.url ||
+                'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
+              "
               :alt="getImageName(currentImages[0])"
               class="w-full h-full object-cover"
               @error="handleImageError"
@@ -192,7 +190,6 @@
           </div>
         </div>
 
-        <!-- Multiple Images Grid -->
         <div
           v-else-if="isMultiple"
           class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
@@ -206,7 +203,10 @@
               class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden"
             >
               <img
-                :src="getMultipleImageUrl(image?.id)"
+                :src="
+                  imageUrls.find((u) => u.id === image?.id)?.url ||
+                  'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
+                "
                 :alt="getImageName(image)"
                 class="w-full h-full object-cover"
                 @error="handleImageError"
@@ -265,7 +265,6 @@
         </div>
       </div>
 
-      <!-- Hidden File Input -->
       <input
         ref="fileInput"
         type="file"
@@ -276,7 +275,6 @@
       />
     </div>
 
-    <!-- Image Info -->
     <div
       v-if="currentImages.length > 0"
       class="text-xs text-gray-500 bg-gray-50 rounded-lg p-3"
@@ -292,7 +290,6 @@
       </div>
     </div>
 
-    <!-- Preview Modal -->
     <div
       v-if="previewImageUrl"
       class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
@@ -329,7 +326,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from "../../../stores/auth";
-import { ref, computed, watch, nextTick, reactive } from "vue";
+import { ref, computed, watch } from "vue";
 
 const authStore = useAuthStore();
 
@@ -351,13 +348,10 @@ const fileInput = ref<HTMLInputElement>();
 const isDragging = ref(false);
 const previewImageUrl = ref<string | null>(null);
 const circumference = 2 * Math.PI * 28;
-const imageUrlsCache = reactive<Record<string, string>>({});
+const imageUrls = ref<Array<{ id: string; url: string }>>([]);
 const loadingImages = ref<Set<string>>(new Set());
-const cacheVersion = ref(0); // Agregar esto
 
 const currentImages = computed(() => {
-  cacheVersion.value; // Forzar dependencia
-
   if (!props.currentValue) return [];
 
   if (props.isMultiple) {
@@ -366,28 +360,6 @@ const currentImages = computed(() => {
     return props.currentValue ? [props.currentValue] : [];
   }
 });
-
-const imageUrl = computed(() => {
-  if (!currentImages.value.length) return "";
-
-  // Forzar dependencia de cacheVersion
-  cacheVersion.value;
-
-  const image = currentImages.value[0];
-  return (
-    imageUrlsCache[image?.id] ||
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' dy='55' dx='15'%3ECargando...%3C/text%3E%3C/svg%3E"
-  );
-});
-
-const getMultipleImageUrl = (imageId: string) => {
-  // Leer cacheVersion para forzar tracking
-  cacheVersion.value;
-  return (
-    imageUrlsCache[imageId] ||
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' dy='55' dx='15'%3ECargando...%3C/text%3E%3C/svg%3E"
-  );
-};
 
 watch(
   () => props.currentValue,
@@ -399,21 +371,13 @@ watch(
     for (const image of images) {
       if (
         image?.id &&
-        !imageUrlsCache[image.id] &&
+        !imageUrls.value.find((u) => u.id === image.id) &&
         !loadingImages.value.has(image.id)
       ) {
         loadingImages.value.add(image.id);
         const url = await loadSignedUrl(image.id);
         if (url) {
-          imageUrlsCache[image.id] = url;
-          cacheVersion.value++;
-          // ÚNICO console - muestra si el caché se llenó
-          console.log("✅ URL cargada:", {
-            id: image.id,
-            url,
-            cacheVersion: cacheVersion.value,
-            cache: imageUrlsCache,
-          });
+          imageUrls.value.push({ id: image.id, url });
         }
         loadingImages.value.delete(image.id);
       }
@@ -453,7 +417,9 @@ async function previewImage(image: any) {
   if (image instanceof File) {
     previewImageUrl.value = URL.createObjectURL(image);
   } else if (image?.id) {
-    const url = imageUrlsCache[image.id] || (await loadSignedUrl(image.id));
+    const url =
+      imageUrls.value.find((u) => u.id === image.id)?.url ||
+      (await loadSignedUrl(image.id));
     previewImageUrl.value = url;
   }
 }

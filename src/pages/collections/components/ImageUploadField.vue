@@ -130,7 +130,9 @@
             class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden"
           >
             <img
-              :key="`img-${currentImages[0]?.id || 'new'}`"
+              :key="`img-${currentImages[0]?.id}-${
+                imageUrlsCache[currentImages[0]?.id] || 'loading'
+              }`"
               :src="getImageUrl(currentImages[0])"
               :alt="getImageName(currentImages[0])"
               class="w-full h-full object-cover"
@@ -207,7 +209,9 @@
               class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden"
             >
               <img
-                :key="`img-${image?.id || index}`"
+                :key="`img-${image?.id}-${
+                  imageUrlsCache[image?.id] || 'loading'
+                }`"
                 :src="getImageUrl(image)"
                 :alt="getImageName(image)"
                 class="w-full h-full object-cover"

@@ -131,8 +131,13 @@
           >
             <img
               :src="
-                imageUrlsCache[currentImages[0]?.id] ||
-                'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
+                (() => {
+                  cacheVersion; // Forzar dependencia
+                  return (
+                    imageUrlsCache[currentImages[0]?.id] ||
+                    'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
+                  );
+                })()
               "
               :alt="getImageName(currentImages[0])"
               class="w-full h-full object-cover"
@@ -210,8 +215,13 @@
             >
               <img
                 :src="
-                  imageUrlsCache[image?.id] ||
-                  'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
+                  (() => {
+                    cacheVersion; // Forzar dependencia
+                    return (
+                      imageUrlsCache[image?.id] ||
+                      'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'14\' dy=\'55\' dx=\'15\'%3ECargando...%3C/text%3E%3C/svg%3E'
+                    );
+                  })()
                 "
                 :alt="getImageName(image)"
                 class="w-full h-full object-cover"

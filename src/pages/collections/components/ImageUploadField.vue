@@ -121,7 +121,7 @@
           v-if="!isMultiple && currentImages.length === 1"
           class="relative group"
         >
-          <div class="relative w-full h-48 rounded-lg overflow-hidden">
+          <div class="relative w-full h-32 rounded-lg overflow-hidden">
             <img
               :data-file-id="currentImages[0]?.id"
               :src="getSignedImageUrl(currentImages[0])"
@@ -130,7 +130,7 @@
               @error="handleImageError"
             />
             <div
-              class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center"
+              class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center"
             >
               <div
                 class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2"
@@ -204,7 +204,7 @@
                 @error="handleImageError"
               />
               <div
-                class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center"
+                class="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center"
               >
                 <div
                   class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-1"
@@ -295,7 +295,7 @@
         />
         <button
           @click="closePreview"
-          class="absolute top-4 right-4 text-white hover:text-gray-300 p-2 bg-black bg-opacity-50 rounded-full"
+          class="absolute top-4 right-4 text-white hover:text-gray-300 p-2 bg-black bg-opacity-10 rounded-full"
         >
           <svg
             class="w-6 h-6"

@@ -329,7 +329,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from "../../../stores/auth";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 
 const authStore = useAuthStore();
 
@@ -562,4 +562,15 @@ function getTotalSize(): string {
     return `${(totalSize / 1024).toFixed(1)} KB total`;
   return `${(totalSize / (1024 * 1024)).toFixed(1)} MB total`;
 }
+
+onMounted(async () => {
+  for (const image of currentImages.value) {
+    if (image?.id && !imageUrlsCache.value.has(image.id)) {
+      const url = await loadSignedUrl(image.id);
+      if (url) {
+        imageUrlsCache.value.set(image.id, url);
+      }
+    }
+  }
+});
 </script>

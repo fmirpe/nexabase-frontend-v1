@@ -121,9 +121,7 @@
           v-if="!isMultiple && currentImages.length === 1"
           class="relative group"
         >
-          <div
-            class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden"
-          >
+          <div class="relative w-full h-48 rounded-lg overflow-hidden">
             <img
               :data-file-id="currentImages[0]?.id"
               :src="getSignedImageUrl(currentImages[0])"
@@ -197,9 +195,7 @@
             :key="index"
             class="relative group aspect-square"
           >
-            <div
-              class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden"
-            >
+            <div class="relative w-full h-full rounded-lg overflow-hidden">
               <img
                 :data-file-id="image?.id"
                 :src="getSignedImageUrl(image)"

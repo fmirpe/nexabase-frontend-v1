@@ -400,7 +400,14 @@ watch(
         const url = await loadSignedUrl(image.id);
         if (url) {
           imageUrlsCache[image.id] = url;
-          cacheVersion.value++; // Incrementar para forzar re-render
+          cacheVersion.value++;
+          // ÚNICO console - muestra si el caché se llenó
+          console.log("✅ URL cargada:", {
+            id: image.id,
+            url,
+            cacheVersion: cacheVersion.value,
+            cache: imageUrlsCache,
+          });
         }
         loadingImages.value.delete(image.id);
       }

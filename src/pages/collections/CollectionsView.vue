@@ -1840,7 +1840,7 @@ onMounted(() => {
     adminCollections
       .getByName(collectionName)
       .then((response) => {
-        currentCollection.value = response.data;
+        currentCollection.value = response.data as Collection;
         loadRecords();
       })
       .catch(() => {
@@ -1866,7 +1866,7 @@ watch(
       adminCollections
         .getByName(newCollectionName as string)
         .then((response) => {
-          currentCollection.value = response.data;
+          currentCollection.value = response.data as Collection;
           selectedRecords.value = [];
           pagination.value.page = 1;
           searchQuery.value = "";

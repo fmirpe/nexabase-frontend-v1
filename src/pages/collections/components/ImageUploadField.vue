@@ -329,7 +329,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from "../../../stores/auth";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 
 const authStore = useAuthStore();
 
@@ -352,6 +352,7 @@ const isDragging = ref(false);
 const previewImageUrl = ref<string | null>(null);
 const circumference = 2 * Math.PI * 28;
 const imageUrlsCache = ref<Record<string, string>>({});
+const loadingImages = ref<Set<string>>(new Set());
 
 const currentImages = computed(() => {
   if (!props.currentValue) return [];
@@ -371,11 +372,17 @@ watch(
     const images = Array.isArray(newValue) ? newValue : [newValue];
 
     for (const image of images) {
-      if (image?.id && !imageUrlsCache.value[image.id]) {
+      if (
+        image?.id &&
+        !imageUrlsCache.value[image.id] &&
+        !loadingImages.value.has(image.id)
+      ) {
+        loadingImages.value.add(image.id);
         const url = await loadSignedUrl(image.id);
         if (url) {
-          imageUrlsCache.value[image.id] = url;
+          imageUrlsCache.value = { ...imageUrlsCache.value, [image.id]: url };
         }
+        loadingImages.value.delete(image.id);
       }
     }
   },
@@ -413,16 +420,10 @@ function getImageUrl(imageData: any): string {
   }
 
   if (imageData.id) {
-    const cached = imageUrlsCache.value[imageData.id];
-    if (cached) return cached;
-
-    loadSignedUrl(imageData.id).then((url) => {
-      if (url) {
-        imageUrlsCache.value[imageData.id] = url;
-      }
-    });
-
-    return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' dy='55' dx='15'%3ECargando...%3C/text%3E%3C/svg%3E";
+    return (
+      imageUrlsCache.value[imageData.id] ||
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext fill='%23999' font-family='sans-serif' font-size='14' dy='55' dx='15'%3ECargando...%3C/text%3E%3C/svg%3E"
+    );
   }
 
   return "";

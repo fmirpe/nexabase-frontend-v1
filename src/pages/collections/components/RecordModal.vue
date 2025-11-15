@@ -692,6 +692,7 @@
                   <!-- Image Upload -->
                   <template v-else-if="fieldDef.type === 'image'">
                     <ImageUploadField
+                      :key="`image-${fieldName}-${editingRecord?.id || 'new'}`"
                       :field-name="fieldName.toString()"
                       :current-value="recordForm[fieldName]"
                       :upload-progress="uploadProgress[fieldName]"

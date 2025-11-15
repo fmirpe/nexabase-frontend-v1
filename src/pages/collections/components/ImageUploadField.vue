@@ -418,7 +418,7 @@ async function loadSignedUrl(fileId: string): Promise<string> {
   }
 }
 
-function getImageUrl(imageData: any): string {
+const getImageUrl = computed(() => (imageData: any): string => {
   if (!imageData) return "";
 
   if (imageData instanceof File) {
@@ -433,7 +433,7 @@ function getImageUrl(imageData: any): string {
   }
 
   return "";
-}
+});
 
 function getPlaceholderImage(): string {
   return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5QzEwLjg5IDkgMTAgOS44OSAxMCAxMUMxMCAxMi4xMSAxMC44OSAxMyAxMiAxM0MxMy4xMSAxMyAxNCAxMi4xMSAxNCAxMUMxNCAxMC42OSAxMy44NyAxMC40MSAxMy42NyAxMC4xN0wxNS42NiA4LjE4QzE2LjU0IDkuMjIgMTcgMTAuNTQgMTcgMTJIMTlDMTkgOS43OSAxNy4yMSA4IDE1IDhWMTBDMTQuMzMgMTAgMTMuNjkgMTAuMjYgMTMuMTcgMTAuNjdMMTIgOVoiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+";

@@ -1360,21 +1360,21 @@ async function handleFileUpload(
 
     if (isMultiple) {
       const currentFiles = props.recordForm[fieldName] || [];
-      const newFileIds: string[] = [];
+      const newFileData: any[] = []; // ✅ Cambiar a any[] en lugar de string[]
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const fileId = await uploadSingleFile(file);
-        if (fileId) newFileIds.push(fileId);
+        const fileData = await uploadSingleFile(file); // ✅ Ahora es objeto
+        if (fileData) newFileData.push(fileData);
         props.uploadProgress[fieldName] = Math.round(
           ((i + 1) / files.length) * 100
         );
       }
 
-      props.recordForm[fieldName] = [...currentFiles, ...newFileIds];
+      props.recordForm[fieldName] = [...currentFiles, ...newFileData];
     } else {
-      const fileId = await uploadSingleFile(files[0]);
-      if (fileId) props.recordForm[fieldName] = fileId;
+      const fileData = await uploadSingleFile(files[0]); // ✅ Objeto completo
+      if (fileData) props.recordForm[fieldName] = fileData;
       props.uploadProgress[fieldName] = 100;
     }
 
@@ -1389,15 +1389,25 @@ async function handleFileUpload(
   }
 }
 
-async function uploadSingleFile(file: File): Promise<string | null> {
+async function uploadSingleFile(file: File): Promise<any | null> {
   try {
     const response = await storageAPI.upload(file, {
       folder: `folder/${props.collection.name}`,
       collection: props.collection.name,
     });
     const responseData = response.data as any;
-    const fileId = responseData?.data?.id || responseData?.id;
-    return fileId || null;
+
+    // ✅ RETORNAR EL OBJETO COMPLETO, NO SOLO EL ID
+    const fileData = responseData?.data || responseData;
+
+    return {
+      id: fileData.id,
+      url: `/api/storage/${fileData.id}/download`,
+      filename: fileData.filename,
+      original_name: fileData.original_name || fileData.filename,
+      mime_type: fileData.mime_type,
+      size: fileData.size,
+    };
   } catch (error) {
     console.error("Error uploading single file:", error);
     throw error;

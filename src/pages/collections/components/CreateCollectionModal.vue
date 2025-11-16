@@ -776,7 +776,27 @@
                             class="block text-sm font-medium text-gray-700 mb-2"
                             >Campo</label
                           >
-                          <input
+                          <select
+                            :value="relation.field"
+                            @change="
+                              updateRelation(
+                                idx,
+                                'field',
+                                ($event.target as HTMLSelectElement).value
+                              )
+                            "
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">Seleccionar campo...</option>
+                            <option
+                              v-for="field in schemaFields"
+                              :key="field.id"
+                              :value="field.name"
+                            >
+                              {{ field.name }} ({{ field.type }})
+                            </option>
+                          </select>
+                          <!-- <input
                             :value="relation.field"
                             @input="
                               updateRelation(
@@ -788,7 +808,7 @@
                             type="text"
                             placeholder="usuario_id"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                          /> -->
                         </div>
                         <div>
                           <label
@@ -818,7 +838,28 @@
                             class="block text-sm font-medium text-gray-700 mb-2"
                             >Referencia</label
                           >
-                          <input
+
+                          <select
+                            :value="relation.references"
+                            @change="
+                              updateRelation(
+                                idx,
+                                'references',
+                                ($event.target as HTMLSelectElement).value
+                              )
+                            "
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">Seleccionar collection...</option>
+                            <option
+                              v-for="coll in collections"
+                              :key="coll.id"
+                              :value="coll.name"
+                            >
+                              {{ coll.name }}
+                            </option>
+                          </select>
+                          <!-- <input
                             :value="relation.references"
                             @input="
                               updateRelation(
@@ -830,7 +871,7 @@
                             type="text"
                             placeholder="users"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                          /> -->
                         </div>
                         <div class="flex items-end">
                           <button
@@ -1365,6 +1406,7 @@ import { ref, computed, h } from "vue";
 
 interface Props {
   editingCollection: any;
+  collections: any[];
   form: any;
   schemaFields: any[];
   relationList: any[];

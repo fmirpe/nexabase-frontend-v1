@@ -506,6 +506,7 @@
     <div class="premium-modals">
       <CreateCollectionModal
         v-if="showCreateModal"
+        :collections="collections"
         :editing-collection="editingCollection"
         :form="form"
         :schema-fields="schemaFields"

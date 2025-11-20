@@ -1719,11 +1719,13 @@ async function saveRecord() {
     delete recordData.created_at;
     delete recordData.updated_at;
 
-    // Process JSON fields
+    // Process fields according to their type
     if (currentCollection.value.schema?.fields) {
       Object.keys(currentCollection.value.schema.fields).forEach(
         (fieldName) => {
           const fieldDef = currentCollection.value!.schema.fields[fieldName];
+          
+          // Process JSON fields
           if (fieldDef.type === "json") {
             const jsonString = recordData[fieldName + "_json_string"];
             if (jsonString) {
@@ -1735,6 +1737,18 @@ async function saveRecord() {
               }
             }
             delete recordData[fieldName + "_json_string"];
+          }
+          
+          // Process number fields - convert strings to numbers
+          if (fieldDef.type === "number") {
+            const value = recordData[fieldName];
+            if (value !== null && value !== undefined && value !== "") {
+              // Convert to number if it's a string
+              recordData[fieldName] = typeof value === "string" ? Number(value) : value;
+            } else if (value === "") {
+              // If empty string, set to null (unless required)
+              recordData[fieldName] = null;
+            }
           }
         }
       );

@@ -13,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Argumentos de build para variables de entorno
-ARG VITE_API_URL=https://nexabase-api.captain.nine-level.online
+ARG VITE_API_URL=https://api.nexabase.online
 
 # Establecer variables de entorno para el build
 ENV VITE_API_URL=$VITE_API_URL
@@ -34,7 +34,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
 # Variables de entorno por defecto
-ENV BACKEND_URL=https://nexabase-api.captain.nine-level.online
+ENV BACKEND_URL=https://api.nexabase.online
 
 EXPOSE 80
 

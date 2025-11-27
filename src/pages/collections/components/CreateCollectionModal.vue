@@ -247,6 +247,24 @@
                         Configuración
                       </h4>
                       <div class="space-y-3">
+
+                        <label class="flex items-center">
+                          <input
+                            type="checkbox"
+                            :checked="form.is_view"
+                            @change="
+                              updateForm(
+                                'is_view',
+                                ($event.target as HTMLInputElement).checked
+                              )
+                            "
+                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span class="ml-3 text-sm font-medium text-gray-700"
+                            >Collection tipo vista</span
+                          >
+                        </label>
+
                         <label class="flex items-center">
                           <input
                             type="checkbox"
@@ -280,6 +298,8 @@
                             >Incluir timestamps (created_at, updated_at)</span
                           >
                         </label>
+
+
                       </div>
                     </div>
 
@@ -309,10 +329,30 @@
                   </div>
                 </div>
               </div>
+              <div class="bg-white rounded-lg border border-gray-200 p-6" v-if="showEditor">
+                <label class="block font-medium text-gray-700 mb-1">Consulta SQL</label>
+                <div style="height: 180px; width: 100%;">
+                  <MonacoEditor
+                    :value="content"
+                    language="sql"
+                    theme="vs-dark"
+                    :options="monacoOptions"
+                    @editorDidMount="onEditorMount"
+                    @change="onEditorChange"
+                  />
+                </div>
+                <p v-if="validationResult.error" class="text-red-600 font-semibold mb-2">{{ validationResult.error }}</p>
+                <p v-else-if="!validationResult.hasIdField" class="text-red-600 font-semibold mb-2">
+                  La consulta SQL debe contener un campo <code>id</code>.
+                </p>
+                <p v-else-if="validationResult.hasOrderBy" class="text-red-600 font-semibold mb-2">
+                  No está permitida la cláusula <code>ORDER BY</code> en la consulta.
+                </p>
+              </div>
             </div>
 
             <!-- Schema Fields Tab -->
-            <div v-if="activeTab === 'fields'" class="space-y-6">
+            <div v-if="activeTab === 'fields' && !form.is_view" class="space-y-6">
               <div class="bg-white rounded-lg border border-gray-200">
                 <div
                   class="px-6 py-4 border-b border-gray-200 flex items-center justify-between"
@@ -688,7 +728,7 @@
             </div>
 
             <!-- Relations Tab -->
-            <div v-if="activeTab === 'relations'" class="space-y-6">
+            <div v-if="activeTab === 'relations' && !form.is_view" class="space-y-6">
               <div class="bg-white rounded-lg border border-gray-200">
                 <div
                   class="px-6 py-4 border-b border-gray-200 flex items-center justify-between"
@@ -1402,7 +1442,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, h } from "vue";
+import { ref, computed, h, watch, nextTick, onBeforeUnmount   } from "vue";
+import MonacoEditor from "monaco-editor-vue3";
+import { parse, SelectStatement } from 'pgsql-ast-parser';
 
 interface Props {
   editingCollection: any;
@@ -1440,6 +1482,158 @@ const emit = defineEmits<{
 }>();
 
 const activeTab = ref("basic");
+
+const monacoOptions = {
+  wordWrap: "on",
+  minimap: { enabled: false },
+  fontSize: 15,
+  automaticLayout: true,
+}
+
+const content = ref(props.form.view_definition || "");
+const showEditor = ref(false);
+let editorInstance: any = null;
+let layoutTimeout: ReturnType<typeof setTimeout> | null = null;
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+const validationResult = ref<{ hasIdField: boolean; hasOrderBy: boolean; error?: string }>({
+  hasIdField: false,
+  hasOrderBy: false,
+  error: undefined,
+});
+
+const updating = ref(false);
+
+function validateViewSql(sql: string) {
+  try {
+    const ast = parse(sql);
+    if (!Array.isArray(ast) || ast.length === 0) {
+      validationResult.value = { hasIdField: false, hasOrderBy: false, error: "No SQL statements found" };
+      return;
+    }
+    const selectStmt = ast.find(s => s.type === "select") as SelectStatement | undefined;
+    if (!selectStmt) {
+      validationResult.value = { hasIdField: false, hasOrderBy: false, error: "No SELECT statement found" };
+      return;
+    }
+    let hasId = false;
+    for (const col of (selectStmt as any).columns) {
+      const colName = (col.alias?.name || (col.expr && "name" in col.expr ? col.expr.name : null)) || null;
+      if (colName && colName.toLowerCase() === "id") {
+        hasId = true;
+        break;
+      }
+    }
+    const hasOrderBy = Boolean(
+      (selectStmt as any).orderBy && (selectStmt as any).orderBy.length > 0
+    );
+    validationResult.value = { hasIdField: hasId, hasOrderBy, error: undefined };
+  } catch (e: any) {
+    validationResult.value = { hasIdField: false, hasOrderBy: false, error: `SQL parse error: ${e.message}` };
+  }
+}
+
+function hasIdFieldInViewDefinition(viewSql: string): boolean {
+  try {
+    const ast = parse(viewSql);
+    // El AST es un array de statements
+    if (!Array.isArray(ast) || ast.length === 0) return false;
+
+    // Normalmente el primer statement es SELECT
+    const selectStmt = ast[0];
+
+    if (selectStmt.type !== 'select') return false;
+
+    // selectStmt.columns contiene un array de columnas
+    if (!selectStmt.columns) return false;
+    for (const col of selectStmt.columns) {
+      // col puede ser { expr: { type: 'ref' or 'string', name: 'id' }, alias: 'id' etc.}
+      const colName =
+        (col.alias && col.alias.name) ||           // alias si existe
+        (col.expr && typeof col.expr === 'object' && 'name' in col.expr && col.expr.name) ||
+        null;
+
+      if (colName && colName.toLowerCase() === 'id') {
+        return true;
+      }
+    }
+
+    return false;
+  } catch (err) {
+    console.warn('Error parsing SQL:', err);
+    return false;
+  }
+}
+
+function onEditorMount(editor: any) {
+  editorInstance = editor;
+  if (layoutTimeout) clearTimeout(layoutTimeout);
+  layoutTimeout = setTimeout(() => {
+    editorInstance?.layout();
+  }, 100);
+
+  editorInstance.onDidChangeModelContent(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      content.value = editorInstance.getValue() || "";
+    }, 300);
+  });
+}
+
+watch(
+  () => props.form.is_view,
+  async (val) => {
+    if (val) {
+      showEditor.value = false;
+      await nextTick();
+      showEditor.value = true;
+      await nextTick();
+      if (editorInstance) editorInstance.layout();
+      content.value = props.form.view_definition || "";
+    } else {
+      showEditor.value = false;
+      if (layoutTimeout) clearTimeout(layoutTimeout);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      if (editorInstance) editorInstance.dispose();
+      editorInstance = null;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => content.value,
+  (val) => {
+    if (updating.value) return;
+    updating.value = true;
+    props.form.view_definition = val;
+    validateViewSql(val);
+    updating.value = false;
+  },
+  { immediate: true }
+);
+
+watch(() => props.form.view_definition, val => {
+  if (updating.value) return;
+  updating.value = true;
+  content.value = val || "";
+  updating.value = false;
+}, { immediate: true });
+
+function onEditorChange(val: string) {
+  if (updating.value) return;
+  updating.value = true;
+  props.form.view_definition = val;
+  updating.value = false;
+}
+
+onBeforeUnmount(() => {
+  if (layoutTimeout) clearTimeout(layoutTimeout);
+  if (debounceTimer) clearTimeout(debounceTimer);
+  if (editorInstance) editorInstance.dispose();
+  editorInstance = null;
+});
+
 
 // ✅ ICONOS REALES COMO COMPONENTES FUNCIONALES
 const InfoIcon = () =>
@@ -1536,6 +1730,8 @@ const EyeIcon = () =>
     )
   );
 
+const hasIdField = computed(() => hasIdFieldInViewDefinition(content.value));
+
 const tabs = computed(() => [
   {
     id: "basic",
@@ -1595,6 +1791,16 @@ const completionPercentage = computed(() => {
 });
 
 const canSave = computed(() => {
+  if (props.form.is_view) {
+    return (
+      !!props.form.name &&
+      !!props.form.view_definition &&
+      validationResult.value.hasIdField && 
+      !validationResult.value.hasOrderBy && 
+      !validationResult.value.error &&
+      props.form.view_definition.trim().length > 0
+    );
+  }
   return props.form.name && props.schemaFields.length > 0;
 });
 
@@ -1915,6 +2121,8 @@ function generatePreviewJSON() {
       description: props.form.metadata?.description || "",
     },
     is_active: props.form.is_active,
+    is_view: props.form.is_view,
+    view_definition: props.form.view_definition || "",
   };
 }
 </script>

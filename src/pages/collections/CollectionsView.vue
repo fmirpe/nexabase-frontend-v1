@@ -603,6 +603,8 @@ interface Collection {
   id: string;
   name: string;
   is_active: boolean;
+  is_view: boolean;
+  view_definition: string;
   record_count: number;
   schema: any;
   metadata: any;
@@ -685,6 +687,8 @@ const recordToDelete = ref<any>(null);
 const form = ref({
   name: "",
   is_active: true,
+  is_view: false,
+  view_definition: "",
   metadata: { description: "" },
   auth_rules: {
     select: "authenticated",
@@ -714,15 +718,15 @@ const uploadProgress = ref<any>({});
 
 // ✅ MANTENER TODOS LOS COMPUTED ORIGINALES EXACTAMENTE IGUAL
 const canInsertRecords = computed(() => {
-  return currentCollection.value?.auth_rules?.insert !== "none";
+  return currentCollection.value?.auth_rules?.insert !== "none"  && !currentCollection.value?.is_view;
 });
 
 const canUpdateRecords = computed(() => {
-  return currentCollection.value?.auth_rules?.update !== "none";
+  return currentCollection.value?.auth_rules?.update !== "none" && !currentCollection.value?.is_view;
 });
 
 const canDeleteRecords = computed(() => {
-  return currentCollection.value?.auth_rules?.delete !== "none";
+  return currentCollection.value?.auth_rules?.delete !== "none" && !currentCollection.value?.is_view;
 });
 
 const hasActiveCollectionFilters = computed(() => {
@@ -1127,6 +1131,8 @@ function resetForm() {
   form.value = {
     name: "",
     is_active: true,
+    is_view: false,
+    view_definition: "",
     metadata: { description: "" },
     auth_rules: {
       select: "authenticated",
@@ -1153,6 +1159,8 @@ function resetForm() {
 function populateForm(collection: Collection) {
   form.value.name = collection.name;
   form.value.is_active = collection.is_active;
+  form.value.is_view = collection.is_view;
+  form.value.view_definition = collection.view_definition || "";
   form.value.metadata = collection.metadata || { description: "" };
   form.value.auth_rules = collection.auth_rules || {
     select: "authenticated",
@@ -1219,7 +1227,7 @@ function populateForm(collection: Collection) {
 }
 
 function resetRecordForm() {
-  recordForm.value = {};
+  recordForm.value = { ...form.value };
   jsonErrors.value = {};
   uploadProgress.value = {};
 
@@ -1616,6 +1624,8 @@ async function saveCollection() {
           description: form.value.metadata?.description || "",
         },
         is_active: form.value.is_active,
+        is_view: form.value.is_view,
+        view_definition: form.value.view_definition,
       };
 
       // Limpiar campos undefined del schema
@@ -1639,6 +1649,8 @@ async function saveCollection() {
           description: form.value.metadata?.description || "",
         },
         is_active: form.value.is_active,
+        is_view: form.value.is_view,
+        view_definition: form.value.view_definition,
       };
 
       // Limpiar undefined del schema

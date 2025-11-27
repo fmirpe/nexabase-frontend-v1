@@ -777,6 +777,13 @@ const adminNavigationItems = computed(() => [
       "M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
   },
   {
+    name: "sql-query",                      // Nuevo nombre de ruta
+    path: "/sql-query",                      // Correspondiente a la ruta definida
+    label: "Ejecutar SQL",      // Texto a mostrar en navegación
+    iconPath:
+      "M12 2a4 4 0 00-2 7.5 4 4 0 104 0A4 4 0 0012 2z M6 14h12v2H6v-2z", // Ícono SVG simple, cambia si quieres
+  },
+  {
     name: "backup",
     path: "/backup",
     label: "Backup & Restore",

@@ -31,6 +31,8 @@ import OrganizationSettingsView from "./pages/tenants/OrganizationSettingsView.v
 import ApiView from "./pages/ApiView.vue";
 import FunctionsView from "./pages/functions/FunctionsView.vue";
 import HooksView from "./pages/hooks/HooksView.vue";
+import SqlQueryPage from "./pages/sql-query/SqlQueryPage.vue";
+
 
 // Router actualizado
 const routes = [
@@ -121,6 +123,16 @@ const routes = [
           requiresAuth: true,
           requiresAdmin: true,
           title: "Backup & Restore",
+        },
+      },
+      {
+        path: "sql-query",
+        name: "SqlQuery",
+        component: SqlQueryPage,
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true, // o ajusta roles necesarios
+          title: "SQL Query Executor",
         },
       },
       {

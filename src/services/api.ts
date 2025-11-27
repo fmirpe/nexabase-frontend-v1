@@ -1136,4 +1136,31 @@ export const filterHelpers = {
   },
 };
 
+// Agrega esta exportación en tu archivo api.ts
+
+export const sqlQueriesAPI = {
+  /**
+   * Ejecuta una consulta SQL arbitraria con paginación en el servidor.
+   * @param sql Consulta SQL como string
+   * @param params Parámetros para la consulta (array)
+   * @param page Número de página (1 por defecto)
+   * @param limit Número de registros por página (20 por defecto)
+   * @returns Resultado con formato { success, results, totalRows }
+   */
+  execute: (
+    sql: string,
+    params: any[] = [],
+    page: number = 1,
+    limit: number = 20
+  ) => {
+    return apiClient.post("/dashboard/sql/execute", {
+      sql,
+      params,
+      page,
+      limit,
+    });
+  },
+};
+
+
 export default apiClient;
